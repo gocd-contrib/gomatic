@@ -1,0 +1,1248 @@
+#!/usr/bin/env python
+
+import unittest
+
+from goServer import *
+
+
+class FakeConfig:
+    def __init__(self, config_string, thing_to_recreate_itself=None):
+        self.config_string = config_string
+        self.thing_to_recreate_itself = thing_to_recreate_itself
+
+    def __repr__(self):
+        if self.thing_to_recreate_itself is None:
+            return 'FakeConfig(whatever)'
+        else:
+            return self.thing_to_recreate_itself
+
+    def get(self, path):
+        # sorry for the duplication/shared knowledge of code but this is easiest way to test
+        # what we want in a controlled way
+        if path == "/go/api/admin/config.xml":
+            return self.config_string
+        if path == "/go/admin/config_xml/edit":
+            return open('test-data/editConfigPage.html').read()
+        raise RuntimeError("not expecting to be asked for anything else")
+
+
+def config():
+    return FakeConfig(open('test-data/config.xml').read())
+
+
+def empty_config():
+    return FakeConfig(open('test-data/empty-config.xml').read(), "empty_config()")
+
+
+def find_with_matching_name(things, name):
+    return [thing for thing in things if thing.name() == name]
+
+
+def standard_pipeline_group():
+    return GoServer(config()).ensure_pipeline_group('P.Group')
+
+
+def typical_pipeline():
+    return standard_pipeline_group().find_pipeline('typical')
+
+
+def more_options_pipeline():
+    return standard_pipeline_group().find_pipeline('more-options')
+
+
+def empty_pipeline():
+    return GoServer(empty_config()).ensure_pipeline_group("pg").ensure_pipeline("pl").set_git_url("gurl")
+
+
+def empty_stage():
+    return empty_pipeline().ensure_stage("deploy-to-dev")
+
+
+class TestAgents(unittest.TestCase):
+    def test_agents_have_resources(self):
+        agents = GoServer(config()).agents()
+        self.assertEquals(2, len(agents))
+        self.assertEquals({'a-resource', 'b-resource'}, agents[0].resources())
+
+    def test_could_have_no_agents(self):
+        agents = GoServer(empty_config()).agents()
+        self.assertEquals(0, len(agents))
+
+    def test_agent_could_have_no_resources(self):
+        agents = GoServer(config()).agents()
+        self.assertEquals(0, len(agents[1].resources()))
+
+    def test_can_add_resource_to_agent_with_no_resources(self):
+        go_server = GoServer(config())
+        agent = go_server.agents()[1]
+        agent.ensure_resource('a-resource-that-it-does-not-already-have')
+        self.assertEquals(1, len(agent.resources()))
+
+    def test_can_add_resource_to_agent(self):
+        go_server = GoServer(config())
+        agents = go_server.agents()
+        agent = agents[0]
+        self.assertEquals(2, len(agent.resources()))
+        agent.ensure_resource('a-resource-that-it-does-not-already-have')
+        self.assertEquals(3, len(agent.resources()))
+
+
+class TestTemplates(unittest.TestCase):
+    def test_templates_have_stages(self):
+        templates = GoServer(config()).templates()
+        self.assertEquals(2, len(templates))
+        self.assertEquals('deploy-stack', templates[1].name())
+
+    def test_can_have_no_templates(self):
+        self.assertEquals(0, len(GoServer(empty_config()).templates()))
+
+
+class TestJobs(unittest.TestCase):
+    def test_jobs_have_resources(self):
+        stages = typical_pipeline().stages()
+        job = stages[0].jobs()[0]
+        resources = job.resources()
+        self.assertEquals(1, len(resources))
+        self.assertEquals({'a-resource'}, resources)
+
+    def test_jobs_can_have_timeout(self):
+        job = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline("typical").ensure_stage("deploy").ensure_job("upload")
+        self.assertEquals(True, job.has_timeout())
+        self.assertEquals('20', job.timeout())
+
+    def test_can_set_timeout(self):
+        job = empty_stage().ensure_job("j")
+        j = job.set_timeout("42")
+        self.assertEquals(j, job)
+        self.assertEquals(True, job.has_timeout())
+        self.assertEquals('42', job.timeout())
+
+    def test_jobs_do_not_have_to_have_timeout(self):
+        stages = typical_pipeline().stages()
+        job = stages[0].jobs()[0]
+        self.assertEquals(False, job.has_timeout())
+        try:
+            job.timeout()
+            self.fail("should have thrown exception")
+        except RuntimeError:
+            pass
+
+    def test_jobs_can_run_on_all_agents(self):
+        job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
+        self.assertEquals(True, job.runs_on_all_agents())
+
+    def test_jobs_do_not_have_to_run_on_all_agents(self):
+        job = typical_pipeline().ensure_stage("build").ensure_job("compile")
+        self.assertEquals(False, job.runs_on_all_agents())
+
+    def test_jobs_can_be_made_to_run_on_all_agents(self):
+        job = typical_pipeline().ensure_stage("build").ensure_job("compile")
+        j = job.set_runs_on_all_agents()
+        self.assertEquals(j, job)
+        self.assertEquals(True, job.runs_on_all_agents())
+
+    def test_can_ensure_job_has_resource(self):
+        stages = typical_pipeline().stages()
+        job = stages[0].jobs()[0]
+        j = job.ensure_resource('moo')
+        self.assertEquals(j, job)
+        self.assertEquals(2, len(job.resources()))
+        self.assertEquals({'a-resource', 'moo'}, job.resources())
+
+    def test_jobs_have_artifacts(self):
+        job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
+        artifacts = job.artifacts()
+        self.assertEquals([
+                              BuildArtifact("target/universal/myapp*.zip", "artifacts"),
+                              BuildArtifact("scripts/*", "files"),
+                              TestArtifact("from", "to")],
+                          artifacts)
+
+    def test_artifacts_might_have_no_dest(self):
+        job = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline("more-options").ensure_stage("s1").ensure_job("rake-job")
+        artifacts = job.artifacts()
+        self.assertEquals(1, len(artifacts))
+        self.assertEquals([BuildArtifact("things/*")], artifacts)
+
+    def test_can_add_build_artifacts_to_job(self):
+        job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
+        job_with_artifacts = job.ensure_artifacts([
+            BuildArtifact("a1", "artifacts"),
+            BuildArtifact("a2", "others")])
+        self.assertEquals(job, job_with_artifacts)
+        artifacts = job.artifacts()
+        self.assertEquals(5, len(artifacts))
+        last_two_artifacts = artifacts[-2:]
+        self.assertEquals([
+                              BuildArtifact("a1", "artifacts"),
+                              BuildArtifact("a2", "others")],
+                          last_two_artifacts)
+
+    def test_can_add_test_artifacts_to_job(self):
+        job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
+        job_with_artifacts = job.ensure_artifacts([
+            TestArtifact("a1"),
+            TestArtifact("a2")])
+        self.assertEquals(job, job_with_artifacts)
+        artifacts = job.artifacts()
+        self.assertEquals(5, len(artifacts))
+        last_two_artifacts = artifacts[-2:]
+        self.assertEquals([
+                              TestArtifact("a1"),
+                              TestArtifact("a2")],
+                          last_two_artifacts)
+
+    def test_can_ensure_artifacts(self):
+        job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
+
+        job.ensure_artifacts([
+            TestArtifact("from", "to"),
+            BuildArtifact("target/universal/myapp*.zip", "somewhereElse"),
+            TestArtifact("another", "with dest"),
+            BuildArtifact("target/universal/myapp*.zip", "artifacts")])
+        self.assertEquals([
+                              BuildArtifact("target/universal/myapp*.zip", "artifacts"),
+                              BuildArtifact("scripts/*", "files"),
+                              TestArtifact("from", "to"),
+                              BuildArtifact("target/universal/myapp*.zip", "somewhereElse"),
+                              TestArtifact("another", "with dest")
+                          ],
+                          job.artifacts())
+
+    def test_jobs_have_tasks(self):
+        stages = more_options_pipeline().stages()
+        job = stages[1].jobs()[2]
+        tasks = job.tasks()
+        self.assertEquals(4, len(tasks))
+        self.assertEquals('rake', tasks[0].type())
+        self.assertEquals('sometarget', tasks[0].target())
+        self.assertEquals('passed', tasks[0].runif())
+
+        self.assertEquals('fetchartifact', tasks[1].type())
+        self.assertEquals('firstPipeline', tasks[1].pipeline())
+        self.assertEquals('earlyStage', tasks[1].stage())
+        self.assertEquals('earlyWorm', tasks[1].job())
+        self.assertEquals(FetchArtifactDir('sourceDir'), tasks[1].src())
+        self.assertEquals('destDir', tasks[1].dest())
+        self.assertEquals('passed', tasks[1].runif())
+
+    def test_runif_defaults_to_passed(self):
+        pipeline = GoServer(config()).ensure_pipeline_group("P.Group").find_pipeline("typical")
+        tasks = pipeline.ensure_stage("build").ensure_job("compile").tasks()
+        self.assertEquals("passed", tasks[0].runif())
+
+    def test_jobs_can_have_rake_tasks(self):
+        stages = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline("more-options").stages()
+        job = stages[1].jobs()[0]
+        tasks = job.tasks()
+        self.assertEquals(1, len(tasks))
+        self.assertEquals('rake', tasks[0].type())
+        self.assertEquals("boo", tasks[0].target())
+
+    def test_can_ensure_rake_task(self):
+        stages = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline("more-options").stages()
+        job = stages[1].jobs()[0]
+        job.ensure_task(RakeTask("boo"))
+        self.assertEquals(1, len(job.tasks()))
+
+    def test_can_add_rake_task(self):
+        stages = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline("more-options").stages()
+        job = stages[1].jobs()[0]
+        job.ensure_task(RakeTask("another"))
+        self.assertEquals(2, len(job.tasks()))
+        self.assertEquals("another", job.tasks()[1].target())
+
+    def test_can_add_exec_task_with_runif(self):
+        stages = typical_pipeline().stages()
+        job = stages[0].jobs()[0]
+        added_task = job.add_task(ExecTask(['ls', '-la'], 'some/dir', "failed"))
+        self.assertEquals(2, len(job.tasks()))
+        task = job.tasks()[1]
+        self.assertEquals(task, added_task)
+        self.assertEquals(['ls', '-la'], task.command_and_args())
+        self.assertEquals('some/dir', task.working_dir())
+        self.assertEquals('failed', task.runif())
+
+    def test_can_add_exec_task(self):
+        stages = typical_pipeline().stages()
+        job = stages[0].jobs()[0]
+        added_task = job.add_task(ExecTask(['ls', '-la'], 'some/dir'))
+        self.assertEquals(2, len(job.tasks()))
+        task = job.tasks()[1]
+        self.assertEquals(task, added_task)
+        self.assertEquals(['ls', '-la'], task.command_and_args())
+        self.assertEquals('some/dir', task.working_dir())
+
+    def test_can_ensure_exec_task(self):
+        stages = typical_pipeline().stages()
+        job = stages[0].jobs()[0]
+        t1 = job.ensure_task(ExecTask(['ls', '-la'], 'some/dir'))
+        t2 = job.ensure_task(ExecTask(['make', 'options', 'source code']))
+        job.ensure_task(ExecTask(['ls', '-la'], 'some/otherdir'))
+        job.ensure_task(ExecTask(['ls', '-la'], 'some/dir'))
+        self.assertEquals(3, len(job.tasks()))
+
+        self.assertEquals(t2, job.tasks()[0])
+        self.assertEquals(['make', 'options', 'source code'], (job.tasks()[0]).command_and_args())
+
+        self.assertEquals(t1, job.tasks()[1])
+        self.assertEquals(['ls', '-la'], (job.tasks()[1]).command_and_args())
+        self.assertEquals('some/dir', (job.tasks()[1]).working_dir())
+
+        self.assertEquals(['ls', '-la'], (job.tasks()[2]).command_and_args())
+        self.assertEquals('some/otherdir', (job.tasks()[2]).working_dir())
+
+    def test_exec_task_args_are_unescaped_as_appropriate(self):
+        job = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline("more-options").ensure_stage("earlyStage").ensure_job("earlyWorm")
+        task = job.tasks()[1]
+        self.assertEquals(["bash", "-c",
+                           'curl "http://domain.com/service/check?target=one+two+three&key=2714_beta%40domain.com"'],
+                          task.command_and_args())
+
+    def test_exec_task_args_are_escaped_as_appropriate(self):
+        job = empty_stage().ensure_job("j")
+        task = job.add_task(ExecTask(["bash", "-c",
+                                      'curl "http://domain.com/service/check?target=one+two+three&key=2714_beta%40domain.com"']))
+        self.assertEquals(["bash", "-c",
+                           'curl "http://domain.com/service/check?target=one+two+three&key=2714_beta%40domain.com"'],
+                          task.command_and_args())
+
+    def test_can_have_no_tasks(self):
+        self.assertEquals(0, len(empty_stage().ensure_job("empty_job").tasks()))
+
+    def test_can_add_fetch_artifact_task_to_job(self):
+        stages = typical_pipeline().stages()
+        job = stages[0].jobs()[0]
+        added_task = job.add_task(FetchArtifactTask('p', 's', 'j', FetchArtifactDir('d'), runif="any"))
+        self.assertEquals(2, len(job.tasks()))
+        task = job.tasks()[1]
+        self.assertEquals(added_task, task)
+        self.assertEquals('p', task.pipeline())
+        self.assertEquals('s', task.stage())
+        self.assertEquals('j', task.job())
+        self.assertEquals(FetchArtifactDir('d'), task.src())
+        self.assertEquals('any', task.runif())
+
+    def test_fetch_artifact_task_can_have_src_file_rather_than_src_dir(self):
+        job = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options').ensure_stage("s1").ensure_job("variety-of-tasks")
+        tasks = job.tasks()
+
+        self.assertEquals(4, len(tasks))
+        self.assertEquals('firstPipeline', tasks[1].pipeline())
+        self.assertEquals('earlyStage', tasks[1].stage())
+        self.assertEquals('earlyWorm', tasks[1].job())
+        self.assertEquals(FetchArtifactFile('someFile'), tasks[2].src())
+        self.assertEquals('passed', tasks[1].runif())
+        self.assertEquals(['true'], tasks[3].command_and_args())
+
+    def test_fetch_artifact_task_can_have_dest(self):
+        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        job = pipeline.ensure_stage("s1").ensure_job("variety-of-tasks")
+        tasks = job.tasks()
+        self.assertEquals(FetchArtifactTask("firstPipeline",
+                                            "earlyStage",
+                                            "earlyWorm",
+                                            FetchArtifactDir("sourceDir"),
+                                            dest="destDir"),
+                          tasks[1])
+
+    def test_can_ensure_fetch_artifact_tasks(self):
+        job = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options').ensure_stage("s1").ensure_job("variety-of-tasks")
+        job.ensure_task(FetchArtifactTask("anotherPipeline", "build", "build", FetchArtifactFile("someFile")))
+        first_added_task = job.ensure_task(FetchArtifactTask('p', 's', 'j', FetchArtifactDir('dir')))
+        self.assertEquals(5, len(job.tasks()))
+
+        self.assertEquals(first_added_task, job.tasks()[4])
+
+        self.assertEquals('p', (job.tasks()[4]).pipeline())
+        self.assertEquals('s', (job.tasks()[4]).stage())
+        self.assertEquals('j', (job.tasks()[4]).job())
+        self.assertEquals(FetchArtifactDir('dir'), (job.tasks()[4]).src())
+        self.assertEquals('passed', (job.tasks()[4]).runif())
+
+        job.ensure_task(FetchArtifactTask('p', 's', 'j', FetchArtifactFile('f')))
+        self.assertEquals(FetchArtifactFile('f'), (job.tasks()[5]).src())
+
+        job.ensure_task(FetchArtifactTask('p', 's', 'j', FetchArtifactDir('dir'), dest="somedest"))
+        self.assertEquals("somedest", (job.tasks()[6]).dest())
+
+        job.ensure_task(FetchArtifactTask('p', 's', 'j', FetchArtifactDir('dir'), runif="failed"))
+        self.assertEquals('failed', (job.tasks()[7]).runif())
+
+    def test_tasks_run_if_defaults_to_passed(self):
+        job = empty_stage().ensure_job("j")
+        job.add_task(ExecTask(['ls', '-la'], 'some/dir'))
+        job.add_task(FetchArtifactTask('p', 's', 'j', FetchArtifactDir('dir')))
+        job.add_task(RakeTask('x'))
+        self.assertEquals('passed', (job.tasks()[0]).runif())
+        self.assertEquals('passed', (job.tasks()[1]).runif())
+        self.assertEquals('passed', (job.tasks()[2]).runif())
+
+    def test_tasks_run_if_variants(self):
+        job = more_options_pipeline().ensure_stage("s1").ensure_job("run-if-variants")
+        tasks = job.tasks()
+        self.assertEquals('t-passed', tasks[0].command_and_args()[0])
+        self.assertEquals('passed', tasks[0].runif())
+
+        self.assertEquals('t-none', tasks[1].command_and_args()[0])
+        self.assertEquals('passed', tasks[1].runif())
+
+        self.assertEquals('t-failed', tasks[2].command_and_args()[0])
+        self.assertEquals('failed', tasks[2].runif())
+
+        self.assertEquals('t-any', tasks[3].command_and_args()[0])
+        self.assertEquals('any', tasks[3].runif())
+
+        self.assertEquals('t-both', tasks[4].command_and_args()[0])
+        self.assertEquals('any', tasks[4].runif())
+
+    def test_cannot_set_runif_to_random_things(self):
+        try:
+            ExecTask(['x'], runif='whatever')
+            self.fail("should have thrown exception")
+        except RuntimeError as e:
+            self.assertTrue(e.message.count("whatever") > 0)
+
+    def test_can_set_runif_to_particular_values(self):
+        self.assertEquals('passed', ExecTask(['x'], runif='passed').runif())
+        self.assertEquals('failed', ExecTask(['x'], runif='failed').runif())
+        self.assertEquals('any', ExecTask(['x'], runif='any').runif())
+
+    def test_tasks_dest_defaults_to_none(self):  # TODO: maybe None could be avoided
+        job = empty_stage().ensure_job("j")
+        job.add_task(FetchArtifactTask('p', 's', 'j', FetchArtifactDir('dir')))
+        self.assertEquals(None, (job.tasks()[0]).dest())
+
+    def test_can_add_exec_task_to_empty_job(self):
+        job = empty_stage().ensure_job("j")
+        added_task = job.add_task(ExecTask(['ls', '-la'], 'some/dir', "any"))
+        self.assertEquals(1, len(job.tasks()))
+        task = job.tasks()[0]
+        self.assertEquals(task, added_task)
+        self.assertEquals(['ls', '-la'], task.command_and_args())
+        self.assertEquals('some/dir', task.working_dir())
+        self.assertEquals('any', task.runif())
+
+    def test_can_remove_all_tasks(self):
+        stages = typical_pipeline().stages()
+        job = stages[0].jobs()[0]
+        self.assertEquals(1, len(job.tasks()))
+        j = job.without_any_tasks()
+        self.assertEquals(j, job)
+        self.assertEquals(0, len(job.tasks()))
+
+    def test_can_add_environment_variables(self):
+        job = GoServer(config()) \
+            .ensure_pipeline_group("P.Group") \
+            .find_pipeline("typical") \
+            .ensure_stage("build") \
+            .ensure_job("compile")
+        j = job.ensure_environment_variables({"new": "one"})
+        self.assertEquals(j, job)
+        self.assertEquals({"CF_COLOR": "false", "new": "one"}, job.environment_variables())
+
+    def test_can_remove_all_environment_variables(self):
+        job = GoServer(config()) \
+            .ensure_pipeline_group("P.Group") \
+            .find_pipeline("typical") \
+            .ensure_stage("build") \
+            .ensure_job("compile")
+        j = job.without_any_environment_variables()
+        self.assertEquals(j, job)
+        self.assertEquals({}, job.environment_variables())
+
+    def test_job_can_haveTabs(self):
+        job = GoServer(config()) \
+            .ensure_pipeline_group("P.Group") \
+            .find_pipeline("typical") \
+            .ensure_stage("build") \
+            .ensure_job("compile")
+        self.assertEquals([Tab("Time_Taken", "artifacts/test-run-times.html")], job.tabs())
+
+    def test_can_addTab(self):
+        job = GoServer(config()) \
+            .ensure_pipeline_group("P.Group") \
+            .find_pipeline("typical") \
+            .ensure_stage("build") \
+            .ensure_job("compile")
+        j = job.ensure_tab(Tab("n", "p"))
+        self.assertEquals(j, job)
+        self.assertEquals([Tab("Time_Taken", "artifacts/test-run-times.html"), Tab("n", "p")], job.tabs())
+
+    def test_can_ensure_tab(self):
+        job = GoServer(config()) \
+            .ensure_pipeline_group("P.Group") \
+            .find_pipeline("typical") \
+            .ensure_stage("build") \
+            .ensure_job("compile")
+        job.ensure_tab(Tab("Time_Taken", "artifacts/test-run-times.html"))
+        self.assertEquals([Tab("Time_Taken", "artifacts/test-run-times.html")], job.tabs())
+
+
+class TestStages(unittest.TestCase):
+    def test_pipelines_have_stages(self):
+        self.assertEquals(2, len(typical_pipeline().stages()))
+
+    def test_stages_have_names(self):
+        stages = typical_pipeline().stages()
+        self.assertEquals('build', stages[0].name())
+        self.assertEquals('deploy', stages[1].name())
+
+    def test_stages_can_have_manual_approval(self):
+        self.assertEquals(False, typical_pipeline().stages()[0].has_manual_approval())
+        self.assertEquals(True, typical_pipeline().stages()[1].has_manual_approval())
+
+    def test_can_set_manual_approval(self):
+        stage = typical_pipeline().stages()[0]
+        s = stage.set_has_manual_approval()
+        self.assertEquals(s, stage)
+        self.assertEquals(True, stage.has_manual_approval())
+
+    def test_stages_have_fetch_materials_flag(self):
+        stage = typical_pipeline().ensure_stage("build")
+        self.assertEquals(True, stage.fetch_materials())
+        stage = GoServer(config()) \
+            .ensure_pipeline_group("P.Group") \
+            .find_pipeline("more-options") \
+            .ensure_stage("s1")
+        self.assertEquals(False, stage.fetch_materials())
+
+    def test_can_set_fetch_materials_flag(self):
+        stage = typical_pipeline().ensure_stage("build")
+        s = stage.set_fetch_materials(False)
+        self.assertEquals(s, stage)
+        self.assertEquals(False, stage.fetch_materials())
+        stage = GoServer(config()) \
+            .ensure_pipeline_group("P.Group") \
+            .find_pipeline("more-options") \
+            .ensure_stage("s1")
+        stage.set_fetch_materials(True)
+        self.assertEquals(True, stage.fetch_materials())
+
+    def test_stages_have_jobs(self):
+        stages = typical_pipeline().stages()
+        jobs = stages[0].jobs()
+        self.assertEquals(1, len(jobs))
+        self.assertEquals('compile', jobs[0].name())
+
+    def test_can_add_job(self):
+        stage = typical_pipeline().ensure_stage("deploy")
+        self.assertEquals(1, len(stage.jobs()))
+        ensured_job = stage.ensure_job("new-job")
+        self.assertEquals(2, len(stage.jobs()))
+        self.assertEquals(ensured_job, stage.jobs()[1])
+        self.assertEquals("new-job", stage.jobs()[1].name())
+
+    def test_can_add_job_to_empty_stage(self):
+        stage = empty_stage()
+        self.assertEquals(0, len(stage.jobs()))
+        ensured_job = stage.ensure_job("new-job")
+        self.assertEquals(1, len(stage.jobs()))
+        self.assertEquals(ensured_job, stage.jobs()[0])
+        self.assertEquals("new-job", stage.jobs()[0].name())
+
+    def test_can_ensure_job_exists(self):
+        stage = typical_pipeline().ensure_stage("deploy")
+        self.assertEquals(1, len(stage.jobs()))
+        ensured_job = stage.ensure_job("upload")
+        self.assertEquals(1, len(stage.jobs()))
+        self.assertEquals("upload", ensured_job.name())
+
+    def test_can_set_environment_variables(self):
+        stage = typical_pipeline().ensure_stage("deploy")
+        s = stage.ensure_environment_variables({"new": "one"})
+        self.assertEquals(s, stage)
+        self.assertEquals({"BASE_URL": "http://myurl", "new": "one"}, stage.environment_variables())
+
+    def test_can_remove_all_environment_variables(self):
+        stage = typical_pipeline().ensure_stage("deploy")
+        s = stage.without_any_environment_variables()
+        self.assertEquals(s, stage)
+        self.assertEquals({}, stage.environment_variables())
+
+
+class TestPipeline(unittest.TestCase):
+    def test_pipelines_have_names(self):
+        pipeline = typical_pipeline()
+        self.assertEquals('typical', pipeline.name())
+
+    def test_can_add_stage(self):
+        pipeline = empty_pipeline()
+        self.assertEquals(0, len(pipeline.stages()))
+        new_stage = pipeline.ensure_stage("some_stage")
+        self.assertEquals(1, len(pipeline.stages()))
+        self.assertEquals(new_stage, pipeline.stages()[0])
+        self.assertEquals("some_stage", new_stage.name())
+
+    def test_can_ensure_stage(self):
+        pipeline = typical_pipeline()
+        self.assertEquals(2, len(pipeline.stages()))
+        ensured_stage = pipeline.ensure_stage("deploy")
+        self.assertEquals(2, len(pipeline.stages()))
+        self.assertEquals("deploy", ensured_stage.name())
+
+    def test_can_remove_stage(self):
+        pipeline = typical_pipeline()
+        self.assertEquals(2, len(pipeline.stages()))
+        p = pipeline.ensure_removal_of_stage("deploy")
+        self.assertEquals(p, pipeline)
+        self.assertEquals(1, len(pipeline.stages()))
+        self.assertEquals(0, len([s for s in pipeline.stages() if s.name() == "deploy"]))
+
+    def test_can_ensure_removal_of_stage(self):
+        pipeline = typical_pipeline()
+        self.assertEquals(2, len(pipeline.stages()))
+        pipeline.ensure_removal_of_stage("stage-that-has-already-been-deleted")
+        self.assertEquals(2, len(pipeline.stages()))
+
+    def test_can_set_stage_clean_policy(self):
+        pipeline = empty_pipeline()
+        stage1 = pipeline.ensure_stage("some_stage1").set_clean_working_dir()
+        stage2 = pipeline.ensure_stage("some_stage2")
+        self.assertEquals(True, pipeline.stages()[0].clean_working_dir())
+        self.assertEquals(True, stage1.clean_working_dir())
+        self.assertEquals(False, pipeline.stages()[1].clean_working_dir())
+        self.assertEquals(False, stage2.clean_working_dir())
+
+    def test_pipelines_can_have_git_urls(self):
+        pipeline = typical_pipeline()
+        self.assertEquals("git@bitbucket.org:springersbm/gomatic.git", pipeline.git_url())
+
+    def test_git_is_polled_by_default(self):
+        pipeline = GoServer(empty_config()).ensure_pipeline_group("g").ensure_pipeline("p")
+        pipeline.set_git_url("some git url")
+        self.assertEquals(True, pipeline.git_material().polling())
+
+    def test_pipelines_can_have_git_material_with_material_name(self):
+        pipeline = more_options_pipeline()
+        self.assertEquals("git@bitbucket.org:springersbm/gomatic.git", pipeline.git_url())
+        self.assertEquals("some-material-name", pipeline.git_material().material_name())
+
+    def test_can_set_pipeline_git_url(self):
+        pipeline = typical_pipeline()
+        p = pipeline.set_git_url("git@bitbucket.org:springersbm/changed.git")
+        self.assertEquals(p, pipeline)
+        self.assertEquals("git@bitbucket.org:springersbm/changed.git", pipeline.git_url())
+        self.assertEquals('master', pipeline.git_branch())
+
+    def test_can_set_pipeline_git_url_with_branch(self):
+        pipeline = typical_pipeline()
+        p = pipeline.set_git_url("git@bitbucket.org:springersbm/changed.git", branch="branch")
+        self.assertEquals(p, pipeline)
+        self.assertEquals("git@bitbucket.org:springersbm/changed.git", pipeline.git_url())
+        self.assertEquals("branch", pipeline.git_branch())
+
+    def test_can_set_pipeline_git_url_with_material_name(self):
+        pipeline = typical_pipeline()
+        p = pipeline.set_git_url("git@bitbucket.org:springersbm/changed.git", material_name="material-name")
+        self.assertEquals(p, pipeline)
+        self.assertEquals("git@bitbucket.org:springersbm/changed.git", pipeline.git_url())
+        self.assertEquals("material-name", pipeline.git_material().material_name())
+
+    def test_can_set_pipeline_git_url_with_no_polling(self):
+        pipeline = typical_pipeline()
+        p = pipeline.set_git_url("git@bitbucket.org:springersbm/changed.git", polling=False)
+        self.assertEquals(p, pipeline)
+        self.assertEquals("git@bitbucket.org:springersbm/changed.git", pipeline.git_url())
+        self.assertEquals(False, pipeline.git_material().polling())
+
+    def test_throws_exception_if_no_git_url(self):
+        pipeline = GoServer(empty_config()).ensure_pipeline_group("g").ensure_pipeline("p")
+        self.assertEquals(False, pipeline.has_git_url())
+        try:
+            pipeline.git_url()
+            self.fail("should have thrown exception")
+        except RuntimeError:
+            pass
+
+    def test_git_url_throws_exception_if_multiple_git_materials(self):
+        pipeline = GoServer(empty_config()).ensure_pipeline_group("g").ensure_pipeline("p")
+        pipeline.ensure_material(GitMaterial("git@bitbucket.org:springersbm/one.git"))
+        pipeline.ensure_material(GitMaterial("git@bitbucket.org:springersbm/two.git"))
+        self.assertEquals(False, pipeline.has_git_url())
+        try:
+            pipeline.git_url()
+            self.fail("should have thrown exception")
+        except RuntimeError:
+            pass
+
+    def test_set_git_url_throws_exception_if_multiple_git_materials(self):
+        pipeline = GoServer(empty_config()).ensure_pipeline_group("g").ensure_pipeline("p")
+        pipeline.ensure_material(GitMaterial("git@bitbucket.org:springersbm/one.git"))
+        pipeline.ensure_material(GitMaterial("git@bitbucket.org:springersbm/two.git"))
+        try:
+            pipeline.set_git_url("git@bitbucket.org:springersbm/three.git")
+            self.fail("should have thrown exception")
+        except RuntimeError:
+            pass
+
+    def test_can_add_git_material(self):
+        pipeline = GoServer(empty_config()).ensure_pipeline_group("g").ensure_pipeline("p")
+        p = pipeline.ensure_material(GitMaterial("git@bitbucket.org:springersbm/changed.git"))
+        self.assertEquals(p, pipeline)
+        self.assertEquals("git@bitbucket.org:springersbm/changed.git", pipeline.git_url())
+
+    def test_can_ensure_git_material(self):
+        pipeline = typical_pipeline()
+        pipeline.ensure_material(GitMaterial("git@bitbucket.org:springersbm/gomatic.git"))
+        self.assertEquals("git@bitbucket.org:springersbm/gomatic.git", pipeline.git_url())
+        self.assertEquals([GitMaterial("git@bitbucket.org:springersbm/gomatic.git")], pipeline.materials())
+
+    def test_can_have_multiple_git_materials(self):
+        pipeline = typical_pipeline()
+        pipeline.ensure_material(GitMaterial("git@bitbucket.org:springersbm/changed.git"))
+        self.assertEquals([GitMaterial("git@bitbucket.org:springersbm/gomatic.git"), GitMaterial("git@bitbucket.org:springersbm/changed.git")],
+                          pipeline.materials())
+
+    def test_pipelines_can_have_pipeline_materials(self):
+        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        self.assertEquals(2, len(pipeline.materials()))
+        self.assertEquals(GitMaterial('git@bitbucket.org:springersbm/gomatic.git', branch="a-branch", material_name="some-material-name", polling=False), pipeline.materials()[0])
+
+    def test_pipelines_can_have_more_complicated_pipeline_materials(self):
+        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        self.assertEquals(2, len(pipeline.materials()))
+        self.assertEquals(True, pipeline.materials()[0].is_git())
+        self.assertEquals(PipelineMaterial('deploy.fig-env', 'update-docker-containers'), pipeline.materials()[1])
+
+    def test_pipelines_can_have_no_materials(self):
+        pipeline = GoServer(empty_config()).ensure_pipeline_group("g").ensure_pipeline("p")
+        self.assertEquals(0, len(pipeline.materials()))
+
+    def test_can_add_pipeline_material(self):
+        pipeline = GoServer(empty_config()).ensure_pipeline_group("g").ensure_pipeline("p")
+        p = pipeline.ensure_material(PipelineMaterial('deploy-qa', 'baseline-user-data'))
+        self.assertEquals(p, pipeline)
+        self.assertEquals(PipelineMaterial('deploy-qa', 'baseline-user-data'), pipeline.materials()[0])
+
+    def test_can_add_more_complicated_pipeline_material(self):
+        pipeline = GoServer(empty_config()).ensure_pipeline_group("g").ensure_pipeline("p")
+        p = pipeline.ensure_material(PipelineMaterial('p', 's', 'm'))
+        self.assertEquals(p, pipeline)
+        self.assertEquals(PipelineMaterial('p', 's', 'm'), pipeline.materials()[0])
+
+    def test_can_ensure_pipeline_material(self):
+        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        self.assertEquals(2, len(pipeline.materials()))
+        pipeline.ensure_material(PipelineMaterial('deploy.fig-env', 'update-docker-containers'))
+        self.assertEquals(2, len(pipeline.materials()))
+
+    def test_can_set_pipeline_git_url_for_new_pipeline(self):
+        pipeline_group = standard_pipeline_group()
+        new_pipeline = pipeline_group.ensure_pipeline("some_name")
+        new_pipeline.set_git_url("git@bitbucket.org:springersbm/changed.git")
+        self.assertEquals("git@bitbucket.org:springersbm/changed.git", new_pipeline.git_url())
+
+    def test_pipelines_have_environment_variables(self):
+        pipeline = typical_pipeline()
+        self.assertEquals({"JAVA_HOME": "/opt/java/jdk-1.8"}, pipeline.environment_variables())
+
+    def test_pipelines_have_encrypted_environment_variables(self):
+        pipeline = more_options_pipeline()
+        self.assertEquals({"JAVA_HOME": "/opt/java/jdk-1.7"}, pipeline.environment_variables())
+        self.assertEquals({
+                              "MY_USERNAME": "ls6AMEyDqlE=",
+                              "MY_PASSWORD": "rZlyug1gxy4="
+                          },
+                          pipeline.encrypted_environment_variables())
+
+    def test_can_add_environment_variables_to_pipeline(self):
+        pipeline = empty_pipeline()
+        pipeline.ensure_environment_variables({"new": "one", "again": "two"})
+        self.assertEquals({"new": "one", "again": "two"}, pipeline.environment_variables())
+
+    def test_can_add_encrypted_environment_variables_to_pipeline(self):
+        pipeline = empty_pipeline()
+        pipeline.ensure_encrypted_environment_variables({"new": "one", "again": "two"})
+        self.assertEquals({"new": "one", "again": "two"}, pipeline.encrypted_environment_variables())
+
+    def test_can_add_environment_variables_to_new_pipeline(self):
+        pipeline = typical_pipeline()
+        pipeline.ensure_environment_variables({"new": "one"})
+        self.assertEquals({"JAVA_HOME": "/opt/java/jdk-1.8", "new": "one"}, pipeline.environment_variables())
+
+    def test_can_modify_environment_variables_of_pipeline(self):
+        pipeline = typical_pipeline()
+        pipeline.ensure_environment_variables({"new": "one", "JAVA_HOME": "/opt/java/jdk-1.1"})
+        self.assertEquals({"JAVA_HOME": "/opt/java/jdk-1.1", "new": "one"}, pipeline.environment_variables())
+
+    def test_can_remove_all_environment_variables(self):
+        pipeline = typical_pipeline()
+        p = pipeline.without_any_environment_variables()
+        self.assertEquals(p, pipeline)
+        self.assertEquals({}, pipeline.environment_variables())
+
+    def test_pipelines_have_parameters(self):
+        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        self.assertEquals({"environment": "qa"}, pipeline.parameters())
+
+    def test_pipelines_have_no_parameters(self):
+        pipeline = typical_pipeline()
+        self.assertEquals({}, pipeline.parameters())
+
+    def test_can_add_params_to_pipeline(self):
+        pipeline = typical_pipeline()
+        p = pipeline.ensure_parameters({"new": "one", "again": "two"})
+        self.assertEquals(p, pipeline)
+        self.assertEquals({"new": "one", "again": "two"}, pipeline.parameters())
+
+    def test_can_modify_parameters_of_pipeline(self):
+        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        pipeline.ensure_parameters({"new": "one", "environment": "qa55"})
+        self.assertEquals({"environment": "qa55", "new": "one"}, pipeline.parameters())
+
+    def test_can_remove_all_parameters(self):
+        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        p = pipeline.without_any_parameters()
+        self.assertEquals(p, pipeline)
+        self.assertEquals({}, pipeline.parameters())
+
+    def test_can_have_timer(self):
+        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        self.assertEquals(True, pipeline.has_timer())
+        self.assertEquals("0 15 22 * * ?", pipeline.timer())
+
+    def test_need_not_have_timer(self):
+        pipeline = GoServer(empty_config()).ensure_pipeline_group('Group').ensure_pipeline('Pipeline')
+        self.assertEquals(False, pipeline.has_timer())
+        try:
+            pipeline.timer()
+            self.fail('_should have thrown an exception')
+        except RuntimeError:
+            pass
+
+    def test_can_set_timer(self):
+        pipeline = GoServer(empty_config()).ensure_pipeline_group('Group').ensure_pipeline('Pipeline')
+        p = pipeline.set_timer("one two three")
+        self.assertEquals(p, pipeline)
+        self.assertEquals("one two three", pipeline.timer())
+
+    def test_can_have_label_template(self):
+        pipeline = typical_pipeline()
+        self.assertEquals("something-${COUNT}", pipeline.label_template())
+        self.assertEquals(True, pipeline.has_label_template())
+
+    def test_might_not_have_label_template(self):
+        pipeline = more_options_pipeline()  # TODO swap label with typical
+        self.assertEquals(False, pipeline.has_label_template())
+
+    def test_can_set_label_template(self):
+        pipeline = GoServer(empty_config()).ensure_pipeline_group('Group').ensure_pipeline('Pipeline')
+        p = pipeline.set_label_template("some label")
+        self.assertEquals(p, pipeline)
+        self.assertEquals("some label", pipeline.label_template())
+
+    def test_can_set_default_label_template(self):
+        pipeline = GoServer(empty_config()).ensure_pipeline_group('Group').ensure_pipeline('Pipeline')
+        p = pipeline.set_default_label_template()
+        self.assertEquals(p, pipeline)
+        self.assertEquals(DEFAULT_LABEL_TEMPLATE, pipeline.label_template())
+
+    def test_can_set_automatic_pipeline_locking(self):
+        go_server = GoServer(empty_config())
+        pipeline = go_server.ensure_pipeline_group("new_group").ensure_pipeline("some_name")
+        p = pipeline.set_automatic_pipeline_locking()
+        self.assertEquals(p, pipeline)
+        self.assertEquals(True, pipeline.has_automatic_pipeline_locking())
+
+
+class TestPipelineGroup(unittest.TestCase):
+    def test_gets_all_pipeline_groups(self):
+        self.assertEquals(2, len(GoServer(config()).pipeline_groups()))
+
+    def test_can_have_no_pipeline_groups(self):
+        self.assertEquals(0, len(GoServer(empty_config()).pipeline_groups()))
+
+    def test_pipeline_groups_have_names(self):
+        pipeline_groups = GoServer(config()).pipeline_groups()
+        matches = find_with_matching_name(pipeline_groups, 'Second.Group')
+        self.assertEquals(1, len(matches))
+
+    def test_pipeline_groups_have_pipelines(self):
+        pipeline_group = standard_pipeline_group()
+        self.assertEquals(2, len(pipeline_group.pipelines()))
+
+    def test_can_add_pipeline(self):
+        go_server = GoServer(empty_config())
+        pipeline_group = go_server.ensure_pipeline_group("new_group")
+        new_pipeline = pipeline_group.ensure_pipeline("some_name")
+        self.assertEquals(1, len(pipeline_group.pipelines()))
+        self.assertEquals(new_pipeline, pipeline_group.pipelines()[0])
+        self.assertEquals("some_name", new_pipeline.name())
+        self.assertEquals(False, new_pipeline.has_git_url())
+        self.assertEquals(False, new_pipeline.has_label_template())
+        self.assertEquals(False, new_pipeline.has_automatic_pipeline_locking())
+
+    def test_can_find_pipeline(self):
+        found_pipeline = standard_pipeline_group().find_pipeline("more-options")
+        self.assertEquals("more-options", found_pipeline.name())
+
+    def test_can_remove_pipeline(self):
+        pipeline_group = standard_pipeline_group()
+        self.assertEquals(2, len(pipeline_group.pipelines()))
+        pipeline_group.ensure_removal_of_pipeline("typical")
+        self.assertEquals(1, len(pipeline_group.pipelines()))
+        try:
+            pipeline_group.find_pipeline("typical")
+            self.fail("should have thrown exception")
+        except RuntimeError:
+            pass
+
+    def test_ensuring_replacement_of_pipeline_leaves_it_empty_but_in_same_place(self):
+        pipeline_group = standard_pipeline_group()
+        self.assertEquals("more-options", pipeline_group.pipelines()[1].name())
+        pipeline = pipeline_group.find_pipeline("more-options")
+        pipeline.set_label_template("something")
+        self.assertEquals(2, len(pipeline.stages()))
+        self.assertEquals(True, pipeline.has_label_template())
+
+        p = pipeline_group.ensure_replacement_of_pipeline("more-options")
+        self.assertEquals(p, pipeline_group.pipelines()[1])
+        self.assertEquals("more-options", p.name())
+        self.assertEquals(0, len(p.stages()))
+        self.assertEquals(False, p.has_label_template())
+
+    def test_can_ensure_pipeline_removal(self):
+        pipeline_group = standard_pipeline_group()
+        self.assertEquals(2, len(pipeline_group.pipelines()))
+        pg = pipeline_group.ensure_removal_of_pipeline("already-removed-pipeline")
+        self.assertEquals(pg, pipeline_group)
+        self.assertEquals(2, len(pipeline_group.pipelines()))
+        try:
+            pipeline_group.find_pipeline("already-removed-pipeline")
+            self.fail("should have thrown exception")
+        except RuntimeError:
+            pass
+
+
+class TestGoServer(unittest.TestCase):
+    def test_can_find_authenticity_token(self):
+        go_server = GoServer(empty_config())
+        self.assertEquals("861gOYM6Hczw7JirgRJSjjQId1+t0EiCwAV/O0RJATs=", go_server.authenticity_token())
+
+    def test_can_get_initial_config_md5(self):
+        go_server = GoServer(empty_config())
+        self.assertEquals("1caffb21b1a5b683164a9e1a3a69bd46", go_server._initial_md5())
+
+    def test_config_is_updated_as_result_of_updating_part_of_it(self):
+        go_server = GoServer(config())
+        agent = go_server.agents()[0]
+        self.assertEquals(2, len(agent.resources()))
+        agent.ensure_resource('a-resource-that-it-does-not-already-have')
+        go_server_based_on_new_config = GoServer(FakeConfig(go_server.config()))
+        self.assertEquals(3, len(go_server_based_on_new_config.agents()[0].resources()))
+
+    def test_can_add_pipeline_group(self):
+        go_server = GoServer(empty_config())
+        self.assertEquals(0, len(go_server.pipeline_groups()))
+        new_pipeline_group = go_server.ensure_pipeline_group("a_new_group")
+        self.assertEquals(1, len(go_server.pipeline_groups()))
+        self.assertEquals(new_pipeline_group, go_server.pipeline_groups()[-1])
+        self.assertEquals("a_new_group", new_pipeline_group.name())
+
+    def test_can_ensure_pipeline_group_exists(self):
+        go_server = GoServer(config())
+        self.assertEquals(2, len(go_server.pipeline_groups()))
+        pre_existing_pipeline_group = go_server.ensure_pipeline_group('Second.Group')
+        self.assertEquals(2, len(go_server.pipeline_groups()))
+        self.assertEquals('Second.Group', pre_existing_pipeline_group.name())
+
+    def test_can_remove_all_pipeline_groups(self):
+        go_server = GoServer(config())
+        s = go_server.remove_all_pipeline_groups()
+        self.assertEquals(s, go_server)
+        self.assertEquals(0, len(go_server.pipeline_groups()))
+
+    def test_can_remove_pipeline_group(self):
+        go_server = GoServer(config())
+        s = go_server.ensure_removal_of_pipeline_group('P.Group')
+        self.assertEquals(s, go_server)
+        self.assertEquals(1, len(go_server.pipeline_groups()))
+
+    def test_can_ensure_removal_of_pipeline_group(self):
+        go_server = GoServer(config())
+        go_server.ensure_removal_of_pipeline_group('pipeline-group-that-has-already-been-removed')
+        self.assertEquals(2, len(go_server.pipeline_groups()))
+
+    def test_top_level_elements_get_reordered_to_please_go(self):
+        go_server = GoServer(FakeConfig(open('test-data/config-with-agents-and-templates-but-without-pipelines.xml').read()))
+        go_server.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")
+        xml = go_server.config()
+        root = ET.fromstring(xml)
+        self.assertEquals("pipelines", root[0].tag)
+        self.assertEquals("templates", root[1].tag)
+        self.assertEquals("agents", root[2].tag)
+
+    def test_elements_can_be_created_in_order_to_please_go(self):
+        go_server = GoServer(empty_config())
+        pipeline = go_server.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")
+        pipeline.ensure_parameters({'p': 'p'})
+        pipeline.set_timer("some timer")
+        pipeline.ensure_environment_variables({'pe': 'pe'})
+        pipeline.set_git_url("gurl")
+        stage = pipeline.ensure_stage("s")
+        stage.ensure_environment_variables({'s': 's'})
+        job = stage.ensure_job("j")
+        job.ensure_environment_variables({'j': 'j'})
+        job.ensure_task(ExecTask(['ls']))
+        job.ensure_tab(Tab("n", "p"))
+        job.ensure_resource("r")
+        job.ensure_artifacts([BuildArtifact('s', 'd')])
+
+        xml = go_server.config()
+        pipeline_root = ET.fromstring(xml).find('pipelines').find('pipeline')
+        self.assertEquals("params", pipeline_root[0].tag)
+        self.assertEquals("timer", pipeline_root[1].tag)
+        self.assertEquals("environmentvariables", pipeline_root[2].tag)
+        self.assertEquals("materials", pipeline_root[3].tag)
+        self.assertEquals("stage", pipeline_root[4].tag)
+
+        stage_root = pipeline_root.find('stage')
+        self.assertEquals("environmentvariables", stage_root[0].tag)
+        self.assertEquals("jobs", stage_root[1].tag)
+
+        job_root = stage_root.find('jobs').find('job')
+        self.assertEquals("environmentvariables", job_root[0].tag)
+        self.assertEquals("tasks", job_root[1].tag)
+        self.assertEquals("tabs", job_root[2].tag)
+        self.assertEquals("resources", job_root[3].tag)
+        self.assertEquals("artifacts", job_root[4].tag)
+
+    def test_elements_are_reordered_in_order_to_please_go(self):
+        go_server = GoServer(empty_config())
+        pipeline = go_server.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")
+        pipeline.set_git_url("gurl")
+        pipeline.ensure_environment_variables({'pe': 'pe'})
+        pipeline.set_timer("some timer")
+        pipeline.ensure_parameters({'p': 'p'})
+
+        stage = pipeline.ensure_stage("s")
+        job = stage.ensure_job("j")
+        stage.ensure_environment_variables({'s': 's'})
+
+        job.ensure_tab(Tab("n", "p"))
+        job.ensure_artifacts([BuildArtifact('s', 'd')])
+        job.ensure_task(ExecTask(['ls']))
+        job.ensure_resource("r")
+        job.ensure_environment_variables({'j': 'j'})
+
+        xml = go_server.config()
+        pipeline_root = ET.fromstring(xml).find('pipelines').find('pipeline')
+        self.assertEquals("params", pipeline_root[0].tag)
+        self.assertEquals("timer", pipeline_root[1].tag)
+        self.assertEquals("environmentvariables", pipeline_root[2].tag)
+        self.assertEquals("materials", pipeline_root[3].tag)
+        self.assertEquals("stage", pipeline_root[4].tag)
+
+        stage_root = pipeline_root.find('stage')
+        self.assertEquals("environmentvariables", stage_root[0].tag)
+        self.assertEquals("jobs", stage_root[1].tag)
+
+        job_root = stage_root.find('jobs').find('job')
+        self.assertEquals("environmentvariables", job_root[0].tag)
+        self.assertEquals("tasks", job_root[1].tag)
+        self.assertEquals("tabs", job_root[2].tag)
+        self.assertEquals("resources", job_root[3].tag)
+        self.assertEquals("artifacts", job_root[4].tag)
+
+
+def simplified(s):
+    return s.strip().replace("\t", "").replace("\n", "").replace("\\", "").replace(" ", "")
+
+
+def sneakily_converted_to_xml(pipeline):
+    return ET.tostring(pipeline.parent.element)
+
+
+class TestReverseEngineering(unittest.TestCase):
+    def check_round_trip_pipeline(self, go_server, before, show=False):
+        reverse_engineered_python = go_server.as_python(before, with_save=False)
+        if show:
+            print
+            print reverse_engineered_python
+        pipeline = "evaluation failed"
+        exec reverse_engineered_python
+        self.assertEquals(sneakily_converted_to_xml(before), sneakily_converted_to_xml(pipeline))
+
+    def test_can_round_trip_simplest_pipeline(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_standard_label(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_default_label_template()
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_non_standard_label(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_label_template("non standard")
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_automatic_pipeline_locking(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_automatic_pipeline_locking()
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_pipeline_material(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").ensure_material(PipelineMaterial("p", "s", "m"))
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_multiple_git_materials(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
+        before.ensure_material(GitMaterial("giturl1", "b", "m1"))
+        before.ensure_material(GitMaterial("giturl2"))
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_git_url(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_git_url("some git url")
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_git_extras(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_git_url("some git url", "some branch", "some material name", False)
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_pipeline_parameters(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").ensure_parameters({"p": "v"})
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_pipeline_environment_variables(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").ensure_environment_variables({"p": "v"})
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_pipeline_encrypted_environment_variables(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").ensure_encrypted_environment_variables({"p": "v"})
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_timer(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_timer("some timer")
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_stage_bits(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
+        before.ensure_stage("stage1").ensure_environment_variables({"k": "v"}).set_clean_working_dir().set_has_manual_approval().set_fetch_materials(False)
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_stages(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
+        before.ensure_stage("stage1")
+        before.ensure_stage("stage2")
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_job(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
+        before.ensure_stage("stage").ensure_job("job")
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_job_bits(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
+        before.ensure_stage("stage").ensure_job("job") \
+            .ensure_artifacts([BuildArtifact("s", "d"), TestArtifact("sauce")]) \
+            .ensure_environment_variables({"k": "v"}) \
+            .ensure_resource("r") \
+            .ensure_tab(Tab("n", "p")) \
+            .set_timeout("23") \
+            .set_runs_on_all_agents()
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_jobs(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
+        stage = before.ensure_stage("stage")
+        stage.ensure_job("job1")
+        stage.ensure_job("job2")
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_round_trip_tasks(self):
+        go_server = GoServer(empty_config())
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
+        job = before.ensure_stage("stage").ensure_job("job")
+
+        job.add_task(ExecTask(["one", "two"], working_dir="somewhere", runif="failed"))
+        job.add_task(ExecTask(["one", "two"], working_dir="somewhere", runif="failed"))
+        job.ensure_task(ExecTask(["one"], working_dir="somewhere else"))
+        job.ensure_task(ExecTask(["two"], runif="any"))
+
+        job.ensure_task(FetchArtifactTask('p', 's', 'j', FetchArtifactFile('f'), runif="any"))
+        job.ensure_task(FetchArtifactTask('p', 's', 'j', FetchArtifactDir('d')))
+        job.ensure_task(FetchArtifactTask('p', 's', 'j', FetchArtifactDir('d'), dest="somewhere-else"))
+        job.ensure_task(FetchArtifactTask('p', 's', 'j', FetchArtifactDir('d'), dest="somewhere-else", runif="any"))
+
+        job.ensure_task(RakeTask('t1', runif="any"))
+        job.ensure_task(RakeTask('t2'))
+
+        self.check_round_trip_pipeline(go_server, before)
+
+    def test_can_reverse_engineer_pipeline(self):
+        go_server = GoServer(config())
+        actual = go_server.as_python(go_server.ensure_pipeline_group("P.Group").ensure_pipeline("more-options"), with_save=False)
+        expected = """#!/usr/bin/env python
+from goServer import *
+
+go_server = GoServer(FakeConfig(whatever))
+pipeline = go_server\
+	.ensure_pipeline_group("P.Group")\
+	.ensure_replacement_of_pipeline("more-options")\
+	.set_timer("0 15 22 * * ?")\
+	.set_git_url("git@bitbucket.org:springersbm/gomatic.git", branch="a-branch", material_name="some-material-name", polling=False)\
+	.ensure_material(PipelineMaterial("deploy.fig-env", "update-docker-containers")).ensure_environment_variables({'JAVA_HOME': '/opt/java/jdk-1.7'}).ensure_encrypted_environment_variables({'MY_PASSWORD': 'rZlyug1gxy4=', 'MY_USERNAME': 'ls6AMEyDqlE='})\
+	.ensure_parameters({'environment': 'qa'})
+stage = pipeline.ensure_stage("earlyStage")
+job = stage.ensure_job("earlyWorm").ensure_artifacts([BuildArtifact("target/universal/myapp*.zip", "artifacts"), BuildArtifact("scripts/*", "files"), TestArtifact("from", "to")]).set_runs_on_all_agents()
+job.add_task(ExecTask(['ls']))
+job.add_task(ExecTask(['bash', '-c', 'curl "http://domain.com/service/check?target=one+two+three&key=2714_beta%40domain.com"']))
+stage = pipeline.ensure_stage("s1").set_fetch_materials(False)
+job = stage.ensure_job("rake-job").ensure_artifacts([BuildArtifact("things/*")])
+job.add_task(RakeTask("boo", "passed"))
+job = stage.ensure_job("run-if-variants")
+job.add_task(ExecTask(['t-passed']))
+job.add_task(ExecTask(['t-none']))
+job.add_task(ExecTask(['t-failed'], runif="failed"))
+job.add_task(ExecTask(['t-any'], runif="any"))
+job.add_task(ExecTask(['t-both'], runif="any"))
+job = stage.ensure_job("variety-of-tasks")
+job.add_task(RakeTask("sometarget", "passed"))
+job.add_task(FetchArtifactTask("firstPipeline", "earlyStage", "earlyWorm", FetchArtifactDir("sourceDir"), dest="destDir"))
+job.add_task(FetchArtifactTask("anotherPipeline", "build", "build", FetchArtifactFile("someFile")))
+job.add_task(ExecTask(['true']))
+        """
+        self.assertEquals(simplified(expected), simplified(actual))
+
+
+class TestXmlFormatting(unittest.TestCase):
+    def test_can_format_simple_xml(self):
+        expected = '<?xml version="1.0" ?>\n<top>\n\t<middle>stuff</middle>\n</top>'
+        non_formatted = "<top><middle>stuff</middle></top>"
+        formatted = prettify(non_formatted)
+        self.assertEquals(expected, formatted)
+
+    def test_can_format_more_complicated_xml(self):
+        expected = '<?xml version="1.0" ?>\n<top>\n\t<middle>\n\t\t<innermost>stuff</innermost>\n\t</middle>\n</top>'
+        non_formatted = "<top><middle><innermost>stuff</innermost></middle></top>"
+        formatted = prettify(non_formatted)
+        self.assertEquals(expected, formatted)
+
+    def test_can_format_actual_config(self):
+        formatted = prettify(open("test-data/config.xml").read())
+        expected = open("test-data/config-formatted.xml").read()
+
+        def head(s):
+            return "\n".join(s.split('\n')[:10])
+
+        self.assertEquals(expected, formatted, "expected=\n%s\n%s\nactual=\n%s" % (head(expected), "=" * 88, head(formatted)))
+
+
+if __name__ == '__main__':
+    unittest.main()

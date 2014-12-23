@@ -1,0 +1,38 @@
+<?xml version="1.0" ?>
+<cruise schemaVersion="72" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd">
+    <templates>
+        <pipeline name="deploy_stack">
+            <stage name="pre-deploy">
+                <approval type="manual"/>
+                <jobs>
+                    <job name="prepare-environment">
+                        <tasks>
+                            <fetchartifact pipeline="pre-deploy-tasks" stage="build" job="build" srcdir="pre-deploy-tasks">
+                                <runif status="passed"/>
+                            </fetchartifact>
+                            <exec command="bundle" workingdir="pre-deploy-tasks">
+                                <runif status="passed"/>
+                            </exec>
+                        </tasks>
+                        <resources>
+                            <resource>any</resource>
+                        </resources>
+                    </job>
+                </jobs>
+            </stage>
+        </pipeline>
+    </templates>
+    <agents>
+        <agent hostname="go-agent" ipaddress="10.0.42.1" uuid="d86795de-5b9e-48cb-92ec-7f3d80cf08b1">
+            <resources>
+                <resource>docker</resource>
+            </resources>
+        </agent>
+        <agent hostname="go-agent2" ipaddress="10.0.42.1" uuid="01cfcd37-a0c7-483e-9330-db50fa4045d8">
+            <resources>
+                <resource>docker</resource>
+                <resource>deploy</resource>
+            </resources>
+        </agent>
+    </agents>
+</cruise>

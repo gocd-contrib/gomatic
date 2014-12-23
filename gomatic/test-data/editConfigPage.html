@@ -1,0 +1,266 @@
+
+<!DOCTYPE HTML>
+
+<!--[if lt IE 7]>
+<html lang="en" class="no-js ie6 oldie"> <![endif]-->
+<!--[if IE 7]>
+<html lang="en" class="no-js ie7 oldie"> <![endif]-->
+<!--[if IE 8]>
+<html lang="en" class="no-js ie8 oldie"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html xmlns="http://www.w3.org/1999/xhtml" lang='en'>
+<!--<![endif]-->
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=9">
+    <title>
+        Administration - Go
+    </title>
+
+
+
+    <link href="/go/stylesheets/structure/reset.css?14.1.0(18882-d0272e1d227b5e)" media="screen" rel="stylesheet" type="text/css" />
+
+    <!-- LEGACY Structure css, TODO: migrate these to structure/application.css and patterns -->
+    <link href="/go/stylesheets/main.css?14.1.0(18882-d0272e1d227b5e)" media="screen" rel="stylesheet" type="text/css" />
+    <link href="/go/stylesheets/layout.css?14.1.0(18882-d0272e1d227b5e)" media="screen" rel="stylesheet" type="text/css" />
+    <link href="/go/stylesheets/structure.css?14.1.0(18882-d0272e1d227b5e)" media="screen" rel="stylesheet" type="text/css" />
+    <link href="/go/stylesheets/ie_hacks.css?14.1.0(18882-d0272e1d227b5e)" media="screen" rel="stylesheet" type="text/css" />
+
+    <!-- END - LEGACY Structure css, TODO: migrate these to structure/application.css and patterns -->
+
+    <!-- Structure css -->
+
+    <link href="/go/stylesheets/structure/application.css?14.1.0(18882-d0272e1d227b5e)" media="screen" rel="stylesheet" type="text/css" />
+
+    <link href="/go/stylesheets/plugins/plugins.css?14.1.0(18882-d0272e1d227b5e)" media="screen" rel="stylesheet" type="text/css" />
+
+
+
+    <link href="/go/stylesheets/patterns/patterns.css?14.1.0(18882-d0272e1d227b5e)" media="screen" rel="stylesheet" type="text/css" />
+
+
+
+    <!-- LEGACY Module pieces css, TODO: migrate these to patterns/plugins/views-->
+    <link href="/go/stylesheets/module.css?14.1.0(18882-d0272e1d227b5e)" media="screen" rel="stylesheet" type="text/css" />
+    <!-- END - LEGACY Module pieces css, TODO: migrate these to patterns/plugins/views-->
+
+
+    <!-- Views css -->
+
+    <link href="/go/stylesheets/views/views.css?14.1.0(18882-d0272e1d227b5e)" media="screen" rel="stylesheet" type="text/css" />
+
+
+
+    <!-- less-to-css -->
+
+    <link href="/go/stylesheets/css_sass/css_sass.css?14.1.0(18882-d0272e1d227b5e)" media="screen" rel="stylesheet" type="text/css" />
+
+
+    <!-- START: prototype hooks for css injection -->
+
+
+
+    <!-- END: prototype hooks for css injection -->
+
+
+    <script src="/go/compressed/all.js?14.1.0(18882-d0272e1d227b5e)" type="text/javascript"></script>
+    <![if !IE]>
+    <script src="/go/compressed/d3.js?14.1.0(18882-d0272e1d227b5e)" type="text/javascript"></script>
+    <![endif]>
+    <!--[if gt IE 8]><!-->
+    <script src="/go/compressed/d3.js?14.1.0(18882-d0272e1d227b5e)" type="text/javascript"></script>
+    <!--<![endif]-->
+
+
+
+    <link rel="shortcut icon" href="/go/images/cruise.ico?14.1.0(18882-d0272e1d227b5e)"/>
+</head>
+<body id="admin_configuration" class="admin_configuration">
+<div id="body_bg">
+    <div id="header">
+        <div class="header clear_float">
+            <a href="/go/pipelines" id="application_logo">&nbsp;</a>
+            <div class="application_nav">
+                <input id="server_timestamp" name="server_time" type="hidden" value="1415281141" />
+                <ul class="user">
+                    <li class="help">
+                        <a href="/go/help/index.html" target="_blank">Help</a>
+                    </li>
+                </ul>
+
+
+
+                <ul class="tabs">
+                    <li id='cruise-header-tab-recent-activity' class=' '>
+                        <a href="/go/pipelines" class="">PIPELINES</a>
+                    </li>
+                    <li id='cruise-header-tab-environments' class=' '>
+                        <a href="/go/environments" class="">ENVIRONMENTS</a>
+                    </li>
+                    <li id='cruise-header-tab-agents' class=' '>
+                        <a href="/go/agents" class="">AGENTS</a>
+                    </li>
+                    <li id="cruise-header-tab-admin" class="current">
+
+                        <a href="#" class="dropdown-arrow-icon" data-toggle="dropdown">ADMIN</a>                <ul class="dropdown-menu" role="menu">
+                        <li role="presentation">
+                            <a href="/go/admin/pipelines">Pipelines</a></li>
+                        <li role="presentation">
+                            <a href="/go/admin/templates">Templates</a></li>
+                        <li role="presentation">
+                            <a href="/go/admin/config_xml">Config XML</a></li>
+                        <li role="presentation">
+                            <a href="/go/admin/config/server">Server Configuration</a></li>
+                        <li role="presentation">
+                            <a href="/go/admin/users">User Summary</a></li>
+                        <li role="presentation">
+                            <a href="/go/admin/oauth/clients">OAuth Clients</a></li>
+                        <li role="presentation">
+                            <a href="/go/admin/gadgets/oauth_clients">OAuth Enabled Gadget Providers</a></li>
+                        <li role="presentation">
+                            <a href="/go/admin/backup">Backup</a></li>
+                        <li role="presentation">
+                            <a href="/go/admin/plugins">Plugins</a></li>
+                        <li role="presentation">
+                            <a href="/go/admin/package_repositories/new">Package Repositories</a></li>
+                    </ul>
+                    </li>
+                </ul>
+                <div class="error_messaging_counter">
+                    <div id="cruise_message_counts" class="cruise_messages">
+
+                    </div>
+                    <div id="cruise_message_body" style="display:none;">
+
+                    </div>
+
+                    <script type="text/javascript">
+        Util.on_load(function() {new AjaxRefresher('/go/server/messages.json', null);});
+     </script>
+                </div>
+
+            </div>
+            <div class="back_to_top" title="Scroll to Top">Top</div>
+        </div>
+    </div>
+
+    <div id='body_content'>
+        <div class="messaging_wrapper" id="messaging_wrapper">
+            <div class="flash" id="message_pane">
+            </div>
+
+        </div>
+
+
+        <div class="page_header">
+            <h1 id="page-title" class="entity_title">Administration</h1>
+        </div>
+
+
+
+        <div class="content_wrapper_outer"><div class="content_wrapper_inner">
+            <div class="bd-container rounded-corner-for-pipeline admin-rounded-container">
+                <div class="sub_tab_container rounded-corner-for-tab-container">
+                    <div class="sub_tabs_container">
+                        <ul>
+
+                            <li id="pipeline-groups-tab-button" class="">
+                                <a id="tab-link-of-pipeline-groups" href="/go/admin/pipelines">Pipelines</a>
+                            </li>
+
+                            <li id="templates-tab-button" class="">
+                                <a id="tab-link-of-templates" href="/go/admin/templates">Templates</a>
+                            </li>
+
+
+
+                            <li id="source-xml-tab-button" class="current_tab">
+                                <a href="/go/admin/config_xml" id="tab-link-of-source-xml">Config XML</a>                            </li>
+                            <li id="server-configuration-tab-button" class="">
+                                <a href="/go/admin/config/server" id="tab-link-of-server-configuration">Server Configuration</a>                            </li>
+                            <li id="user-summary-tab-button" class="">
+                                <a href="/go/admin/users" id="tab-link-of-user-listing">User Summary</a>
+                            </li>
+                            <li id="oauth-clients-tab-button" class="">
+                                <a href="/go/admin/oauth/clients" id="tab-link-of-oauth-clients">OAuth Clients</a>
+                            </li>
+                            <li id="gadget-providers-tab-button" class="">
+                                <a href="/go/admin/gadgets/oauth_clients" id="tab-link-of-gadget-providers">OAuth Enabled Gadget Providers</a>
+                            </li>
+                            <li id="backup-tab-button" class="">
+                                <a href="/go/admin/backup" id="tab-link-of-backup">Backup</a>
+                            </li>
+
+                            <li id="plugins-listing-tab-button" class="">
+                                <a href="/go/admin/plugins" id="tab-link-of-plugins-listing">Plugins</a>
+                            </li>
+
+                            <li id="package-repositories-tab-button" class="">
+                                <a href="/go/admin/package_repositories/new" id="tab-link-of-package-repositories">Package Repositories</a>
+                            </li>
+
+                        </ul>
+                    </div>
+                    <div class="sub_tab_container_content">
+                        <div id="tab-content-of-configuration-xml" style="">
+                            <div class="sub_tab_container_content">
+                                <div id="tab-content-of-source-xml">
+
+                                    <div class="heading">
+                                        <h2>Configuration File</h2>
+                                        <span class="wbrSensitive">/etc/go/cruise-config.xml</span>
+                                        <span class='label'>Configuration File Path: </span>
+                                    </div>
+
+                                    <div class="admin_holder" id="admin-holder-for-admin-config-source-xml">
+                                        <form action="/go/admin/config_xml" id="config_editor_form" method="post"><div style="margin:0;padding:0;display:inline"><input name="_method" type="hidden" value="put" /><input name="authenticity_token" type="hidden" value="861gOYM6Hczw7JirgRJSjjQId1+t0EiCwAV/O0RJATs=" /></div>
+                                            <div class='form_heading'>
+                                                <div class="buttons-group">
+                                                    <div class="config_change_timestamp" title="Last modified: 1 minute ago by anonymous">Last modified: 1 minute ago by anonymous</div>
+                                                    <a href="/go/admin/config_xml" class="link_as_button" id="cancel_edit">Cancel</a>
+                                                    <input class="link_as_button primary" disabled="disabled" id="save_config" name="commit" type="submit" value="SAVE" />        </div>
+                                            </div>
+                                            <div id="content_area">
+                                                <textarea class="code" cols="40" id="content" name="go_config[content]" rows="20" spellcheck="false">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+                                                    &lt;cruise xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; xsi:noNamespaceSchemaLocation=&quot;cruise-config.xsd&quot; schemaVersion=&quot;72&quot;&gt;
+                                                    &lt;server artifactsdir=&quot;artifacts&quot; commandRepositoryLocation=&quot;default&quot; serverId=&quot;96eab4bf-210e-499f-9dc9-0cefdae38d0c&quot; /&gt;
+                                                    &lt;pipelines group=&quot;defaultGroup&quot; /&gt;
+                                                    &lt;/cruise&gt;
+
+                                                </textarea>
+                                                <input id="go_config_md5" name="go_config[md5]" type="hidden" value="f32725aee702713e49063c1a4a4945a5" />
+                                            </div>
+                                        </form>
+
+                                        <script type="text/javascript">
+    jQuery(document).ready(function() {
+       jQuery("input#save_config").removeAttr("disabled");
+    });
+</script>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div></div>
+    <div id='footer'>
+        <ul class="copyright" onclick="dashboard_periodical_executer.stop();">
+            <li>Copyright &copy; 2014 <a href="http://www.thoughtworks.com/products" target='_blank'>ThoughtWorks, Inc.</a> Licensed under <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>. Go includes <a href="/go/help/resources/NOTICE/cruise_notice_file.pdf" target="_blank">third-party software</a>.</li>
+            <li class="last">Go Version: 14.1.0(18882-d0272e1d227b5e)</li>
+        </ul>
+        <ul class="links">
+            <li><a href="/go/cctray.xml">(cc) CCTray Feed</a></li>
+            <li><a href="/go/about">Server Details</a></li>
+            <li><a href="http://www.go.cd/community" target="_blank">Community</a></li>
+            <li class="last"><a href="/go/help/index.html" target="_blank">Help</a></li>
+        </ul>
+
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<?xml version="1.0" ?>
+<cruise schemaVersion="72" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd">
+	<server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="590fc344-be24-4a80-aa6e-c4e3f05e8f41"/>
+	<pipelines group="P.Group">
+		<pipeline isLocked="false" labeltemplate="something-${COUNT}" name="typical">
+			<environmentvariables>
+				<variable name="JAVA_HOME">
+					<value>/opt/java/jdk-1.8</value>
+				</variable>
+			</environmentvariables>
+			<materials>
+				<git url="git@bitbucket.org:springersbm/gomatic.git"/>
+			</materials>
+			<stage name="build">
+				<jobs>
+					<job name="compile">
+						<environmentvariables>
+							<variable name="CF_COLOR">
+								<value>false</value>
+							</variable>
+						</environmentvariables>
+						<tasks>
+							<exec command="make">
+								<arg>options</arg>
+								<arg>source code</arg>
+							</exec>
+						</tasks>
+						<tabs>
+							<tab name="Time_Taken" path="artifacts/test-run-times.html"/>
+						</tabs>
+						<resources>
+							<resource>a-resource</resource>
+						</resources>
+					</job>
+				</jobs>
+			</stage>
+			<stage name="deploy">
+				<approval type="manual"/>
+				<environmentvariables>
+					<variable name="BASE_URL">
+						<value>http://myurl</value>
+					</variable>
+				</environmentvariables>
+				<jobs>
+					<job name="upload" timeout="20">
+						<tasks>
+							<exec command="curl">
+								<arg>POST</arg>
+								<arg>http://myurl</arg>
+								<runif status="passed"/>
+							</exec>
+						</tasks>
+					</job>
+				</jobs>
+			</stage>
+		</pipeline>
+		<pipeline name="more-options">
+			<environmentvariables>
+				<variable name="JAVA_HOME">
+					<value>/opt/java/jdk-1.7</value>
+				</variable>
+				<variable name="MY_USERNAME" secure="true">
+					<encryptedValue>ls6AMEyDqlE=</encryptedValue>
+				</variable>
+				<variable name="MY_PASSWORD" secure="true">
+					<encryptedValue>rZlyug1gxy4=</encryptedValue>
+				</variable>
+			</environmentvariables>
+			<params>
+				<param name="environment">qa</param>
+			</params>
+			<timer>0 15 22 * * ?</timer>
+			<materials>
+				<git autoUpdate="false" branch="a-branch" materialName="some-material-name" url="git@bitbucket.org:springersbm/gomatic.git"/>
+				<pipeline pipelineName="deploy.fig-env" stageName="update-docker-containers"/>
+			</materials>
+			<stage name="earlyStage">
+				<jobs>
+					<job name="earlyWorm" runOnAllAgents="true">
+						<tasks>
+							<exec command="ls"/>
+							<exec command="bash">
+								<arg>-c</arg>
+								<arg>curl &quot;http://domain.com/service/check?target=one+two+three&amp;key=2714_beta%40domain.com&quot;</arg>
+								<runif status="passed"/>
+							</exec>
+						</tasks>
+						<artifacts>
+							<artifact dest="artifacts" src="target/universal/myapp*.zip"/>
+							<artifact dest="files" src="scripts/*"/>
+							<test dest="to" src="from"/>
+						</artifacts>
+					</job>
+				</jobs>
+			</stage>
+			<stage fetchMaterials="false" name="s1">
+				<jobs>
+					<job name="rake-job">
+						<tasks>
+							<rake target="boo">
+								<runif status="passed"/>
+							</rake>
+						</tasks>
+						<artifacts>
+							<artifact src="things/*"/>
+						</artifacts>
+					</job>
+					<job name="run-if-variants">
+						<tasks>
+							<exec command="t-passed">
+								<runif status="passed"/>
+							</exec>
+							<exec command="t-none"/>
+							<exec command="t-failed">
+								<runif status="failed"/>
+							</exec>
+							<exec command="t-any">
+								<runif status="any"/>
+							</exec>
+							<exec command="t-both">
+								<runif status="failed"/>
+								<runif status="passed"/>
+							</exec>
+						</tasks>
+					</job>
+					<job name="variety-of-tasks">
+						<tasks>
+							<rake target="sometarget">
+								<runif status="passed"/>
+							</rake>
+							<fetchartifact dest="destDir" job="earlyWorm" pipeline="firstPipeline" srcdir="sourceDir" stage="earlyStage">
+								<runif status="passed"/>
+							</fetchartifact>
+							<fetchartifact job="build" pipeline="anotherPipeline" srcfile="someFile" stage="build">
+								<runif status="passed"/>
+							</fetchartifact>
+							<exec command="true"/>
+						</tasks>
+					</job>
+				</jobs>
+			</stage>
+		</pipeline>
+	</pipelines>
+	<pipelines group="Second.Group">
+		<pipeline isLocked="false" labeltemplate="something-${COUNT}" name="smoke-tests">
+			<stage name="build">
+				<jobs>
+					<job name="compile">
+						<tasks>
+							<exec command="make">
+								<arg>options</arg>
+								<arg>source code</arg>
+							</exec>
+						</tasks>
+					</job>
+				</jobs>
+			</stage>
+		</pipeline>
+	</pipelines>
+	<templates>
+		<pipeline name="api-component">
+			<stage name="build">
+				<jobs>
+					<job name="build">
+						<tasks>
+							<exec command="./build"/>
+						</tasks>
+						<resources>
+							<resource>any</resource>
+						</resources>
+						<artifacts>
+							<artifact dest="artifacts" src="target/scala-*/*.zip"/>
+							<artifact dest="artifacts" src="ops/deploy/*"/>
+						</artifacts>
+					</job>
+				</jobs>
+			</stage>
+		</pipeline>
+		<pipeline name="deploy-stack">
+			<stage cleanWorkingDir="true" name="deploy-components">
+				<jobs>
+					<job name="api">
+						<tasks>
+							<fetchartifact job="build" pipeline="Build-Api" srcdir="artifacts" stage="build">
+								<runif status="passed"/>
+							</fetchartifact>
+							<exec command="bundle" workingdir="artifacts">
+								<arg>install</arg>
+								<runif status="passed"/>
+							</exec>
+							<exec command="bundle" workingdir="artifacts">
+								<arg>exec</arg>
+								<arg>cap</arg>
+								<arg>#{environment}</arg>
+								<arg>deploy</arg>
+								<runif status="passed"/>
+							</exec>
+						</tasks>
+						<resources>
+							<resource>any</resource>
+						</resources>
+					</job>
+					<job name="webapp">
+						<tasks>
+							<fetchartifact job="build" pipeline="Build-Webapp" srcdir="artifacts" stage="artifacts">
+								<runif status="passed"/>
+							</fetchartifact>
+							<exec command="bundle" workingdir="artifacts">
+								<arg>install</arg>
+								<runif status="passed"/>
+							</exec>
+							<exec command="bash">
+								<arg>-c</arg>
+								<arg>curl &quot;http://domain.com/service/check?target=one+two+three&amp;key=2714_beta%40domain.com&quot;</arg>
+								<runif status="passed"/>
+							</exec>
+						</tasks>
+						<resources>
+							<resource>any</resource>
+						</resources>
+					</job>
+				</jobs>
+			</stage>
+		</pipeline>
+	</templates>
+	<agents>
+		<agent hostname="go-agent-1" ipaddress="10.0.42.1" uuid="5991eba9-a714-49b6-8fa7-fd8e09a05441">
+			<resources>
+				<resource>a-resource</resource>
+				<resource>b-resource</resource>
+			</resources>
+		</agent>
+		<agent hostname="go-agent-2" ipaddress="10.0.42.1" uuid="1000eba9-a714-49b6-8fa7-fd8e09a00001">
+    </agent>
+	</agents>
+</cruise>
