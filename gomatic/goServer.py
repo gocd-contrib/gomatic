@@ -990,7 +990,7 @@ class GoServer:
         return "GoServer(%s)" % self._host_rest_client
 
     def as_python(self, pipeline, with_save=True):
-        result = "#!/usr/bin/env python\nfrom goServer import *\n\ngo_server = " + str(self) + "\n"
+        result = "#!/usr/bin/env python\nfrom gomatic import *\n\ngo_server = " + str(self) + "\n"
         result += "pipeline = go_server"
         result += pipeline.as_python_commands_applied_to_server()
         save_part = ""

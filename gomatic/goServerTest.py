@@ -1189,7 +1189,7 @@ class TestReverseEngineering(unittest.TestCase):
         go_server = GoServer(config())
         actual = go_server.as_python(go_server.ensure_pipeline_group("P.Group").ensure_pipeline("more-options"), with_save=False)
         expected = """#!/usr/bin/env python
-from goServer import *
+from gomatic import *
 
 go_server = GoServer(FakeConfig(whatever))
 pipeline = go_server\
