@@ -12,24 +12,22 @@ It has only been tested using GoCD version 14.2.0-377 - I think it doesn't yet w
 
 We've written it using Python 2 (for the moment - should be simple to port to Python 3 - which we might do in the future). You can install it using "pip":
 
-```sudo pip install gomatic```
+    sudo pip install gomatic
 
 ## Create a pipeline
 
 If you wanted to configure a pipeline something like that shown in the [GoCD documentation](http://www.thoughtworks.com/products/docs/go/current/help/quick_pipeline_setup.html) then you could run the following script:
 
-```
-#!/usr/bin/env python
-from gomatic import *
+    #!/usr/bin/env python
+    from gomatic import *
 
-go_server = GoServer(HostRestClient("localhost:8153"))
-pipeline = go_server \
-    .ensure_pipeline_group("Group") \
-    .ensure_replacement_of_pipeline("first_pipeline") \
-    .set_git_url("http://git.url")
-stage = pipeline.ensure_stage("a_stage")
-job = stage.ensure_job("a_job")
-job.add_task(ExecTask(['thing']))
+    go_server = GoServer(HostRestClient("localhost:8153"))
+    pipeline = go_server \
+        .ensure_pipeline_group("Group") \
+        .ensure_replacement_of_pipeline("first_pipeline") \
+        .set_git_url("http://git.url")
+    stage = pipeline.ensure_stage("a_stage")
+    job = stage.ensure_job("a_job")
+    job.add_task(ExecTask(['thing']))
 
-go_server.save_updated_config()
-```
+    go_server.save_updated_config()
