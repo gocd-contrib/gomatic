@@ -649,14 +649,17 @@ class GitMaterial(CommonEqualityMixin):
             polling_part = ', polling=False'
         return ('GitMaterial("%s"' % self._url) + branch_part + material_name_part + polling_part + ')'
 
+    def _has_options(self):
+        return (not self.is_on_master()) or (self._material_name is not None) or (not self._polling)
+
     def is_on_master(self):
         return self._branch is None or self._branch == 'master'
 
     def as_python_applied_to_pipeline(self):
-        if (not self.is_on_master()) or (self._material_name is not None) or (not self._polling):
+        if self._has_options():
             return 'set_git_material(%s)' % str(self)
         else:
-            return ('set_git_url("%s"' % self._url) + ')'
+            return 'set_git_url("%s")' % self._url
 
     def is_git(self):
         return True
