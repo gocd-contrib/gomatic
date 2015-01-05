@@ -639,11 +639,12 @@ class TestPipeline(unittest.TestCase):
 
     def test_can_set_pipeline_git_url_with_options(self):
         pipeline = typical_pipeline()
-        p = pipeline.set_git_url("git@bitbucket.org:springersbm/changed.git",
+        p = pipeline.set_git_material(GitMaterial(
+                                "git@bitbucket.org:springersbm/changed.git",
                                  branch="branch",
                                  material_name="material-name",
                                  ignore_patterns={"ignoreMe", "ignoreThisToo"},
-                                 polling=False)
+                                 polling=False))
         self.assertEquals(p, pipeline)
         self.assertEquals("branch", pipeline.git_branch())
         self.assertEquals("material-name", pipeline.git_material().material_name())
@@ -652,7 +653,7 @@ class TestPipeline(unittest.TestCase):
 
     def test_throws_exception_if_no_git_url(self):
         pipeline = GoServer(empty_config()).ensure_pipeline_group("g").ensure_pipeline("p")
-        self.assertEquals(False, pipeline.has_git_url())
+        self.assertEquals(False, pipeline.has_single_git_material())
         try:
             pipeline.git_url()
             self.fail("should have thrown exception")
@@ -663,7 +664,7 @@ class TestPipeline(unittest.TestCase):
         pipeline = GoServer(empty_config()).ensure_pipeline_group("g").ensure_pipeline("p")
         pipeline.ensure_material(GitMaterial("git@bitbucket.org:springersbm/one.git"))
         pipeline.ensure_material(GitMaterial("git@bitbucket.org:springersbm/two.git"))
-        self.assertEquals(False, pipeline.has_git_url())
+        self.assertEquals(False, pipeline.has_single_git_material())
         try:
             pipeline.git_url()
             self.fail("should have thrown exception")
@@ -865,7 +866,7 @@ class TestPipelineGroup(unittest.TestCase):
         self.assertEquals(1, len(pipeline_group.pipelines()))
         self.assertEquals(new_pipeline, pipeline_group.pipelines()[0])
         self.assertEquals("some_name", new_pipeline.name())
-        self.assertEquals(False, new_pipeline.has_git_url())
+        self.assertEquals(False, new_pipeline.has_single_git_material())
         self.assertEquals(False, new_pipeline.has_label_template())
         self.assertEquals(False, new_pipeline.has_automatic_pipeline_locking())
 
@@ -1101,7 +1102,7 @@ class TestReverseEngineering(unittest.TestCase):
 
     def test_can_round_trip_git_extras(self):
         go_server = GoServer(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_git_url("some git url", "some branch", "some material name", False)
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_git_material(GitMaterial("some git url", "some branch", "some material name", False))
         self.check_round_trip_pipeline(go_server, before)
 
     def test_can_round_trip_pipeline_parameters(self):
@@ -1194,7 +1195,7 @@ pipeline = go_server\
 	.ensure_pipeline_group("P.Group")\
 	.ensure_replacement_of_pipeline("more-options")\
 	.set_timer("0 15 22 * * ?")\
-	.set_git_url("git@bitbucket.org:springersbm/gomatic.git", branch="a-branch", material_name="some-material-name", polling=False)\
+	.set_git_material(GitMaterial("git@bitbucket.org:springersbm/gomatic.git", branch="a-branch", material_name="some-material-name", polling=False))\
 	.ensure_material(PipelineMaterial("pipeline2", "build")).ensure_environment_variables({'JAVA_HOME': '/opt/java/jdk-1.7'})\
 	.ensure_parameters({'environment': 'qa'})
 stage = pipeline.ensure_stage("earlyStage")

@@ -653,16 +653,10 @@ class GitMaterial(CommonEqualityMixin):
         return self._branch is None or self._branch == 'master'
 
     def as_python_applied_to_pipeline(self):
-        branch_part = ""
-        if not self.is_on_master():
-            branch_part = ', branch="%s"' % self._branch
-        material_name_part = ""
-        if self._material_name is not None:
-            material_name_part = ', material_name="%s"' % self._material_name
-        polling_part = ""
-        if not self._polling:
-            polling_part = ', polling=False'
-        return ('set_git_url("%s"' % self._url) + branch_part + material_name_part + polling_part + ')'
+        if (not self.is_on_master()) or (self._material_name is not None) or (not self._polling):
+            return 'set_git_material(%s)' % str(self)
+        else:
+            return ('set_git_url("%s"' % self._url) + ')'
 
     def is_git(self):
         return True
@@ -758,11 +752,11 @@ class Pipeline(CommonEqualityMixin):
         if self.has_automatic_pipeline_locking():
             result += then('set_automatic_pipeline_locking()')
 
-        if self.has_git_url():
+        if self.has_single_git_material():
             result += then(self.git_material().as_python_applied_to_pipeline())
 
         for material in self.materials():
-            if not (self.has_git_url() and material.is_git()):
+            if not (self.has_single_git_material() and material.is_git()):
                 result += then('ensure_material(%s)' % material)
 
         result += ThingWithEnvironmentVariables(self.element).as_python()
@@ -823,7 +817,7 @@ class Pipeline(CommonEqualityMixin):
 
         return gits[0]
 
-    def has_git_url(self):
+    def has_single_git_material(self):
         return len(self.git_materials()) == 1
 
     def git_url(self):
@@ -832,11 +826,14 @@ class Pipeline(CommonEqualityMixin):
     def git_branch(self):
         return self.git_material().branch()
 
-    def set_git_url(self, git_url, branch=None, material_name=None, polling=True, ignore_patterns=set()):
+    def set_git_url(self, git_url):
+        return self.set_git_material(GitMaterial(git_url))
+
+    def set_git_material(self, git_material):
         if len(self.git_materials()) > 1:
             raise RuntimeError('Cannot set git url for pipeline that already has multiple git materials. Use "ensure_material(GitMaterial(..." instead')
         PossiblyMissingElement(self.element).possibly_missing_child('materials').remove_all_children('git')
-        self._add_material(GitMaterial(git_url, branch, material_name, polling, ignore_patterns))
+        self._add_material(git_material)
         return self
 
     def environment_variables(self):
@@ -1058,7 +1055,7 @@ class GoServer:
         return [Pipeline(e, 'templates') for e in PossiblyMissingElement(self._xml_root).possibly_missing_child('templates').findall('pipeline')]
 
     def git_urls(self):
-        return [pipeline.git_url() for pipeline in self.pipelines() if pipeline.has_git_url()]
+        return [pipeline.git_url() for pipeline in self.pipelines() if pipeline.has_single_git_material()]
 
     def authenticity_token(self):
         html = self._host_rest_client.get("/go/admin/config_xml/edit")
