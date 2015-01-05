@@ -626,6 +626,10 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals("git@bitbucket.org:springersbm/gomatic.git", pipeline.git_url())
         self.assertEquals("some-material-name", pipeline.git_material().material_name())
 
+    def test_git_material_can_have_exclusion(self):
+        pipeline = GoServer(config_with('config-with-source-exclusions')).ensure_pipeline_group("P.Group").find_pipeline("with-exclusions")
+        self.assertEquals({"excluded-folder", "another-excluded-folder"}, pipeline.git_material().ignore_patterns())
+
     def test_can_set_pipeline_git_url(self):
         pipeline = typical_pipeline()
         p = pipeline.set_git_url("git@bitbucket.org:springersbm/changed.git")

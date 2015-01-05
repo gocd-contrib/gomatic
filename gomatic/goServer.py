@@ -613,12 +613,16 @@ class Stage(CommonEqualityMixin):
         return result
 
 
+def ignore_patterns_in(element):
+    return set([e.attrib['pattern'] for e in PossiblyMissingElement(element).possibly_missing_child("filter").findall("ignore")])
+
+
 def Materials(element):
     if element.tag == "git":
         branch = element.attrib.get('branch', None)
         material_name = element.attrib.get('materialName', None)
         polling = element.attrib.get('autoUpdate', 'true') == 'true'
-        return GitMaterial(element.attrib['url'], branch, material_name, polling)
+        return GitMaterial(element.attrib['url'], branch, material_name, polling, ignore_patterns_in(element))
     if element.tag == "pipeline":
         material_name = element.attrib.get('materialName', None)
         return PipelineMaterial(element.attrib['pipelineName'], element.attrib['stageName'], material_name)
@@ -626,11 +630,12 @@ def Materials(element):
 
 
 class GitMaterial(CommonEqualityMixin):
-    def __init__(self, url, branch=None, material_name=None, polling=True):
+    def __init__(self, url, branch=None, material_name=None, polling=True, ignore_patterns=set()):
         self._url = url
         self._branch = branch
         self._material_name = material_name
         self._polling = polling
+        self._ignore_patterns = ignore_patterns
 
     def __repr__(self):
         branch_part = ""
@@ -676,6 +681,9 @@ class GitMaterial(CommonEqualityMixin):
 
     def material_name(self):
         return self._material_name
+
+    def ignore_patterns(self):
+        return self._ignore_patterns
 
     def append_to(self, element):
         branch_part = ""
