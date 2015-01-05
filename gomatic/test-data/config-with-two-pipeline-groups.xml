@@ -6,6 +6,12 @@
       <materials>
         <git url="git@bitbucket.org:springersbm/gomatic.git" />
       </materials>
+      <stage name="build">
+        <jobs>
+          <job name="compile">
+          </job>
+        </jobs>
+      </stage>
     </pipeline>
   </pipelines>
   <pipelines group="Second.Group">
@@ -13,6 +19,12 @@
       <materials>
         <git url="git@bitbucket.org:springersbm/gomatic.git" />
       </materials>
+      <stage name="build">
+        <jobs>
+          <job name="compile">
+          </job>
+        </jobs>
+      </stage>
     </pipeline>
   </pipelines>
 </cruise>
