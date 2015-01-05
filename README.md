@@ -31,3 +31,27 @@ If you wanted to configure a pipeline something like that shown in the [GoCD doc
     job.add_task(ExecTask(['thing']))
 
     go_server.save_updated_config()
+
+## Getting Started with Developing gomatic
+
+You need to install Python's virtualenv tool and create a virtual environment (once):
+
+    pip install virtualenv
+
+Then, if you are using IntelliJ IDEA:
+
+1. File -> Project Structure -> Project SDK
+1. New -> Python SDK -> Create VirtualEnv
+1. for "Name" use "venv"
+1. for path, select Gomatic's directory, and location should become `.../gomatic/venv`
+1. follow the command line steps below (apart from "virtualenv venv").
+
+If you only want to use the command line:
+
+1. `virtualenv venv`
+1. `source venv/bin/activate`
+1. `pip install -r requirements.txt`
+
+Then, each time you want to run gomatic, if you need to activate the virtual environment (if it is not already activated - your command prompt will indicate if it is, e.g. `(venv)ivan@...`):
+
+    source venv/bin/activate
