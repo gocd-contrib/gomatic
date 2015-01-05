@@ -63,29 +63,29 @@ def empty_stage():
 
 
 class TestAgents(unittest.TestCase):
-    def test_agents_have_resources(self):
-        agents = GoServer(config_with_just_agents()).agents()
-        self.assertEquals(2, len(agents))
-        self.assertEquals({'a-resource', 'b-resource'}, agents[0].resources())
+    def _agents_from_config(self):
+        return GoServer(config_with_just_agents()).agents()
 
     def test_could_have_no_agents(self):
         agents = GoServer(empty_config()).agents()
         self.assertEquals(0, len(agents))
 
+    def test_agents_have_resources(self):
+        agents = self._agents_from_config()
+        self.assertEquals(2, len(agents))
+        self.assertEquals({'a-resource', 'b-resource'}, agents[0].resources())
+
     def test_agent_could_have_no_resources(self):
-        agents = GoServer(config_with_just_agents()).agents()
+        agents = self._agents_from_config()
         self.assertEquals(0, len(agents[1].resources()))
 
     def test_can_add_resource_to_agent_with_no_resources(self):
-        go_server = GoServer(config_with_just_agents())
-        agent = go_server.agents()[1]
+        agent = self._agents_from_config()[1]
         agent.ensure_resource('a-resource-that-it-does-not-already-have')
         self.assertEquals(1, len(agent.resources()))
 
     def test_can_add_resource_to_agent(self):
-        go_server = GoServer(config_with_just_agents())
-        agents = go_server.agents()
-        agent = agents[0]
+        agent = self._agents_from_config()[0]
         self.assertEquals(2, len(agent.resources()))
         agent.ensure_resource('a-resource-that-it-does-not-already-have')
         self.assertEquals(3, len(agent.resources()))
