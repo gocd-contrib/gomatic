@@ -11,16 +11,10 @@
         <variable name="JAVA_HOME">
           <value>/opt/java/jdk-1.7</value>
         </variable>
-        <variable name="MY_USERNAME" secure="true">
-          <encryptedValue>ls6AMEyDqlE=</encryptedValue>
-        </variable>
-        <variable name="MY_PASSWORD" secure="true">
-          <encryptedValue>rZlyug1gxy4=</encryptedValue>
-        </variable>
       </environmentvariables>
       <materials>
         <git url="git@bitbucket.org:springersbm/gomatic.git" branch="a-branch" autoUpdate="false" materialName="some-material-name" />
-        <pipeline pipelineName="deploy.fig-env" stageName="update-docker-containers" />
+        <pipeline pipelineName="pipeline2" stageName="build" />
       </materials>
       <stage name="earlyStage">
         <jobs>
@@ -38,6 +32,12 @@
               <artifact src="scripts/*" dest="files" />
               <test src="from" dest="to" />
             </artifacts>
+          </job>
+        </jobs>
+      </stage>
+      <stage name="middleStage">
+        <jobs>
+          <job name="middleJob">
           </job>
         </jobs>
       </stage>
@@ -76,14 +76,25 @@
               <rake target="sometarget">
                 <runif status="passed" />
               </rake>
-              <fetchartifact pipeline="firstPipeline" stage="earlyStage" job="earlyWorm" srcdir="sourceDir" dest="destDir">
+              <fetchartifact pipeline="more-options" stage="earlyStage" job="earlyWorm" srcdir="sourceDir" dest="destDir">
                 <runif status="passed" />
               </fetchartifact>
-              <fetchartifact pipeline="anotherPipeline" stage="build" job="build" srcfile="someFile">
+              <fetchartifact pipeline="more-options" stage="middleStage" job="middleJob" srcfile="someFile">
                 <runif status="passed" />
               </fetchartifact>
               <exec command="true" />
             </tasks>
+          </job>
+        </jobs>
+      </stage>
+    </pipeline>
+    <pipeline name="pipeline2">
+      <materials>
+        <git url="git@bitbucket.org:springersbm/gomatic.git" />
+      </materials>
+      <stage name="build">
+        <jobs>
+          <job name="compile">
           </job>
         </jobs>
       </stage>

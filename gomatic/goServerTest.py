@@ -50,6 +50,10 @@ def config_with_typical_pipeline():
     return FakeConfig(open('test-data/config-with-typical-pipeline.xml').read())
 
 
+def config_with_encrypted_variable():
+    return FakeConfig(open('test-data/config-with-encrypted-variable.xml').read())
+
+
 def empty_config():
     return FakeConfig(open('test-data/empty-config.xml').read(), "empty_config()")
 
@@ -230,8 +234,7 @@ class TestJobs(unittest.TestCase):
                           job.artifacts())
 
     def test_jobs_have_tasks(self):
-        stages = more_options_pipeline().stages()
-        job = stages[1].jobs()[2]
+        job = more_options_pipeline().ensure_stage("s1").jobs()[2]
         tasks = job.tasks()
         self.assertEquals(4, len(tasks))
         self.assertEquals('rake', tasks[0].type())
@@ -239,7 +242,7 @@ class TestJobs(unittest.TestCase):
         self.assertEquals('passed', tasks[0].runif())
 
         self.assertEquals('fetchartifact', tasks[1].type())
-        self.assertEquals('firstPipeline', tasks[1].pipeline())
+        self.assertEquals('more-options', tasks[1].pipeline())
         self.assertEquals('earlyStage', tasks[1].stage())
         self.assertEquals('earlyWorm', tasks[1].job())
         self.assertEquals(FetchArtifactDir('sourceDir'), tasks[1].src())
@@ -252,22 +255,19 @@ class TestJobs(unittest.TestCase):
         self.assertEquals("passed", tasks[0].runif())
 
     def test_jobs_can_have_rake_tasks(self):
-        stages = more_options_pipeline().stages()
-        job = stages[1].jobs()[0]
+        job = more_options_pipeline().ensure_stage("s1").jobs()[0]
         tasks = job.tasks()
         self.assertEquals(1, len(tasks))
         self.assertEquals('rake', tasks[0].type())
         self.assertEquals("boo", tasks[0].target())
 
     def test_can_ensure_rake_task(self):
-        stages = more_options_pipeline().stages()
-        job = stages[1].jobs()[0]
+        job = more_options_pipeline().ensure_stage("s1").jobs()[0]
         job.ensure_task(RakeTask("boo"))
         self.assertEquals(1, len(job.tasks()))
 
     def test_can_add_rake_task(self):
-        stages = more_options_pipeline().stages()
-        job = stages[1].jobs()[0]
+        job = more_options_pipeline().ensure_stage("s1").jobs()[0]
         job.ensure_task(RakeTask("another"))
         self.assertEquals(2, len(job.tasks()))
         self.assertEquals("another", job.tasks()[1].target())
@@ -348,7 +348,7 @@ class TestJobs(unittest.TestCase):
         tasks = job.tasks()
 
         self.assertEquals(4, len(tasks))
-        self.assertEquals('firstPipeline', tasks[1].pipeline())
+        self.assertEquals('more-options', tasks[1].pipeline())
         self.assertEquals('earlyStage', tasks[1].stage())
         self.assertEquals('earlyWorm', tasks[1].job())
         self.assertEquals(FetchArtifactFile('someFile'), tasks[2].src())
@@ -359,7 +359,7 @@ class TestJobs(unittest.TestCase):
         pipeline = more_options_pipeline()
         job = pipeline.ensure_stage("s1").ensure_job("variety-of-tasks")
         tasks = job.tasks()
-        self.assertEquals(FetchArtifactTask("firstPipeline",
+        self.assertEquals(FetchArtifactTask("more-options",
                                             "earlyStage",
                                             "earlyWorm",
                                             FetchArtifactDir("sourceDir"),
@@ -368,7 +368,7 @@ class TestJobs(unittest.TestCase):
 
     def test_can_ensure_fetch_artifact_tasks(self):
         job = more_options_pipeline().ensure_stage("s1").ensure_job("variety-of-tasks")
-        job.ensure_task(FetchArtifactTask("anotherPipeline", "build", "build", FetchArtifactFile("someFile")))
+        job.ensure_task(FetchArtifactTask("more-options", "middleStage", "middleJob", FetchArtifactFile("someFile")))
         first_added_task = job.ensure_task(FetchArtifactTask('p', 's', 'j', FetchArtifactDir('dir')))
         self.assertEquals(5, len(job.tasks()))
 
@@ -708,7 +708,7 @@ class TestPipeline(unittest.TestCase):
         pipeline = more_options_pipeline()
         self.assertEquals(2, len(pipeline.materials()))
         self.assertEquals(True, pipeline.materials()[0].is_git())
-        self.assertEquals(PipelineMaterial('deploy.fig-env', 'update-docker-containers'), pipeline.materials()[1])
+        self.assertEquals(PipelineMaterial('pipeline2', 'build'), pipeline.materials()[1])
 
     def test_pipelines_can_have_no_materials(self):
         pipeline = GoServer(empty_config()).ensure_pipeline_group("g").ensure_pipeline("p")
@@ -729,7 +729,7 @@ class TestPipeline(unittest.TestCase):
     def test_can_ensure_pipeline_material(self):
         pipeline = more_options_pipeline()
         self.assertEquals(2, len(pipeline.materials()))
-        pipeline.ensure_material(PipelineMaterial('deploy.fig-env', 'update-docker-containers'))
+        pipeline.ensure_material(PipelineMaterial('pipeline2', 'build'))
         self.assertEquals(2, len(pipeline.materials()))
 
     def test_can_set_pipeline_git_url_for_new_pipeline(self):
@@ -743,13 +743,8 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals({"JAVA_HOME": "/opt/java/jdk-1.8"}, pipeline.environment_variables())
 
     def test_pipelines_have_encrypted_environment_variables(self):
-        pipeline = more_options_pipeline()
-        self.assertEquals({"JAVA_HOME": "/opt/java/jdk-1.7"}, pipeline.environment_variables())
-        self.assertEquals({
-                              "MY_USERNAME": "ls6AMEyDqlE=",
-                              "MY_PASSWORD": "rZlyug1gxy4="
-                          },
-                          pipeline.encrypted_environment_variables())
+        pipeline = GoServer(config_with_encrypted_variable()).ensure_pipeline_group("defaultGroup").find_pipeline("example")
+        self.assertEquals({"MY_SECURE_PASSWORD": "yq5qqPrrD9/htfwTWMYqGQ=="}, pipeline.encrypted_environment_variables())
 
     def test_can_add_environment_variables_to_pipeline(self):
         pipeline = empty_pipeline()
@@ -1200,12 +1195,14 @@ pipeline = go_server\
 	.ensure_replacement_of_pipeline("more-options")\
 	.set_timer("0 15 22 * * ?")\
 	.set_git_url("git@bitbucket.org:springersbm/gomatic.git", branch="a-branch", material_name="some-material-name", polling=False)\
-	.ensure_material(PipelineMaterial("deploy.fig-env", "update-docker-containers")).ensure_environment_variables({'JAVA_HOME': '/opt/java/jdk-1.7'}).ensure_encrypted_environment_variables({'MY_PASSWORD': 'rZlyug1gxy4=', 'MY_USERNAME': 'ls6AMEyDqlE='})\
+	.ensure_material(PipelineMaterial("pipeline2", "build")).ensure_environment_variables({'JAVA_HOME': '/opt/java/jdk-1.7'})\
 	.ensure_parameters({'environment': 'qa'})
 stage = pipeline.ensure_stage("earlyStage")
 job = stage.ensure_job("earlyWorm").ensure_artifacts([BuildArtifact("target/universal/myapp*.zip", "artifacts"), BuildArtifact("scripts/*", "files"), TestArtifact("from", "to")]).set_runs_on_all_agents()
 job.add_task(ExecTask(['ls']))
 job.add_task(ExecTask(['bash', '-c', 'curl "http://domain.com/service/check?target=one+two+three&key=2714_beta%40domain.com"']))
+stage = pipeline.ensure_stage("middleStage")
+job = stage.ensure_job("middleJob")
 stage = pipeline.ensure_stage("s1").set_fetch_materials(False)
 job = stage.ensure_job("rake-job").ensure_artifacts([BuildArtifact("things/*")])
 job.add_task(RakeTask("boo", "passed"))
@@ -1217,8 +1214,8 @@ job.add_task(ExecTask(['t-any'], runif="any"))
 job.add_task(ExecTask(['t-both'], runif="any"))
 job = stage.ensure_job("variety-of-tasks")
 job.add_task(RakeTask("sometarget", "passed"))
-job.add_task(FetchArtifactTask("firstPipeline", "earlyStage", "earlyWorm", FetchArtifactDir("sourceDir"), dest="destDir"))
-job.add_task(FetchArtifactTask("anotherPipeline", "build", "build", FetchArtifactFile("someFile")))
+job.add_task(FetchArtifactTask("more-options", "earlyStage", "earlyWorm", FetchArtifactDir("sourceDir"), dest="destDir"))
+job.add_task(FetchArtifactTask("more-options", "middleStage", "middleJob", FetchArtifactFile("someFile")))
 job.add_task(ExecTask(['true']))
         """
         self.assertEquals(simplified(expected), simplified(actual))
