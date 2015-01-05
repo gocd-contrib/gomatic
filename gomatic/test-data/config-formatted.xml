@@ -143,6 +143,9 @@
 	</pipelines>
 	<pipelines group="Second.Group">
 		<pipeline isLocked="false" labeltemplate="something-${COUNT}" name="smoke-tests">
+			<materials>
+				<git url="git@bitbucket.org:springersbm/gomatic.git"/>
+			</materials>
 			<stage name="build">
 				<jobs>
 					<job name="compile">
