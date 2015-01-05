@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">
+  <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="590fc344-be24-4a80-aa6e-c4e3f05e8f41" />
+  <templates>
+    <pipeline name="api-component">
+      <stage name="build">
+        <jobs>
+          <job name="build">
+            <tasks>
+              <exec command="./build" />
+            </tasks>
+            <resources>
+              <resource>any</resource>
+            </resources>
+            <artifacts>
+              <artifact src="target/scala-*/*.zip" dest="artifacts" />
+              <artifact src="ops/deploy/*" dest="artifacts" />
+            </artifacts>
+          </job>
+        </jobs>
+      </stage>
+    </pipeline>
+    <pipeline name="deploy-stack">
+      <stage name="deploy-components" cleanWorkingDir="true">
+        <jobs>
+          <job name="api">
+            <tasks>
+              <fetchartifact pipeline="Build-Api" stage="build" job="build" srcdir="artifacts">
+                <runif status="passed" />
+              </fetchartifact>
+              <exec command="bundle" workingdir="artifacts">
+                <arg>install</arg>
+                <runif status="passed" />
+              </exec>
+              <exec command="bundle" workingdir="artifacts">
+                <arg>exec</arg>
+                <arg>cap</arg>
+                <arg>#{environment}</arg>
+                <arg>deploy</arg>
+                <runif status="passed" />
+              </exec>
+            </tasks>
+            <resources>
+              <resource>any</resource>
+            </resources>
+          </job>
+          <job name="webapp">
+            <tasks>
+              <fetchartifact pipeline="Build-Webapp" stage="artifacts" job="build" srcdir="artifacts">
+                <runif status="passed" />
+              </fetchartifact>
+              <exec command="bundle" workingdir="artifacts">
+                <arg>install</arg>
+                <runif status="passed" />
+              </exec>
+              <exec command="bash">
+                <arg>-c</arg>
+                <arg>curl "http://domain.com/service/check?target=one+two+three&amp;key=2714_beta%40domain.com"</arg>
+                <runif status="passed"/>
+              </exec>
+            </tasks>
+            <resources>
+              <resource>any</resource>
+            </resources>
+          </job>
+        </jobs>
+      </stage>
+    </pipeline>
+  </templates>
+</cruise>

@@ -34,6 +34,10 @@ def config_with_just_agents():
     return FakeConfig(open('test-data/config-with-just-agents.xml').read())
 
 
+def config_with_just_templates():
+    return FakeConfig(open('test-data/config-with-just-templates.xml').read())
+
+
 def empty_config():
     return FakeConfig(open('test-data/empty-config.xml').read(), "empty_config()")
 
@@ -93,7 +97,7 @@ class TestAgents(unittest.TestCase):
 
 class TestTemplates(unittest.TestCase):
     def test_templates_have_stages(self):
-        templates = GoServer(config()).templates()
+        templates = GoServer(config_with_just_templates()).templates()
         self.assertEquals(2, len(templates))
         self.assertEquals('deploy-stack', templates[1].name())
 
