@@ -26,32 +26,36 @@ class FakeConfig:
         raise RuntimeError("not expecting to be asked for anything else")
 
 
+def config_with(config_name):
+    return FakeConfig(open('test-data/' + config_name + '.xml').read())
+
+
 def config_with_more_options_pipeline():
-    return FakeConfig(open('test-data/config-with-more-options-pipeline.xml').read())
+    return config_with('config-with-more-options-pipeline')
 
 
 def config_with_just_agents():
-    return FakeConfig(open('test-data/config-with-just-agents.xml').read())
+    return config_with('config-with-just-agents')
 
 
 def config_with_just_templates():
-    return FakeConfig(open('test-data/config-with-just-templates.xml').read())
+    return config_with('config-with-just-templates')
 
 
 def config_with_two_pipeline_groups():
-    return FakeConfig(open('test-data/config-with-two-pipeline-groups.xml').read())
+    return config_with('config-with-two-pipeline-groups')
 
 
 def config_with_two_pipelines():
-    return FakeConfig(open('test-data/config-with-two-pipelines.xml').read())
+    return config_with('config-with-two-pipelines')
 
 
 def config_with_typical_pipeline():
-    return FakeConfig(open('test-data/config-with-typical-pipeline.xml').read())
+    return config_with('config-with-typical-pipeline')
 
 
 def config_with_encrypted_variable():
-    return FakeConfig(open('test-data/config-with-encrypted-variable.xml').read())
+    return config_with('config-with-encrypted-variable')
 
 
 def empty_config():
@@ -963,7 +967,7 @@ class TestGoServer(unittest.TestCase):
         self.assertEquals(2, len(go_server.pipeline_groups()))
 
     def test_top_level_elements_get_reordered_to_please_go(self):
-        go_server = GoServer(FakeConfig(open('test-data/config-with-agents-and-templates-but-without-pipelines.xml').read()))
+        go_server = GoServer(config_with('config-with-agents-and-templates-but-without-pipelines'))
         go_server.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")
         xml = go_server.config()
         root = ET.fromstring(xml)
