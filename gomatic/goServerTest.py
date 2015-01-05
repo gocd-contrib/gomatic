@@ -179,7 +179,7 @@ class TestJobs(unittest.TestCase):
                           artifacts)
 
     def test_artifacts_might_have_no_dest(self):
-        job = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline("more-options").ensure_stage("s1").ensure_job("rake-job")
+        job = more_options_pipeline().ensure_stage("s1").ensure_job("rake-job")
         artifacts = job.artifacts()
         self.assertEquals(1, len(artifacts))
         self.assertEquals([BuildArtifact("things/*")], artifacts)
@@ -252,7 +252,7 @@ class TestJobs(unittest.TestCase):
         self.assertEquals("passed", tasks[0].runif())
 
     def test_jobs_can_have_rake_tasks(self):
-        stages = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline("more-options").stages()
+        stages = more_options_pipeline().stages()
         job = stages[1].jobs()[0]
         tasks = job.tasks()
         self.assertEquals(1, len(tasks))
@@ -260,13 +260,13 @@ class TestJobs(unittest.TestCase):
         self.assertEquals("boo", tasks[0].target())
 
     def test_can_ensure_rake_task(self):
-        stages = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline("more-options").stages()
+        stages = more_options_pipeline().stages()
         job = stages[1].jobs()[0]
         job.ensure_task(RakeTask("boo"))
         self.assertEquals(1, len(job.tasks()))
 
     def test_can_add_rake_task(self):
-        stages = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline("more-options").stages()
+        stages = more_options_pipeline().stages()
         job = stages[1].jobs()[0]
         job.ensure_task(RakeTask("another"))
         self.assertEquals(2, len(job.tasks()))
@@ -313,7 +313,7 @@ class TestJobs(unittest.TestCase):
         self.assertEquals('some/otherdir', (job.tasks()[2]).working_dir())
 
     def test_exec_task_args_are_unescaped_as_appropriate(self):
-        job = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline("more-options").ensure_stage("earlyStage").ensure_job("earlyWorm")
+        job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
         task = job.tasks()[1]
         self.assertEquals(["bash", "-c",
                            'curl "http://domain.com/service/check?target=one+two+three&key=2714_beta%40domain.com"'],
@@ -344,7 +344,7 @@ class TestJobs(unittest.TestCase):
         self.assertEquals('any', task.runif())
 
     def test_fetch_artifact_task_can_have_src_file_rather_than_src_dir(self):
-        job = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options').ensure_stage("s1").ensure_job("variety-of-tasks")
+        job = more_options_pipeline().ensure_stage("s1").ensure_job("variety-of-tasks")
         tasks = job.tasks()
 
         self.assertEquals(4, len(tasks))
@@ -356,7 +356,7 @@ class TestJobs(unittest.TestCase):
         self.assertEquals(['true'], tasks[3].command_and_args())
 
     def test_fetch_artifact_task_can_have_dest(self):
-        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        pipeline = more_options_pipeline()
         job = pipeline.ensure_stage("s1").ensure_job("variety-of-tasks")
         tasks = job.tasks()
         self.assertEquals(FetchArtifactTask("firstPipeline",
@@ -367,7 +367,7 @@ class TestJobs(unittest.TestCase):
                           tasks[1])
 
     def test_can_ensure_fetch_artifact_tasks(self):
-        job = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options').ensure_stage("s1").ensure_job("variety-of-tasks")
+        job = more_options_pipeline().ensure_stage("s1").ensure_job("variety-of-tasks")
         job.ensure_task(FetchArtifactTask("anotherPipeline", "build", "build", FetchArtifactFile("someFile")))
         first_added_task = job.ensure_task(FetchArtifactTask('p', 's', 'j', FetchArtifactDir('dir')))
         self.assertEquals(5, len(job.tasks()))
@@ -511,10 +511,7 @@ class TestStages(unittest.TestCase):
     def test_stages_have_fetch_materials_flag(self):
         stage = typical_pipeline().ensure_stage("build")
         self.assertEquals(True, stage.fetch_materials())
-        stage = GoServer(config()) \
-            .ensure_pipeline_group("P.Group") \
-            .find_pipeline("more-options") \
-            .ensure_stage("s1")
+        stage = more_options_pipeline().ensure_stage("s1")
         self.assertEquals(False, stage.fetch_materials())
 
     def test_can_set_fetch_materials_flag(self):
@@ -522,10 +519,7 @@ class TestStages(unittest.TestCase):
         s = stage.set_fetch_materials(False)
         self.assertEquals(s, stage)
         self.assertEquals(False, stage.fetch_materials())
-        stage = GoServer(config()) \
-            .ensure_pipeline_group("P.Group") \
-            .find_pipeline("more-options") \
-            .ensure_stage("s1")
+        stage = more_options_pipeline().ensure_stage("s1")
         stage.set_fetch_materials(True)
         self.assertEquals(True, stage.fetch_materials())
 
@@ -705,13 +699,13 @@ class TestPipeline(unittest.TestCase):
                           pipeline.materials())
 
     def test_pipelines_can_have_pipeline_materials(self):
-        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        pipeline = more_options_pipeline()
         self.assertEquals(2, len(pipeline.materials()))
         self.assertEquals(GitMaterial('git@bitbucket.org:springersbm/gomatic.git', branch="a-branch", material_name="some-material-name", polling=False),
                           pipeline.materials()[0])
 
     def test_pipelines_can_have_more_complicated_pipeline_materials(self):
-        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        pipeline = more_options_pipeline()
         self.assertEquals(2, len(pipeline.materials()))
         self.assertEquals(True, pipeline.materials()[0].is_git())
         self.assertEquals(PipelineMaterial('deploy.fig-env', 'update-docker-containers'), pipeline.materials()[1])
@@ -733,7 +727,7 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals(PipelineMaterial('p', 's', 'm'), pipeline.materials()[0])
 
     def test_can_ensure_pipeline_material(self):
-        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        pipeline = more_options_pipeline()
         self.assertEquals(2, len(pipeline.materials()))
         pipeline.ensure_material(PipelineMaterial('deploy.fig-env', 'update-docker-containers'))
         self.assertEquals(2, len(pipeline.materials()))
@@ -784,7 +778,7 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals({}, pipeline.environment_variables())
 
     def test_pipelines_have_parameters(self):
-        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        pipeline = more_options_pipeline()
         self.assertEquals({"environment": "qa"}, pipeline.parameters())
 
     def test_pipelines_have_no_parameters(self):
@@ -798,18 +792,18 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals({"new": "one", "again": "two"}, pipeline.parameters())
 
     def test_can_modify_parameters_of_pipeline(self):
-        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        pipeline = more_options_pipeline()
         pipeline.ensure_parameters({"new": "one", "environment": "qa55"})
         self.assertEquals({"environment": "qa55", "new": "one"}, pipeline.parameters())
 
     def test_can_remove_all_parameters(self):
-        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        pipeline = more_options_pipeline()
         p = pipeline.without_any_parameters()
         self.assertEquals(p, pipeline)
         self.assertEquals({}, pipeline.parameters())
 
     def test_can_have_timer(self):
-        pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+        pipeline = more_options_pipeline()
         self.assertEquals(True, pipeline.has_timer())
         self.assertEquals("0 15 22 * * ?", pipeline.timer())
 
@@ -957,7 +951,7 @@ class TestGoServer(unittest.TestCase):
         self.assertEquals('Second.Group', pre_existing_pipeline_group.name())
 
     def test_can_remove_all_pipeline_groups(self):
-        go_server = GoServer(config())
+        go_server = GoServer(config_with_two_pipeline_groups())
         s = go_server.remove_all_pipeline_groups()
         self.assertEquals(s, go_server)
         self.assertEquals(0, len(go_server.pipeline_groups()))
@@ -1196,7 +1190,7 @@ class TestReverseEngineering(unittest.TestCase):
 
     def test_can_reverse_engineer_pipeline(self):
         go_server = GoServer(config())
-        actual = go_server.as_python(go_server.ensure_pipeline_group("P.Group").ensure_pipeline("more-options"), with_save=False)
+        actual = go_server.as_python(more_options_pipeline(), with_save=False)
         expected = """#!/usr/bin/env python
 from gomatic import *
 
