@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">
-  <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="590fc344-be24-4a80-aa6e-c4e3f05e8f41" />
+  <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="779d5885-3db5-4640-8901-f9333bc10046" />
   <pipelines group="P.Group">
     <pipeline name="more-options">
       <params>
@@ -21,10 +21,10 @@
           <job name="earlyWorm" runOnAllAgents="true">
             <tasks>
               <exec command="ls" />
-               <exec command="bash">
+              <exec command="bash">
                 <arg>-c</arg>
                 <arg>curl "http://domain.com/service/check?target=one+two+three&amp;key=2714_beta%40domain.com"</arg>
-                <runif status="passed"/>
+                <runif status="passed" />
               </exec>
             </tasks>
             <artifacts>
@@ -37,8 +37,7 @@
       </stage>
       <stage name="middleStage">
         <jobs>
-          <job name="middleJob">
-          </job>
+          <job name="middleJob" />
         </jobs>
       </stage>
       <stage name="s1" fetchMaterials="false">
@@ -94,10 +93,10 @@
       </materials>
       <stage name="build">
         <jobs>
-          <job name="compile">
-          </job>
+          <job name="compile" />
         </jobs>
       </stage>
     </pipeline>
   </pipelines>
 </cruise>
+
