@@ -38,6 +38,10 @@ def config_with_just_templates():
     return FakeConfig(open('test-data/config-with-just-templates.xml').read())
 
 
+def config_with_two_pipeline_groups():
+    return FakeConfig(open('test-data/config-with-two-pipeline-groups.xml').read())
+
+
 def empty_config():
     return FakeConfig(open('test-data/empty-config.xml').read(), "empty_config()")
 
@@ -856,14 +860,14 @@ class TestPipeline(unittest.TestCase):
 
 
 class TestPipelineGroup(unittest.TestCase):
-    def test_gets_all_pipeline_groups(self):
-        self.assertEquals(2, len(GoServer(config()).pipeline_groups()))
-
     def test_can_have_no_pipeline_groups(self):
         self.assertEquals(0, len(GoServer(empty_config()).pipeline_groups()))
 
+    def test_gets_all_pipeline_groups(self):
+        self.assertEquals(2, len(GoServer(config_with_two_pipeline_groups()).pipeline_groups()))
+
     def test_pipeline_groups_have_names(self):
-        pipeline_groups = GoServer(config()).pipeline_groups()
+        pipeline_groups = GoServer(config_with_two_pipeline_groups()).pipeline_groups()
         matches = find_with_matching_name(pipeline_groups, 'Second.Group')
         self.assertEquals(1, len(matches))
 
@@ -950,7 +954,7 @@ class TestGoServer(unittest.TestCase):
         self.assertEquals("a_new_group", new_pipeline_group.name())
 
     def test_can_ensure_pipeline_group_exists(self):
-        go_server = GoServer(config())
+        go_server = GoServer(config_with_two_pipeline_groups())
         self.assertEquals(2, len(go_server.pipeline_groups()))
         pre_existing_pipeline_group = go_server.ensure_pipeline_group('Second.Group')
         self.assertEquals(2, len(go_server.pipeline_groups()))
@@ -963,13 +967,13 @@ class TestGoServer(unittest.TestCase):
         self.assertEquals(0, len(go_server.pipeline_groups()))
 
     def test_can_remove_pipeline_group(self):
-        go_server = GoServer(config())
+        go_server = GoServer(config_with_two_pipeline_groups())
         s = go_server.ensure_removal_of_pipeline_group('P.Group')
         self.assertEquals(s, go_server)
         self.assertEquals(1, len(go_server.pipeline_groups()))
 
     def test_can_ensure_removal_of_pipeline_group(self):
-        go_server = GoServer(config())
+        go_server = GoServer(config_with_two_pipeline_groups())
         go_server.ensure_removal_of_pipeline_group('pipeline-group-that-has-already-been-removed')
         self.assertEquals(2, len(go_server.pipeline_groups()))
 

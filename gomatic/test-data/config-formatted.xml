@@ -141,23 +141,4 @@
 			</stage>
 		</pipeline>
 	</pipelines>
-	<pipelines group="Second.Group">
-		<pipeline isLocked="false" labeltemplate="something-${COUNT}" name="smoke-tests">
-			<materials>
-				<git url="git@bitbucket.org:springersbm/gomatic.git"/>
-			</materials>
-			<stage name="build">
-				<jobs>
-					<job name="compile">
-						<tasks>
-							<exec command="make">
-								<arg>options</arg>
-								<arg>source code</arg>
-							</exec>
-						</tasks>
-					</job>
-				</jobs>
-			</stage>
-		</pipeline>
-	</pipelines>
 </cruise>
