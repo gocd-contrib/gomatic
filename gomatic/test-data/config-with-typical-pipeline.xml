@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">
+  <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="590fc344-be24-4a80-aa6e-c4e3f05e8f41" />
+  <pipelines group="P.Group">
+    <pipeline name="typical" labeltemplate="something-${COUNT}" isLocked="false">
+      <environmentvariables>
+        <variable name="JAVA_HOME">
+          <value>/opt/java/jdk-1.8</value>
+        </variable>
+      </environmentvariables>
+      <materials>
+        <git url="git@bitbucket.org:springersbm/gomatic.git" />
+      </materials>
+      <stage name="build">
+        <jobs>
+          <job name="compile">
+            <environmentvariables>
+              <variable name="CF_COLOR">
+                <value>false</value>
+              </variable>
+            </environmentvariables>
+            <tasks>
+              <exec command="make">
+                <arg>options</arg>
+                <arg>source code</arg>
+              </exec>
+            </tasks>
+            <tabs>
+              <tab name="Time_Taken" path="artifacts/test-run-times.html" />
+            </tabs>
+            <resources>
+              <resource>a-resource</resource>
+            </resources>
+          </job>
+        </jobs>
+      </stage>
+      <stage name="deploy">
+        <approval type="manual" />
+        <environmentvariables>
+          <variable name="BASE_URL">
+            <value>http://myurl</value>
+          </variable>
+        </environmentvariables>
+        <jobs>
+          <job name="upload" timeout="20">
+            <tasks>
+              <exec command="curl">
+                <arg>POST</arg>
+                <arg>http://myurl</arg>
+                <runif status="passed" />
+              </exec>
+            </tasks>
+          </job>
+        </jobs>
+      </stage>
+    </pipeline>
+  </pipelines>
+</cruise>

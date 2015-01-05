@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">
+  <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="590fc344-be24-4a80-aa6e-c4e3f05e8f41" />
+  <pipelines group="P.Group">
+    <pipeline name="pipeline1">
+      <materials>
+        <git url="git@bitbucket.org:springersbm/gomatic.git" />
+      </materials>
+    </pipeline>
+    <pipeline name="pipeline2">
+      <materials>
+        <git url="git@bitbucket.org:springersbm/gomatic.git" />
+      </materials>
+    </pipeline>
+  </pipelines>
+</cruise>

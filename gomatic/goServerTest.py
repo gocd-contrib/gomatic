@@ -42,6 +42,14 @@ def config_with_two_pipeline_groups():
     return FakeConfig(open('test-data/config-with-two-pipeline-groups.xml').read())
 
 
+def config_with_two_pipelines():
+    return FakeConfig(open('test-data/config-with-two-pipelines.xml').read())
+
+
+def config_with_typical_pipeline():
+    return FakeConfig(open('test-data/config-with-typical-pipeline.xml').read())
+
+
 def empty_config():
     return FakeConfig(open('test-data/empty-config.xml').read(), "empty_config()")
 
@@ -51,7 +59,7 @@ def find_with_matching_name(things, name):
 
 
 def standard_pipeline_group():
-    return GoServer(config()).ensure_pipeline_group('P.Group')
+    return GoServer(config_with_typical_pipeline()).ensure_pipeline_group('P.Group')
 
 
 def typical_pipeline():
@@ -59,7 +67,7 @@ def typical_pipeline():
 
 
 def more_options_pipeline():
-    return standard_pipeline_group().find_pipeline('more-options')
+    return GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
 
 
 def empty_pipeline():
@@ -118,7 +126,7 @@ class TestJobs(unittest.TestCase):
         self.assertEquals({'a-resource'}, resources)
 
     def test_jobs_can_have_timeout(self):
-        job = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline("typical").ensure_stage("deploy").ensure_job("upload")
+        job = typical_pipeline().ensure_stage("deploy").ensure_job("upload")
         self.assertEquals(True, job.has_timeout())
         self.assertEquals('20', job.timeout())
 
@@ -239,7 +247,7 @@ class TestJobs(unittest.TestCase):
         self.assertEquals('passed', tasks[1].runif())
 
     def test_runif_defaults_to_passed(self):
-        pipeline = GoServer(config()).ensure_pipeline_group("P.Group").find_pipeline("typical")
+        pipeline = typical_pipeline()
         tasks = pipeline.ensure_stage("build").ensure_job("compile").tasks()
         self.assertEquals("passed", tasks[0].runif())
 
@@ -444,9 +452,7 @@ class TestJobs(unittest.TestCase):
         self.assertEquals(0, len(job.tasks()))
 
     def test_can_add_environment_variables(self):
-        job = GoServer(config()) \
-            .ensure_pipeline_group("P.Group") \
-            .find_pipeline("typical") \
+        job = typical_pipeline() \
             .ensure_stage("build") \
             .ensure_job("compile")
         j = job.ensure_environment_variables({"new": "one"})
@@ -454,9 +460,7 @@ class TestJobs(unittest.TestCase):
         self.assertEquals({"CF_COLOR": "false", "new": "one"}, job.environment_variables())
 
     def test_can_remove_all_environment_variables(self):
-        job = GoServer(config()) \
-            .ensure_pipeline_group("P.Group") \
-            .find_pipeline("typical") \
+        job = typical_pipeline() \
             .ensure_stage("build") \
             .ensure_job("compile")
         j = job.without_any_environment_variables()
@@ -464,17 +468,13 @@ class TestJobs(unittest.TestCase):
         self.assertEquals({}, job.environment_variables())
 
     def test_job_can_haveTabs(self):
-        job = GoServer(config()) \
-            .ensure_pipeline_group("P.Group") \
-            .find_pipeline("typical") \
+        job = typical_pipeline() \
             .ensure_stage("build") \
             .ensure_job("compile")
         self.assertEquals([Tab("Time_Taken", "artifacts/test-run-times.html")], job.tabs())
 
     def test_can_addTab(self):
-        job = GoServer(config()) \
-            .ensure_pipeline_group("P.Group") \
-            .find_pipeline("typical") \
+        job = typical_pipeline() \
             .ensure_stage("build") \
             .ensure_job("compile")
         j = job.ensure_tab(Tab("n", "p"))
@@ -482,9 +482,7 @@ class TestJobs(unittest.TestCase):
         self.assertEquals([Tab("Time_Taken", "artifacts/test-run-times.html"), Tab("n", "p")], job.tabs())
 
     def test_can_ensure_tab(self):
-        job = GoServer(config()) \
-            .ensure_pipeline_group("P.Group") \
-            .find_pipeline("typical") \
+        job = typical_pipeline() \
             .ensure_stage("build") \
             .ensure_job("compile")
         job.ensure_tab(Tab("Time_Taken", "artifacts/test-run-times.html"))
@@ -860,12 +858,15 @@ class TestPipeline(unittest.TestCase):
 
 
 class TestPipelineGroup(unittest.TestCase):
+    def _pipeline_group_from_config(self):
+        return GoServer(config_with_two_pipelines()).ensure_pipeline_group('P.Group')
+
     def test_pipeline_groups_have_names(self):
         pipeline_group = standard_pipeline_group()
         self.assertEquals("P.Group", pipeline_group.name())
 
     def test_pipeline_groups_have_pipelines(self):
-        pipeline_group = standard_pipeline_group()
+        pipeline_group = self._pipeline_group_from_config()
         self.assertEquals(2, len(pipeline_group.pipelines()))
 
     def test_can_add_pipeline(self):
@@ -880,37 +881,33 @@ class TestPipelineGroup(unittest.TestCase):
         self.assertEquals(False, new_pipeline.has_automatic_pipeline_locking())
 
     def test_can_find_pipeline(self):
-        found_pipeline = standard_pipeline_group().find_pipeline("more-options")
-        self.assertEquals("more-options", found_pipeline.name())
+        found_pipeline = self._pipeline_group_from_config().find_pipeline("pipeline2")
+        self.assertEquals("pipeline2", found_pipeline.name())
 
     def test_can_remove_pipeline(self):
-        pipeline_group = standard_pipeline_group()
-        self.assertEquals(2, len(pipeline_group.pipelines()))
-        pipeline_group.ensure_removal_of_pipeline("typical")
+        pipeline_group = self._pipeline_group_from_config()
+        pipeline_group.ensure_removal_of_pipeline("pipeline1")
         self.assertEquals(1, len(pipeline_group.pipelines()))
         try:
-            pipeline_group.find_pipeline("typical")
+            pipeline_group.find_pipeline("pipeline1")
             self.fail("should have thrown exception")
         except RuntimeError:
             pass
 
     def test_ensuring_replacement_of_pipeline_leaves_it_empty_but_in_same_place(self):
-        pipeline_group = standard_pipeline_group()
-        self.assertEquals("more-options", pipeline_group.pipelines()[1].name())
-        pipeline = pipeline_group.find_pipeline("more-options")
+        pipeline_group = self._pipeline_group_from_config()
+        self.assertEquals("pipeline2", pipeline_group.pipelines()[1].name())
+        pipeline = pipeline_group.find_pipeline("pipeline2")
         pipeline.set_label_template("something")
-        self.assertEquals(2, len(pipeline.stages()))
         self.assertEquals(True, pipeline.has_label_template())
 
-        p = pipeline_group.ensure_replacement_of_pipeline("more-options")
+        p = pipeline_group.ensure_replacement_of_pipeline("pipeline2")
         self.assertEquals(p, pipeline_group.pipelines()[1])
-        self.assertEquals("more-options", p.name())
-        self.assertEquals(0, len(p.stages()))
+        self.assertEquals("pipeline2", p.name())
         self.assertEquals(False, p.has_label_template())
 
     def test_can_ensure_pipeline_removal(self):
-        pipeline_group = standard_pipeline_group()
-        self.assertEquals(2, len(pipeline_group.pipelines()))
+        pipeline_group = self._pipeline_group_from_config()
         pg = pipeline_group.ensure_removal_of_pipeline("already-removed-pipeline")
         self.assertEquals(pg, pipeline_group)
         self.assertEquals(2, len(pipeline_group.pipelines()))
