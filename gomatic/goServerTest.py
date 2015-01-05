@@ -626,7 +626,7 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals("git@bitbucket.org:springersbm/gomatic.git", pipeline.git_url())
         self.assertEquals("some-material-name", pipeline.git_material().material_name())
 
-    def test_git_material_can_have_exclusion(self):
+    def test_git_material_can_ignore_sources(self):
         pipeline = GoServer(config_with('config-with-source-exclusions')).ensure_pipeline_group("P.Group").find_pipeline("with-exclusions")
         self.assertEquals({"excluded-folder", "another-excluded-folder"}, pipeline.git_material().ignore_patterns())
 
@@ -637,26 +637,18 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals("git@bitbucket.org:springersbm/changed.git", pipeline.git_url())
         self.assertEquals('master', pipeline.git_branch())
 
-    def test_can_set_pipeline_git_url_with_branch(self):
+    def test_can_set_pipeline_git_url_with_options(self):
         pipeline = typical_pipeline()
-        p = pipeline.set_git_url("git@bitbucket.org:springersbm/changed.git", branch="branch")
+        p = pipeline.set_git_url("git@bitbucket.org:springersbm/changed.git",
+                                 branch="branch",
+                                 material_name="material-name",
+                                 ignore_patterns={"ignoreMe", "ignoreThisToo"},
+                                 polling=False)
         self.assertEquals(p, pipeline)
-        self.assertEquals("git@bitbucket.org:springersbm/changed.git", pipeline.git_url())
         self.assertEquals("branch", pipeline.git_branch())
-
-    def test_can_set_pipeline_git_url_with_material_name(self):
-        pipeline = typical_pipeline()
-        p = pipeline.set_git_url("git@bitbucket.org:springersbm/changed.git", material_name="material-name")
-        self.assertEquals(p, pipeline)
-        self.assertEquals("git@bitbucket.org:springersbm/changed.git", pipeline.git_url())
         self.assertEquals("material-name", pipeline.git_material().material_name())
-
-    def test_can_set_pipeline_git_url_with_no_polling(self):
-        pipeline = typical_pipeline()
-        p = pipeline.set_git_url("git@bitbucket.org:springersbm/changed.git", polling=False)
-        self.assertEquals(p, pipeline)
-        self.assertEquals("git@bitbucket.org:springersbm/changed.git", pipeline.git_url())
-        self.assertEquals(False, pipeline.git_material().polling())
+        self.assertEquals({"ignoreMe", "ignoreThisToo"}, pipeline.git_material().ignore_patterns())
+        self.assertFalse(pipeline.git_material().polling(), "git polling")
 
     def test_throws_exception_if_no_git_url(self):
         pipeline = GoServer(empty_config()).ensure_pipeline_group("g").ensure_pipeline("p")

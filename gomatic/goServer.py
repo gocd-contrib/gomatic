@@ -696,6 +696,11 @@ class GitMaterial(CommonEqualityMixin):
         if not self._polling:
             polling_part = ' autoUpdate="false"'
         new_element = ET.fromstring(('<git url="%s"' % self._url) + branch_part + material_name_part + polling_part + ' />')
+        if self.ignore_patterns():
+            filter_element = ET.fromstring("<filter/>")
+            new_element.append(filter_element)
+            for ignore_pattern in self.ignore_patterns():
+                filter_element.append(ET.fromstring('<ignore pattern="%s"/>' % ignore_pattern))
         element.append(new_element)
 
 
@@ -827,11 +832,11 @@ class Pipeline(CommonEqualityMixin):
     def git_branch(self):
         return self.git_material().branch()
 
-    def set_git_url(self, git_url, branch=None, material_name=None, polling=True):
+    def set_git_url(self, git_url, branch=None, material_name=None, polling=True, ignore_patterns=set()):
         if len(self.git_materials()) > 1:
             raise RuntimeError('Cannot set git url for pipeline that already has multiple git materials. Use "ensure_material(GitMaterial(..." instead')
         PossiblyMissingElement(self.element).possibly_missing_child('materials').remove_all_children('git')
-        self._add_material(GitMaterial(git_url, branch, material_name, polling))
+        self._add_material(GitMaterial(git_url, branch, material_name, polling, ignore_patterns))
         return self
 
     def environment_variables(self):
