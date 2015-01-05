@@ -647,7 +647,10 @@ class GitMaterial(CommonEqualityMixin):
         polling_part = ''
         if not self._polling:
             polling_part = ', polling=False'
-        return ('GitMaterial("%s"' % self._url) + branch_part + material_name_part + polling_part + ')'
+        ignore_patterns_part = ''
+        if self.ignore_patterns():
+            ignore_patterns_part = ', ignore_patterns=%s' % self.ignore_patterns()
+        return ('GitMaterial("%s"' % self._url) + branch_part + material_name_part + polling_part + ignore_patterns_part + ')'
 
     def _has_options(self):
         return (not self.is_on_master()) or (self._material_name is not None) or (not self._polling)

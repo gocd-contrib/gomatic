@@ -1102,7 +1102,7 @@ class TestReverseEngineering(unittest.TestCase):
 
     def test_can_round_trip_git_extras(self):
         go_server = GoServer(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_git_material(GitMaterial("some git url", "some branch", "some material name", False))
+        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_git_material(GitMaterial("some git url", "some branch", "some material name", False, {"excluded", "things"}))
         self.check_round_trip_pipeline(go_server, before)
 
     def test_can_round_trip_pipeline_parameters(self):
