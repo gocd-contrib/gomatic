@@ -860,16 +860,9 @@ class TestPipeline(unittest.TestCase):
 
 
 class TestPipelineGroup(unittest.TestCase):
-    def test_can_have_no_pipeline_groups(self):
-        self.assertEquals(0, len(GoServer(empty_config()).pipeline_groups()))
-
-    def test_gets_all_pipeline_groups(self):
-        self.assertEquals(2, len(GoServer(config_with_two_pipeline_groups()).pipeline_groups()))
-
     def test_pipeline_groups_have_names(self):
-        pipeline_groups = GoServer(config_with_two_pipeline_groups()).pipeline_groups()
-        matches = find_with_matching_name(pipeline_groups, 'Second.Group')
-        self.assertEquals(1, len(matches))
+        pipeline_group = standard_pipeline_group()
+        self.assertEquals("P.Group", pipeline_group.name())
 
     def test_pipeline_groups_have_pipelines(self):
         pipeline_group = standard_pipeline_group()
@@ -929,6 +922,12 @@ class TestPipelineGroup(unittest.TestCase):
 
 
 class TestGoServer(unittest.TestCase):
+    def test_can_have_no_pipeline_groups(self):
+        self.assertEquals(0, len(GoServer(empty_config()).pipeline_groups()))
+
+    def test_gets_all_pipeline_groups(self):
+        self.assertEquals(2, len(GoServer(config_with_two_pipeline_groups()).pipeline_groups()))
+
     def test_can_find_authenticity_token(self):
         go_server = GoServer(empty_config())
         self.assertEquals("861gOYM6Hczw7JirgRJSjjQId1+t0EiCwAV/O0RJATs=", go_server.authenticity_token())
