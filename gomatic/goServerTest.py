@@ -26,8 +26,8 @@ class FakeConfig:
         raise RuntimeError("not expecting to be asked for anything else")
 
 
-def config():
-    return FakeConfig(open('test-data/config.xml').read())
+def config_with_more_options_pipeline():
+    return FakeConfig(open('test-data/config-with-more-options-pipeline.xml').read())
 
 
 def config_with_just_agents():
@@ -67,7 +67,7 @@ def typical_pipeline():
 
 
 def more_options_pipeline():
-    return GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+    return GoServer(config_with_more_options_pipeline()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
 
 
 def empty_pipeline():
@@ -1189,7 +1189,7 @@ class TestReverseEngineering(unittest.TestCase):
         self.check_round_trip_pipeline(go_server, before)
 
     def test_can_reverse_engineer_pipeline(self):
-        go_server = GoServer(config())
+        go_server = GoServer(config_with_more_options_pipeline())
         actual = go_server.as_python(more_options_pipeline(), with_save=False)
         expected = """#!/usr/bin/env python
 from gomatic import *
@@ -1238,7 +1238,7 @@ class TestXmlFormatting(unittest.TestCase):
         self.assertEquals(expected, formatted)
 
     def test_can_format_actual_config(self):
-        formatted = prettify(open("test-data/config.xml").read())
+        formatted = prettify(open("test-data/config-unformatted.xml").read())
         expected = open("test-data/config-formatted.xml").read()
 
         def head(s):
