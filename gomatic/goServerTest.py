@@ -30,6 +30,10 @@ def config():
     return FakeConfig(open('test-data/config.xml').read())
 
 
+def config_with_just_agents():
+    return FakeConfig(open('test-data/config-with-just-agents.xml').read())
+
+
 def empty_config():
     return FakeConfig(open('test-data/empty-config.xml').read(), "empty_config()")
 
@@ -60,7 +64,7 @@ def empty_stage():
 
 class TestAgents(unittest.TestCase):
     def test_agents_have_resources(self):
-        agents = GoServer(config()).agents()
+        agents = GoServer(config_with_just_agents()).agents()
         self.assertEquals(2, len(agents))
         self.assertEquals({'a-resource', 'b-resource'}, agents[0].resources())
 
@@ -69,17 +73,17 @@ class TestAgents(unittest.TestCase):
         self.assertEquals(0, len(agents))
 
     def test_agent_could_have_no_resources(self):
-        agents = GoServer(config()).agents()
+        agents = GoServer(config_with_just_agents()).agents()
         self.assertEquals(0, len(agents[1].resources()))
 
     def test_can_add_resource_to_agent_with_no_resources(self):
-        go_server = GoServer(config())
+        go_server = GoServer(config_with_just_agents())
         agent = go_server.agents()[1]
         agent.ensure_resource('a-resource-that-it-does-not-already-have')
         self.assertEquals(1, len(agent.resources()))
 
     def test_can_add_resource_to_agent(self):
-        go_server = GoServer(config())
+        go_server = GoServer(config_with_just_agents())
         agents = go_server.agents()
         agent = agents[0]
         self.assertEquals(2, len(agent.resources()))
@@ -697,7 +701,8 @@ class TestPipeline(unittest.TestCase):
     def test_pipelines_can_have_pipeline_materials(self):
         pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
         self.assertEquals(2, len(pipeline.materials()))
-        self.assertEquals(GitMaterial('git@bitbucket.org:springersbm/gomatic.git', branch="a-branch", material_name="some-material-name", polling=False), pipeline.materials()[0])
+        self.assertEquals(GitMaterial('git@bitbucket.org:springersbm/gomatic.git', branch="a-branch", material_name="some-material-name", polling=False),
+                          pipeline.materials()[0])
 
     def test_pipelines_can_have_more_complicated_pipeline_materials(self):
         pipeline = GoServer(config()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
@@ -925,7 +930,7 @@ class TestGoServer(unittest.TestCase):
         self.assertEquals("1caffb21b1a5b683164a9e1a3a69bd46", go_server._initial_md5())
 
     def test_config_is_updated_as_result_of_updating_part_of_it(self):
-        go_server = GoServer(config())
+        go_server = GoServer(config_with_just_agents())
         agent = go_server.agents()[0]
         self.assertEquals(2, len(agent.resources()))
         agent.ensure_resource('a-resource-that-it-does-not-already-have')

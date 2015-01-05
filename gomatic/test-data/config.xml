@@ -226,14 +226,4 @@
       </stage>
     </pipeline>
   </templates>
-  <agents>
-    <agent hostname="go-agent-1" ipaddress="10.0.42.1" uuid="5991eba9-a714-49b6-8fa7-fd8e09a05441">
-      <resources>
-        <resource>a-resource</resource>
-        <resource>b-resource</resource>
-      </resources>
-    </agent>
-    <agent hostname="go-agent-2" ipaddress="10.0.42.1" uuid="1000eba9-a714-49b6-8fa7-fd8e09a00001">
-    </agent>
-  </agents>
 </cruise>

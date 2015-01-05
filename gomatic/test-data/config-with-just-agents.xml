@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">
+  <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="590fc344-be24-4a80-aa6e-c4e3f05e8f41" />
+  <agents>
+    <agent hostname="go-agent-1" ipaddress="10.0.42.1" uuid="5991eba9-a714-49b6-8fa7-fd8e09a05441">
+      <resources>
+        <resource>a-resource</resource>
+        <resource>b-resource</resource>
+      </resources>
+    </agent>
+    <agent hostname="go-agent-2" ipaddress="10.0.42.1" uuid="1000eba9-a714-49b6-8fa7-fd8e09a00001">
+    </agent>
+  </agents>
+</cruise>
