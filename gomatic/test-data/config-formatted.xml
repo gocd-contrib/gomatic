@@ -55,6 +55,10 @@
 			</stage>
 		</pipeline>
 		<pipeline name="more-options">
+			<params>
+				<param name="environment">qa</param>
+			</params>
+			<timer>0 15 22 * * ?</timer>
 			<environmentvariables>
 				<variable name="JAVA_HOME">
 					<value>/opt/java/jdk-1.7</value>
@@ -66,10 +70,6 @@
 					<encryptedValue>rZlyug1gxy4=</encryptedValue>
 				</variable>
 			</environmentvariables>
-			<params>
-				<param name="environment">qa</param>
-			</params>
-			<timer>0 15 22 * * ?</timer>
 			<materials>
 				<git autoUpdate="false" branch="a-branch" materialName="some-material-name" url="git@bitbucket.org:springersbm/gomatic.git"/>
 				<pipeline pipelineName="deploy.fig-env" stageName="update-docker-containers"/>
