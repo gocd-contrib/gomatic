@@ -996,14 +996,14 @@ class HostRestClient:
             raise RuntimeError("Could not post config to Go server - see browser to try to work out why")
 
 
-class GoServer:
+class GoServerConfigurator:
     def __init__(self, host_rest_client):
         self._host_rest_client = host_rest_client
         self._initial_config = self.current_config()
         self._xml_root = ET.fromstring(self._initial_config)
 
     def __repr__(self):
-        return "GoServer(%s)" % self._host_rest_client
+        return "GoServerConfigurator(%s)" % self._host_rest_client
 
     def as_python(self, pipeline, with_save=True):
         result = "#!/usr/bin/env python\nfrom gomatic import *\n\ngo_server = " + str(self) + "\n"
@@ -1118,7 +1118,7 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(1)
 
-    go_server = GoServer(HostRestClient(args.server))
+    go_server = GoServerConfigurator(HostRestClient(args.server))
 
     # do what you want to go_server
 

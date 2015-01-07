@@ -21,7 +21,7 @@ If you wanted to configure a pipeline something like that shown in the [GoCD doc
     #!/usr/bin/env python
     from gomatic import *
 
-    go_server = GoServer(HostRestClient("localhost:8153"))
+    go_server = GoServerConfigurator(HostRestClient("localhost:8153"))
     pipeline = go_server \
         .ensure_pipeline_group("Group") \
         .ensure_replacement_of_pipeline("first_pipeline") \
