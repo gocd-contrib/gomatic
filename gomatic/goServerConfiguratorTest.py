@@ -5,7 +5,7 @@ import unittest
 from goServerConfigurator import *
 
 
-class FakeConfig:
+class FakeHostRestClient:
     def __init__(self, config_string, thing_to_recreate_itself=None):
         self.config_string = config_string
         self.thing_to_recreate_itself = thing_to_recreate_itself
@@ -27,7 +27,7 @@ class FakeConfig:
 
 
 def config_with(config_name):
-    return FakeConfig(open('test-data/' + config_name + '.xml').read())
+    return FakeHostRestClient(open('test-data/' + config_name + '.xml').read())
 
 
 def config_with_more_options_pipeline():
@@ -59,7 +59,7 @@ def config_with_encrypted_variable():
 
 
 def empty_config():
-    return FakeConfig(open('test-data/empty-config.xml').read(), "empty_config()")
+    return FakeHostRestClient(open('test-data/empty-config.xml').read(), "empty_config()")
 
 
 def find_with_matching_name(things, name):
@@ -928,7 +928,7 @@ class TestGoServerConfigurator(unittest.TestCase):
         agent = go_server_configurator.agents()[0]
         self.assertEquals(2, len(agent.resources()))
         agent.ensure_resource('a-resource-that-it-does-not-already-have')
-        go_server_configurator_based_on_new_config = GoServerConfigurator(FakeConfig(go_server_configurator.config()))
+        go_server_configurator_based_on_new_config = GoServerConfigurator(FakeHostRestClient(go_server_configurator.config()))
         self.assertEquals(3, len(go_server_configurator_based_on_new_config.agents()[0].resources()))
 
     def test_can_add_pipeline_group(self):
