@@ -840,8 +840,8 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals(DEFAULT_LABEL_TEMPLATE, pipeline.label_template())
 
     def test_can_set_automatic_pipeline_locking(self):
-        go_server = GoServerConfigurator(empty_config())
-        pipeline = go_server.ensure_pipeline_group("new_group").ensure_pipeline("some_name")
+        go_server_configurator = GoServerConfigurator(empty_config())
+        pipeline = go_server_configurator.ensure_pipeline_group("new_group").ensure_pipeline("some_name")
         p = pipeline.set_automatic_pipeline_locking()
         self.assertEquals(p, pipeline)
         self.assertEquals(True, pipeline.has_automatic_pipeline_locking())
@@ -860,8 +860,8 @@ class TestPipelineGroup(unittest.TestCase):
         self.assertEquals(2, len(pipeline_group.pipelines()))
 
     def test_can_add_pipeline(self):
-        go_server = GoServerConfigurator(empty_config())
-        pipeline_group = go_server.ensure_pipeline_group("new_group")
+        go_server_configurator = GoServerConfigurator(empty_config())
+        pipeline_group = go_server_configurator.ensure_pipeline_group("new_group")
         new_pipeline = pipeline_group.ensure_pipeline("some_name")
         self.assertEquals(1, len(pipeline_group.pipelines()))
         self.assertEquals(new_pipeline, pipeline_group.pipelines()[0])
@@ -916,65 +916,65 @@ class TestGoServerConfigurator(unittest.TestCase):
         self.assertEquals(2, len(GoServerConfigurator(config_with_two_pipeline_groups()).pipeline_groups()))
 
     def test_can_find_authenticity_token(self):
-        go_server = GoServerConfigurator(empty_config())
-        self.assertEquals("861gOYM6Hczw7JirgRJSjjQId1+t0EiCwAV/O0RJATs=", go_server.authenticity_token())
+        go_server_configurator = GoServerConfigurator(empty_config())
+        self.assertEquals("861gOYM6Hczw7JirgRJSjjQId1+t0EiCwAV/O0RJATs=", go_server_configurator.authenticity_token())
 
     def test_can_get_initial_config_md5(self):
-        go_server = GoServerConfigurator(empty_config())
-        self.assertEquals("1caffb21b1a5b683164a9e1a3a69bd46", go_server._initial_md5())
+        go_server_configurator = GoServerConfigurator(empty_config())
+        self.assertEquals("1caffb21b1a5b683164a9e1a3a69bd46", go_server_configurator._initial_md5())
 
     def test_config_is_updated_as_result_of_updating_part_of_it(self):
-        go_server = GoServerConfigurator(config_with_just_agents())
-        agent = go_server.agents()[0]
+        go_server_configurator = GoServerConfigurator(config_with_just_agents())
+        agent = go_server_configurator.agents()[0]
         self.assertEquals(2, len(agent.resources()))
         agent.ensure_resource('a-resource-that-it-does-not-already-have')
-        go_server_based_on_new_config = GoServerConfigurator(FakeConfig(go_server.config()))
-        self.assertEquals(3, len(go_server_based_on_new_config.agents()[0].resources()))
+        go_server_configurator_based_on_new_config = GoServerConfigurator(FakeConfig(go_server_configurator.config()))
+        self.assertEquals(3, len(go_server_configurator_based_on_new_config.agents()[0].resources()))
 
     def test_can_add_pipeline_group(self):
-        go_server = GoServerConfigurator(empty_config())
-        self.assertEquals(0, len(go_server.pipeline_groups()))
-        new_pipeline_group = go_server.ensure_pipeline_group("a_new_group")
-        self.assertEquals(1, len(go_server.pipeline_groups()))
-        self.assertEquals(new_pipeline_group, go_server.pipeline_groups()[-1])
+        go_server_configurator = GoServerConfigurator(empty_config())
+        self.assertEquals(0, len(go_server_configurator.pipeline_groups()))
+        new_pipeline_group = go_server_configurator.ensure_pipeline_group("a_new_group")
+        self.assertEquals(1, len(go_server_configurator.pipeline_groups()))
+        self.assertEquals(new_pipeline_group, go_server_configurator.pipeline_groups()[-1])
         self.assertEquals("a_new_group", new_pipeline_group.name())
 
     def test_can_ensure_pipeline_group_exists(self):
-        go_server = GoServerConfigurator(config_with_two_pipeline_groups())
-        self.assertEquals(2, len(go_server.pipeline_groups()))
-        pre_existing_pipeline_group = go_server.ensure_pipeline_group('Second.Group')
-        self.assertEquals(2, len(go_server.pipeline_groups()))
+        go_server_configurator = GoServerConfigurator(config_with_two_pipeline_groups())
+        self.assertEquals(2, len(go_server_configurator.pipeline_groups()))
+        pre_existing_pipeline_group = go_server_configurator.ensure_pipeline_group('Second.Group')
+        self.assertEquals(2, len(go_server_configurator.pipeline_groups()))
         self.assertEquals('Second.Group', pre_existing_pipeline_group.name())
 
     def test_can_remove_all_pipeline_groups(self):
-        go_server = GoServerConfigurator(config_with_two_pipeline_groups())
-        s = go_server.remove_all_pipeline_groups()
-        self.assertEquals(s, go_server)
-        self.assertEquals(0, len(go_server.pipeline_groups()))
+        go_server_configurator = GoServerConfigurator(config_with_two_pipeline_groups())
+        s = go_server_configurator.remove_all_pipeline_groups()
+        self.assertEquals(s, go_server_configurator)
+        self.assertEquals(0, len(go_server_configurator.pipeline_groups()))
 
     def test_can_remove_pipeline_group(self):
-        go_server = GoServerConfigurator(config_with_two_pipeline_groups())
-        s = go_server.ensure_removal_of_pipeline_group('P.Group')
-        self.assertEquals(s, go_server)
-        self.assertEquals(1, len(go_server.pipeline_groups()))
+        go_server_configurator = GoServerConfigurator(config_with_two_pipeline_groups())
+        s = go_server_configurator.ensure_removal_of_pipeline_group('P.Group')
+        self.assertEquals(s, go_server_configurator)
+        self.assertEquals(1, len(go_server_configurator.pipeline_groups()))
 
     def test_can_ensure_removal_of_pipeline_group(self):
-        go_server = GoServerConfigurator(config_with_two_pipeline_groups())
-        go_server.ensure_removal_of_pipeline_group('pipeline-group-that-has-already-been-removed')
-        self.assertEquals(2, len(go_server.pipeline_groups()))
+        go_server_configurator = GoServerConfigurator(config_with_two_pipeline_groups())
+        go_server_configurator.ensure_removal_of_pipeline_group('pipeline-group-that-has-already-been-removed')
+        self.assertEquals(2, len(go_server_configurator.pipeline_groups()))
 
     def test_top_level_elements_get_reordered_to_please_go(self):
-        go_server = GoServerConfigurator(config_with('config-with-agents-and-templates-but-without-pipelines'))
-        go_server.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")
-        xml = go_server.config()
+        go_server_configurator = GoServerConfigurator(config_with('config-with-agents-and-templates-but-without-pipelines'))
+        go_server_configurator.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")
+        xml = go_server_configurator.config()
         root = ET.fromstring(xml)
         self.assertEquals("pipelines", root[0].tag)
         self.assertEquals("templates", root[1].tag)
         self.assertEquals("agents", root[2].tag)
 
     def test_elements_can_be_created_in_order_to_please_go(self):
-        go_server = GoServerConfigurator(empty_config())
-        pipeline = go_server.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")
+        go_server_configurator = GoServerConfigurator(empty_config())
+        pipeline = go_server_configurator.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")
         pipeline.ensure_parameters({'p': 'p'})
         pipeline.set_timer("some timer")
         pipeline.ensure_environment_variables({'pe': 'pe'})
@@ -988,7 +988,7 @@ class TestGoServerConfigurator(unittest.TestCase):
         job.ensure_resource("r")
         job.ensure_artifacts([BuildArtifact('s', 'd')])
 
-        xml = go_server.config()
+        xml = go_server_configurator.config()
         pipeline_root = ET.fromstring(xml).find('pipelines').find('pipeline')
         self.assertEquals("params", pipeline_root[0].tag)
         self.assertEquals("timer", pipeline_root[1].tag)
@@ -1008,8 +1008,8 @@ class TestGoServerConfigurator(unittest.TestCase):
         self.assertEquals("artifacts", job_root[4].tag)
 
     def test_elements_are_reordered_in_order_to_please_go(self):
-        go_server = GoServerConfigurator(empty_config())
-        pipeline = go_server.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")
+        go_server_configurator = GoServerConfigurator(empty_config())
+        pipeline = go_server_configurator.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")
         pipeline.set_git_url("gurl")
         pipeline.ensure_environment_variables({'pe': 'pe'})
         pipeline.set_timer("some timer")
@@ -1025,7 +1025,7 @@ class TestGoServerConfigurator(unittest.TestCase):
         job.ensure_resource("r")
         job.ensure_environment_variables({'j': 'j'})
 
-        xml = go_server.config()
+        xml = go_server_configurator.config()
         pipeline_root = ET.fromstring(xml).find('pipelines').find('pipeline')
         self.assertEquals("params", pipeline_root[0].tag)
         self.assertEquals("timer", pipeline_root[1].tag)
@@ -1054,8 +1054,8 @@ def sneakily_converted_to_xml(pipeline):
 
 
 class TestReverseEngineering(unittest.TestCase):
-    def check_round_trip_pipeline(self, go_server, before, show=False):
-        reverse_engineered_python = go_server.as_python(before, with_save=False)
+    def check_round_trip_pipeline(self, go_server_configurator, before, show=False):
+        reverse_engineered_python = go_server_configurator.as_python(before, with_save=False)
         if show:
             print
             print reverse_engineered_python
@@ -1064,89 +1064,89 @@ class TestReverseEngineering(unittest.TestCase):
         self.assertEquals(sneakily_converted_to_xml(before), sneakily_converted_to_xml(pipeline))
 
     def test_can_round_trip_simplest_pipeline(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
-        self.check_round_trip_pipeline(go_server, before)
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line")
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_standard_label(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_default_label_template()
-        self.check_round_trip_pipeline(go_server, before)
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_default_label_template()
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_non_standard_label(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_label_template("non standard")
-        self.check_round_trip_pipeline(go_server, before)
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_label_template("non standard")
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_automatic_pipeline_locking(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_automatic_pipeline_locking()
-        self.check_round_trip_pipeline(go_server, before)
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_automatic_pipeline_locking()
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_pipeline_material(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").ensure_material(PipelineMaterial("p", "s", "m"))
-        self.check_round_trip_pipeline(go_server, before)
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line").ensure_material(PipelineMaterial("p", "s", "m"))
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_multiple_git_materials(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line")
         before.ensure_material(GitMaterial("giturl1", "b", "m1"))
         before.ensure_material(GitMaterial("giturl2"))
-        self.check_round_trip_pipeline(go_server, before)
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_git_url(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_git_url("some git url")
-        self.check_round_trip_pipeline(go_server, before)
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_git_url("some git url")
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_git_extras(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_git_material(GitMaterial("some git url", "some branch", "some material name", False, {"excluded", "things"}))
-        self.check_round_trip_pipeline(go_server, before)
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_git_material(GitMaterial("some git url", "some branch", "some material name", False, {"excluded", "things"}))
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_pipeline_parameters(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").ensure_parameters({"p": "v"})
-        self.check_round_trip_pipeline(go_server, before)
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line").ensure_parameters({"p": "v"})
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_pipeline_environment_variables(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").ensure_environment_variables({"p": "v"})
-        self.check_round_trip_pipeline(go_server, before)
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line").ensure_environment_variables({"p": "v"})
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_pipeline_encrypted_environment_variables(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").ensure_encrypted_environment_variables({"p": "v"})
-        self.check_round_trip_pipeline(go_server, before)
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line").ensure_encrypted_environment_variables({"p": "v"})
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_timer(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line").set_timer("some timer")
-        self.check_round_trip_pipeline(go_server, before)
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_timer("some timer")
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_stage_bits(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line")
         before.ensure_stage("stage1").ensure_environment_variables({"k": "v"}).set_clean_working_dir().set_has_manual_approval().set_fetch_materials(False)
-        self.check_round_trip_pipeline(go_server, before)
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_stages(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line")
         before.ensure_stage("stage1")
         before.ensure_stage("stage2")
-        self.check_round_trip_pipeline(go_server, before)
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_job(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line")
         before.ensure_stage("stage").ensure_job("job")
-        self.check_round_trip_pipeline(go_server, before)
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_job_bits(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line")
         before.ensure_stage("stage").ensure_job("job") \
             .ensure_artifacts([BuildArtifact("s", "d"), TestArtifact("sauce")]) \
             .ensure_environment_variables({"k": "v"}) \
@@ -1154,19 +1154,19 @@ class TestReverseEngineering(unittest.TestCase):
             .ensure_tab(Tab("n", "p")) \
             .set_timeout("23") \
             .set_runs_on_all_agents()
-        self.check_round_trip_pipeline(go_server, before)
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_jobs(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line")
         stage = before.ensure_stage("stage")
         stage.ensure_job("job1")
         stage.ensure_job("job2")
-        self.check_round_trip_pipeline(go_server, before)
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_round_trip_tasks(self):
-        go_server = GoServerConfigurator(empty_config())
-        before = go_server.ensure_pipeline_group("group").ensure_pipeline("line")
+        go_server_configurator = GoServerConfigurator(empty_config())
+        before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line")
         job = before.ensure_stage("stage").ensure_job("job")
 
         job.add_task(ExecTask(["one", "two"], working_dir="somewhere", runif="failed"))
@@ -1182,16 +1182,16 @@ class TestReverseEngineering(unittest.TestCase):
         job.ensure_task(RakeTask('t1', runif="any"))
         job.ensure_task(RakeTask('t2'))
 
-        self.check_round_trip_pipeline(go_server, before)
+        self.check_round_trip_pipeline(go_server_configurator, before)
 
     def test_can_reverse_engineer_pipeline(self):
-        go_server = GoServerConfigurator(config_with_more_options_pipeline())
-        actual = go_server.as_python(more_options_pipeline(), with_save=False)
+        go_server_configurator = GoServerConfigurator(config_with_more_options_pipeline())
+        actual = go_server_configurator.as_python(more_options_pipeline(), with_save=False)
         expected = """#!/usr/bin/env python
 from gomatic import *
 
-go_server = GoServerConfigurator(FakeConfig(whatever))
-pipeline = go_server\
+go_server_configurator = GoServerConfigurator(FakeConfig(whatever))
+pipeline = go_server_configurator\
 	.ensure_pipeline_group("P.Group")\
 	.ensure_replacement_of_pipeline("more-options")\
 	.set_timer("0 15 22 * * ?")\
