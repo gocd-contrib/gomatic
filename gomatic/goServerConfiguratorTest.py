@@ -886,14 +886,14 @@ class TestPipelineGroup(unittest.TestCase):
 
     def test_ensuring_replacement_of_pipeline_leaves_it_empty_but_in_same_place(self):
         pipeline_group = self._pipeline_group_from_config()
-        self.assertEquals("pipeline2", pipeline_group.pipelines()[1].name())
-        pipeline = pipeline_group.find_pipeline("pipeline2")
+        self.assertEquals("pipeline1", pipeline_group.pipelines()[0].name())
+        pipeline = pipeline_group.find_pipeline("pipeline1")
         pipeline.set_label_template("something")
         self.assertEquals(True, pipeline.has_label_template())
 
-        p = pipeline_group.ensure_replacement_of_pipeline("pipeline2")
-        self.assertEquals(p, pipeline_group.pipelines()[1])
-        self.assertEquals("pipeline2", p.name())
+        p = pipeline_group.ensure_replacement_of_pipeline("pipeline1")
+        self.assertEquals(p, pipeline_group.pipelines()[0])
+        self.assertEquals("pipeline1", p.name())
         self.assertEquals(False, p.has_label_template())
 
     def test_can_ensure_pipeline_removal(self):
