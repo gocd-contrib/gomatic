@@ -2,6 +2,10 @@
 
 *Note* - this describes breaking API changes only
 
+## 0.3.0
+
+* artifacts are now a set rather than a list
+
 ## 0.2.0
 
 * `GoServer` has been renamed `GoServerConfigurator` for clarity.

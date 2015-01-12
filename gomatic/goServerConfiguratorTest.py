@@ -180,61 +180,53 @@ class TestJobs(unittest.TestCase):
     def test_jobs_have_artifacts(self):
         job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
         artifacts = job.artifacts()
-        self.assertEquals([
+        self.assertEquals({
                               BuildArtifact("target/universal/myapp*.zip", "artifacts"),
                               BuildArtifact("scripts/*", "files"),
-                              TestArtifact("from", "to")],
+                              TestArtifact("from", "to")},
                           artifacts)
 
     def test_artifacts_might_have_no_dest(self):
         job = more_options_pipeline().ensure_stage("s1").ensure_job("rake-job")
         artifacts = job.artifacts()
         self.assertEquals(1, len(artifacts))
-        self.assertEquals([BuildArtifact("things/*")], artifacts)
+        self.assertEquals({BuildArtifact("things/*")}, artifacts)
 
     def test_can_add_build_artifacts_to_job(self):
         job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
-        job_with_artifacts = job.ensure_artifacts([
+        job_with_artifacts = job.ensure_artifacts({
             BuildArtifact("a1", "artifacts"),
-            BuildArtifact("a2", "others")])
+            BuildArtifact("a2", "others")})
         self.assertEquals(job, job_with_artifacts)
         artifacts = job.artifacts()
         self.assertEquals(5, len(artifacts))
-        last_two_artifacts = artifacts[-2:]
-        self.assertEquals([
-                              BuildArtifact("a1", "artifacts"),
-                              BuildArtifact("a2", "others")],
-                          last_two_artifacts)
+        self.assertTrue({BuildArtifact("a1", "artifacts"), BuildArtifact("a2", "others")}.issubset(artifacts))
 
     def test_can_add_test_artifacts_to_job(self):
         job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
-        job_with_artifacts = job.ensure_artifacts([
+        job_with_artifacts = job.ensure_artifacts({
             TestArtifact("a1"),
-            TestArtifact("a2")])
+            TestArtifact("a2")})
         self.assertEquals(job, job_with_artifacts)
         artifacts = job.artifacts()
         self.assertEquals(5, len(artifacts))
-        last_two_artifacts = artifacts[-2:]
-        self.assertEquals([
-                              TestArtifact("a1"),
-                              TestArtifact("a2")],
-                          last_two_artifacts)
+        self.assertTrue({TestArtifact("a1"), TestArtifact("a2")}.issubset(artifacts))
 
     def test_can_ensure_artifacts(self):
         job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
 
-        job.ensure_artifacts([
+        job.ensure_artifacts({
             TestArtifact("from", "to"),
             BuildArtifact("target/universal/myapp*.zip", "somewhereElse"),
             TestArtifact("another", "with dest"),
-            BuildArtifact("target/universal/myapp*.zip", "artifacts")])
-        self.assertEquals([
+            BuildArtifact("target/universal/myapp*.zip", "artifacts")})
+        self.assertEquals({
                               BuildArtifact("target/universal/myapp*.zip", "artifacts"),
                               BuildArtifact("scripts/*", "files"),
                               TestArtifact("from", "to"),
                               BuildArtifact("target/universal/myapp*.zip", "somewhereElse"),
                               TestArtifact("another", "with dest")
-                          ],
+                          },
                           job.artifacts())
 
     def test_jobs_have_tasks(self):
@@ -986,7 +978,7 @@ class TestGoServerConfigurator(unittest.TestCase):
         job.ensure_task(ExecTask(['ls']))
         job.ensure_tab(Tab("n", "p"))
         job.ensure_resource("r")
-        job.ensure_artifacts([BuildArtifact('s', 'd')])
+        job.ensure_artifacts({BuildArtifact('s', 'd')})
 
         xml = go_server_configurator.config()
         pipeline_root = ET.fromstring(xml).find('pipelines').find('pipeline')
@@ -1020,7 +1012,7 @@ class TestGoServerConfigurator(unittest.TestCase):
         stage.ensure_environment_variables({'s': 's'})
 
         job.ensure_tab(Tab("n", "p"))
-        job.ensure_artifacts([BuildArtifact('s', 'd')])
+        job.ensure_artifacts({BuildArtifact('s', 'd')})
         job.ensure_task(ExecTask(['ls']))
         job.ensure_resource("r")
         job.ensure_environment_variables({'j': 'j'})
@@ -1148,7 +1140,7 @@ class TestReverseEngineering(unittest.TestCase):
         go_server_configurator = GoServerConfigurator(empty_config())
         before = go_server_configurator.ensure_pipeline_group("group").ensure_pipeline("line")
         before.ensure_stage("stage").ensure_job("job") \
-            .ensure_artifacts([BuildArtifact("s", "d"), TestArtifact("sauce")]) \
+            .ensure_artifacts({BuildArtifact("s", "d"), TestArtifact("sauce")}) \
             .ensure_environment_variables({"k": "v"}) \
             .ensure_resource("r") \
             .ensure_tab(Tab("n", "p")) \
@@ -1199,13 +1191,13 @@ pipeline = go_server_configurator\
 	.ensure_material(PipelineMaterial("pipeline2", "build")).ensure_environment_variables({'JAVA_HOME': '/opt/java/jdk-1.7'})\
 	.ensure_parameters({'environment': 'qa'})
 stage = pipeline.ensure_stage("earlyStage")
-job = stage.ensure_job("earlyWorm").ensure_artifacts([BuildArtifact("target/universal/myapp*.zip", "artifacts"), BuildArtifact("scripts/*", "files"), TestArtifact("from", "to")]).set_runs_on_all_agents()
+job = stage.ensure_job("earlyWorm").ensure_artifacts(set([BuildArtifact("scripts/*", "files"), BuildArtifact("target/universal/myapp*.zip", "artifacts"), TestArtifact("from", "to")])).set_runs_on_all_agents()
 job.add_task(ExecTask(['ls']))
 job.add_task(ExecTask(['bash', '-c', 'curl "http://domain.com/service/check?target=one+two+three&key=2714_beta%40domain.com"']))
 stage = pipeline.ensure_stage("middleStage")
 job = stage.ensure_job("middleJob")
 stage = pipeline.ensure_stage("s1").set_fetch_materials(False)
-job = stage.ensure_job("rake-job").ensure_artifacts([BuildArtifact("things/*")])
+job = stage.ensure_job("rake-job").ensure_artifacts({BuildArtifact("things/*")})
 job.add_task(RakeTask("boo", "passed"))
 job = stage.ensure_job("run-if-variants")
 job.add_task(ExecTask(['t-passed']))

@@ -455,11 +455,11 @@ class Job(CommonEqualityMixin):
 
     def artifacts(self):
         artifact_elements = PossiblyMissingElement(self.element).possibly_missing_child("artifacts").iterator()
-        return [ArtifactFor(e) for e in artifact_elements]
+        return set([ArtifactFor(e) for e in artifact_elements])
 
     def ensure_artifacts(self, artifacts):
         artifacts_ensurance = Ensurance(self.element).ensure_child("artifacts")
-        artifacts_to_add = [artifact for artifact in artifacts if artifact not in self.artifacts()]
+        artifacts_to_add = artifacts.difference(self.artifacts())
         for artifact in artifacts_to_add:
             artifact.append_to(artifacts_ensurance)
         return self
@@ -511,7 +511,12 @@ class Job(CommonEqualityMixin):
         result = 'job = stage.ensure_job("%s")' % self.name()
 
         if self.artifacts():
-            result += '.ensure_artifacts(%s)' % [artifact for artifact in self.artifacts()]
+            if len(self.artifacts()) > 1:
+                artifacts_sorted = list(self.artifacts())
+                artifacts_sorted.sort()
+                result += '.ensure_artifacts(set(%s))' % artifacts_sorted
+            else:
+                result += '.ensure_artifacts({%s})' % self.artifacts().pop()
 
         result += ThingWithEnvironmentVariables(self.element).as_python()
 
