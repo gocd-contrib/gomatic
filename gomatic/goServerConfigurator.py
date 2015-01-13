@@ -513,7 +513,7 @@ class Job(CommonEqualityMixin):
         if self.artifacts():
             if len(self.artifacts()) > 1:
                 artifacts_sorted = list(self.artifacts())
-                artifacts_sorted.sort()
+                artifacts_sorted.sort(key=lambda artifact: str(artifact))
                 result += '.ensure_artifacts(set(%s))' % artifacts_sorted
             else:
                 result += '.ensure_artifacts({%s})' % self.artifacts().pop()
