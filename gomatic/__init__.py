@@ -1,2 +1,2 @@
-from .goServerConfigurator import Agent, BuildArtifact, ExecTask, FetchArtifactDir, FetchArtifactFile, FetchArtifactTask, \
-    GitMaterial, GoServerConfigurator, HostRestClient, Job, Pipeline, PipelineGroup, PipelineMaterial, RakeTask, Tab, TestArtifact
+from .goCdConfigurator import Agent, BuildArtifact, ExecTask, FetchArtifactDir, FetchArtifactFile, FetchArtifactTask, \
+    GitMaterial, GoCdConfigurator, HostRestClient, Job, Pipeline, PipelineGroup, PipelineMaterial, RakeTask, Tab, TestArtifact

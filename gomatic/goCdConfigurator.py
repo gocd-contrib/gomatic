@@ -1001,22 +1001,22 @@ class HostRestClient:
             raise RuntimeError("Could not post config to Go server - see browser to try to work out why")
 
 
-class GoServerConfigurator:
+class GoCdConfigurator:
     def __init__(self, host_rest_client):
         self._host_rest_client = host_rest_client
         self._initial_config = self.current_config()
         self._xml_root = ET.fromstring(self._initial_config)
 
     def __repr__(self):
-        return "GoServerConfigurator(%s)" % self._host_rest_client
+        return "GoCdConfigurator(%s)" % self._host_rest_client
 
     def as_python(self, pipeline, with_save=True):
-        result = "#!/usr/bin/env python\nfrom gomatic import *\n\ngo_server_configurator = " + str(self) + "\n"
-        result += "pipeline = go_server_configurator"
+        result = "#!/usr/bin/env python\nfrom gomatic import *\n\nconfigurator = " + str(self) + "\n"
+        result += "pipeline = configurator"
         result += pipeline.as_python_commands_applied_to_server()
         save_part = ""
         if with_save:
-            save_part = "\n\ngo_server_configurator.save_updated_config(save_config_locally=True, dry_run=True)"
+            save_part = "\n\nconfigurator.save_updated_config(save_config_locally=True, dry_run=True)"
         return result + save_part
 
     def current_config(self):
@@ -1123,8 +1123,8 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(1)
 
-    go_server_configurator = GoServerConfigurator(HostRestClient(args.server))
+    configurator = GoCdConfigurator(HostRestClient(args.server))
 
-    # do what you want to go_server_configurator
+    # do what you want to configurator
 
-    go_server_configurator.save_updated_config(save_config_locally=not args.do_not_save_config, dry_run=args.dry_run)
+    configurator.save_updated_config(save_config_locally=not args.do_not_save_config, dry_run=args.dry_run)

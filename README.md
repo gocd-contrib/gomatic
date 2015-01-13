@@ -21,8 +21,8 @@ If you wanted to configure a pipeline something like that shown in the [GoCD doc
     #!/usr/bin/env python
     from gomatic import *
 
-    go_server_configurator = GoServerConfigurator(HostRestClient("localhost:8153"))
-    pipeline = go_server_configurator \
+    configurator = GoCdConfigurator(HostRestClient("localhost:8153"))
+    pipeline = configurator \
         .ensure_pipeline_group("Group") \
         .ensure_replacement_of_pipeline("first_pipeline") \
         .set_git_url("http://git.url")
@@ -30,7 +30,7 @@ If you wanted to configure a pipeline something like that shown in the [GoCD doc
     job = stage.ensure_job("a_job")
     job.add_task(ExecTask(['thing']))
 
-    go_server_configurator.save_updated_config()
+    configurator.save_updated_config()
 
 ## Getting Started with Developing gomatic
 

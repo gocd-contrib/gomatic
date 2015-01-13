@@ -5,6 +5,7 @@
 ## 0.3.0
 
 * artifacts are now a set rather than a list
+* `GoServerConfigurator` has been renamed `GoCdConfigurator` - slightly shorter.
 
 ## 0.2.0
 
