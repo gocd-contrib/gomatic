@@ -6,7 +6,7 @@ This is a Python API for configuring ThoughtWorks [GoCD](http://www.go.cd/).
 
 We wrote it for our purposes and find it very useful; however, the current version has limitations (e.g. only really supports "Custom Command" task type) and allows you to try to configure GoCD incorrectly (which GoCD will refuse to allow). We will continue to work on it and will address its current limitations.
 
-It has only been tested using GoCD version 14.2.0-377 - I think it doesn't yet work with other versions. 
+It has only been tested using GoCD versions 13.4.0 and 14.2.0-377 - I think it doesn't yet work with the newest versions.
 
 ## Install
 
