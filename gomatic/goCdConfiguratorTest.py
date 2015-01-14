@@ -611,6 +611,7 @@ class TestPipeline(unittest.TestCase):
         pipeline = typical_pipeline()
         stage = pipeline.ensure_initial_stage("deploy")
         self.assertEquals(stage, pipeline.stages()[0])
+        self.assertEquals("build", pipeline.stages()[1].name())
         self.assertEquals(2, len(pipeline.stages()))
 
     def test_can_set_stage_clean_policy(self):
