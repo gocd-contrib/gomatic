@@ -1,6 +1,6 @@
 # Change log
 
-*Note* - this describes breaking API changes only
+*Note* - this describes breaking API changes only, not additions to the API unless they are particularly important.
 
 ## 0.3.0
 
