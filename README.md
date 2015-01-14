@@ -43,6 +43,12 @@ We've written it using Python 2 (for the moment - should be simple to port to Py
 
 We won't document all of the options. Most of the behaviour is covered by [unit tests](https://github.com/SpringerSBM/gomatic/blob/master/gomatic/goCdConfiguratorTest.py), so look at them.
 
+### Dry run
+
+You can see what effect Gomatic will have on the config XML by using `configurator.save_updated_config(save_config_locally=True, dry_run=True)`.
+If you have `kdiff3` installed, Gomatic will open it showing the diff (if there is a difference) between the config XML before and after the changes made by the `GoCdConfigurator`.
+If you don't have `kdiff3` installed, use a diff tool of your choice to diff the files `config-before.xml` vs `config-after.xml`.
+
 ### Reverse engineering of existing pipeline
 
 If you have already set up a pipeline through the UI and now want to retrospectively write a script to do the equivalent, you can get Gomatic to show you the script to create an existing pipeline.
@@ -59,6 +65,11 @@ We will include an easier way to run this in the future - for the moment, you ca
 
 This mechanism can also be useful if you can't work out how to script something; you just make the change you want through the GoCD web based UI and then reverse engineer to see how to do it using Gomatic.
 Bear in mind that Gomatic does not currently support every configuration option available in GoCD, so it might not be possible to do everything you want to do.
+
+### Gotchas
+
+* Gomatic does not prevent you from creating config XML that GoCD will not accept. For example, if you create a stage that has no jobs, Gomatic won't complain until you try to run `save_updated_config`, at which time the GoCD server will reject the config XML.
+* Gomatic currently only supports calling `save_updated_config` once per instance of `GoCdConfigurator`.
 
 ## Developing gomatic
 
