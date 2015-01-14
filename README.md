@@ -39,7 +39,28 @@ We've written it using Python 2 (for the moment - should be simple to port to Py
 
     sudo pip install gomatic
 
-## Getting Started with Developing gomatic
+## Usage
+
+We won't document all of the options. Most of the behaviour is covered by [unit tests](https://github.com/SpringerSBM/gomatic/blob/master/gomatic/goCdConfiguratorTest.py), so look at them.
+
+### Reverse engineering of existing pipeline
+
+If you have already set up a pipeline through the UI and now want to retrospectively write a script to do the equivalent, you can get Gomatic to show you the script to create an existing pipeline.
+We will include an easier way to run this in the future - for the moment, you can run something like the following:
+
+    #!/usr/bin/env python
+    from gomatic import *
+
+    configurator = GoCdConfigurator(HostRestClient("localhost:8153"))
+    pipeline = configurator\
+        .ensure_pipeline_group("Group")\
+        .find_pipeline("first_pipeline")
+    print configurator.as_python(pipeline)
+
+This mechanism can also be useful if you can't work out how to script something; you just make the change you want through the GoCD web based UI and then reverse engineer to see how to do it using Gomatic.
+Bear in mind that Gomatic does not currently support every configuration option available in GoCD, so it might not be possible to do everything you want to do.
+
+## Developing gomatic
 
 You need to install Python's virtualenv tool and create a virtual environment (once):
 
