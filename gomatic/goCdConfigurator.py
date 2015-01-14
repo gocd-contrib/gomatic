@@ -895,6 +895,14 @@ class Pipeline(CommonEqualityMixin):
             self.element.remove(matching_stage.element)
         return self
 
+    def ensure_initial_stage(self, name):
+        stage = self.ensure_stage(name)
+        for stage_element in self.element.findall('stage'):
+            if stage_element.attrib['name'] != name:
+                self.element.remove(stage_element)
+                self.element.append(stage_element)
+        return stage
+
     def reorder_elements_to_please_go(self):
         move_all_to_end(self.element, "params")
         move_all_to_end(self.element, "timer")

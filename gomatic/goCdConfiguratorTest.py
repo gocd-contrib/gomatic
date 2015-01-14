@@ -595,6 +595,24 @@ class TestPipeline(unittest.TestCase):
         pipeline.ensure_removal_of_stage("stage-that-has-already-been-deleted")
         self.assertEquals(2, len(pipeline.stages()))
 
+    def test_can_ensure_initial_stage(self):
+        pipeline = typical_pipeline()
+        stage = pipeline.ensure_initial_stage("first")
+        self.assertEquals(stage, pipeline.stages()[0])
+        self.assertEquals(3, len(pipeline.stages()))
+
+    def test_can_ensure_initial_stage_if_already_exists_as_initial(self):
+        pipeline = typical_pipeline()
+        stage = pipeline.ensure_initial_stage("build")
+        self.assertEquals(stage, pipeline.stages()[0])
+        self.assertEquals(2, len(pipeline.stages()))
+
+    def test_can_ensure_initial_stage_if_already_exists(self):
+        pipeline = typical_pipeline()
+        stage = pipeline.ensure_initial_stage("deploy")
+        self.assertEquals(stage, pipeline.stages()[0])
+        self.assertEquals(2, len(pipeline.stages()))
+
     def test_can_set_stage_clean_policy(self):
         pipeline = empty_pipeline()
         stage1 = pipeline.ensure_stage("some_stage1").set_clean_working_dir()
