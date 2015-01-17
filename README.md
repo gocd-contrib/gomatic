@@ -6,19 +6,21 @@ This is a Python API for configuring ThoughtWorks [GoCD](http://www.go.cd/).
 
 If you wanted to configure a pipeline something like that shown in the [GoCD documentation](http://www.thoughtworks.com/products/docs/go/current/help/quick_pipeline_setup.html) then you could run the following script:
 
-    #!/usr/bin/env python
-    from gomatic import *
+```python
+#!/usr/bin/env python
+from gomatic import *
 
-    configurator = GoCdConfigurator(HostRestClient("localhost:8153"))
-    pipeline = configurator \
-        .ensure_pipeline_group("Group") \
-        .ensure_replacement_of_pipeline("first_pipeline") \
-        .set_git_url("http://git.url")
-    stage = pipeline.ensure_stage("a_stage")
-    job = stage.ensure_job("a_job")
-    job.add_task(ExecTask(['thing']))
+configurator = GoCdConfigurator(HostRestClient("localhost:8153"))
+pipeline = configurator \
+    .ensure_pipeline_group("Group") \
+    .ensure_replacement_of_pipeline("first_pipeline") \
+    .set_git_url("http://git.url")
+stage = pipeline.ensure_stage("a_stage")
+job = stage.ensure_job("a_job")
+job.add_task(ExecTask(['thing']))
 
-    configurator.save_updated_config()
+configurator.save_updated_config()
+```
 
 ## How does it work?
 
@@ -54,14 +56,16 @@ If you don't have `kdiff3` installed, use a diff tool of your choice to diff the
 If you have already set up a pipeline through the UI and now want to retrospectively write a script to do the equivalent, you can get Gomatic to show you the script to create an existing pipeline.
 We will include an easier way to run this in the future - for the moment, you can run something like the following:
 
-    #!/usr/bin/env python
-    from gomatic import *
+```python
+#!/usr/bin/env python
+from gomatic import *
 
-    configurator = GoCdConfigurator(HostRestClient("localhost:8153"))
-    pipeline = configurator\
-        .ensure_pipeline_group("Group")\
-        .find_pipeline("first_pipeline")
-    print configurator.as_python(pipeline)
+configurator = GoCdConfigurator(HostRestClient("localhost:8153"))
+pipeline = configurator\
+    .ensure_pipeline_group("Group")\
+    .find_pipeline("first_pipeline")
+print configurator.as_python(pipeline)
+```
 
 This mechanism can also be useful if you can't work out how to script something; you just make the change you want through the GoCD web based UI and then reverse engineer to see how to do it using Gomatic.
 Bear in mind that Gomatic does not currently support every configuration option available in GoCD, so it might not be possible to do everything you want to do.
