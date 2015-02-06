@@ -133,6 +133,10 @@ class TestJobs(unittest.TestCase):
         self.assertEquals(1, len(resources))
         self.assertEquals({'a-resource'}, resources)
 
+    def test_job_has_nice_tostring(self):
+        job = typical_pipeline().stages()[0].jobs()[0]
+        self.assertEquals("Job('compile', [ExecTask(['make', 'options', 'source code'])])", str(job))
+
     def test_jobs_can_have_timeout(self):
         job = typical_pipeline().ensure_stage("deploy").ensure_job("upload")
         self.assertEquals(True, job.has_timeout())

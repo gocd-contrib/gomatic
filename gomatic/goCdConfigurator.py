@@ -424,6 +424,9 @@ class Job(CommonEqualityMixin):
         self.element = element
         self.thing_with_resources = ThingWithResources(element)
 
+    def __repr__(self):
+        return "Job('%s', %s)" % (self.name(), self.tasks())
+
     def name(self):
         return self.element.attrib['name']
 
