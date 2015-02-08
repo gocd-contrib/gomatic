@@ -41,6 +41,8 @@ We've written it using Python 2 (for the moment - should be simple to port to Py
 
     sudo pip install gomatic
 
+which will install the [gomatic package](https://pypi.python.org/pypi/gomatic/).
+
 ## Usage
 
 We won't document all of the options. Most of the behaviour is covered by [unit tests](https://github.com/SpringerSBM/gomatic/blob/master/gomatic/goCdConfiguratorTest.py), so look at them.
