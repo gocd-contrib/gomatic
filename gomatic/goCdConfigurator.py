@@ -1100,6 +1100,15 @@ class GoCdConfigurator:
             open('config-before.xml', 'w').write(config_before)
             open('config-after.xml', 'w').write(config_after)
 
+            def has_kdiff3():
+                try:
+                    return subprocess.call(["kdiff3", "-version"]) == 0
+                except:
+                    return False
+
+            if dry_run and config_before != config_after and has_kdiff3():
+                subprocess.call(["kdiff3", "config-before.xml", "config-after.xml"])
+
         data = {
             'go_config[content]': self.config(),
             'commit': 'SAVE',
@@ -1107,15 +1116,6 @@ class GoCdConfigurator:
             'go_config[md5]': self._initial_md5(),
             'authenticity_token': self.authenticity_token()
         }
-
-        def has_kdiff3():
-            try:
-                return subprocess.call(["kdiff3", "-version"]) == 0
-            except:
-                return False
-
-        if save_config_locally and dry_run and config_before != config_after and has_kdiff3():
-            subprocess.call(["kdiff3", "config-before.xml", "config-after.xml"])
 
         if not dry_run and config_before != config_after:
             self._host_rest_client.post('/go/admin/config_xml', data)
