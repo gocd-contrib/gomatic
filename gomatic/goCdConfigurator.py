@@ -1000,6 +1000,8 @@ class HostRestClient:
 
     def get(self, path):
         r = requests.get(self._path(path))
+        if "JSESSIONID" not in r.cookies:
+            raise RuntimeError("Could not find JSESSIONID cookie - got %s" % r.cookies)
         self.session_id = r.cookies["JSESSIONID"]
         return r.text
 
