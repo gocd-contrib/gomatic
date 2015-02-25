@@ -14,3 +14,6 @@
 
 /go-server-*.deb
 /Dockerfile
+/config-before.xml
+/config-after.xml
+
