@@ -924,6 +924,11 @@ class TestPipelineGroup(unittest.TestCase):
 
 
 class TestGoCdConfigurator(unittest.TestCase):
+    def test_keeps_schema_version(self):
+        empty_config = FakeHostRestClient(open('test-data/empty-config.xml').read().replace('schemaVersion="72"', 'schemaVersion="73"'), "empty_config()")
+        configurator = GoCdConfigurator(empty_config)
+        self.assertEquals(1, configurator.config().count('schemaVersion="73"'))
+
     def test_can_have_no_pipeline_groups(self):
         self.assertEquals(0, len(GoCdConfigurator(empty_config()).pipeline_groups()))
 
