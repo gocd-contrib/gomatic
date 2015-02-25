@@ -6,9 +6,10 @@ from goCdConfigurator import *
 
 
 class FakeHostRestClient:
-    def __init__(self, config_string, thing_to_recreate_itself=None):
+    def __init__(self, config_string, thing_to_recreate_itself=None, edit_config_page_html_file='test-data/editConfigPage.html'):
         self.config_string = config_string
         self.thing_to_recreate_itself = thing_to_recreate_itself
+        self.edit_config_page_html_file = edit_config_page_html_file
 
     def __repr__(self):
         if self.thing_to_recreate_itself is None:
@@ -22,7 +23,7 @@ class FakeHostRestClient:
         if path == "/go/api/admin/config.xml":
             return self.config_string
         if path == "/go/admin/config_xml/edit":
-            return open('test-data/editConfigPage.html').read()
+            return open(self.edit_config_page_html_file).read()
         raise RuntimeError("not expecting to be asked for anything else")
 
 
@@ -936,8 +937,16 @@ class TestGoCdConfigurator(unittest.TestCase):
         self.assertEquals(2, len(GoCdConfigurator(config_with_two_pipeline_groups()).pipeline_groups()))
 
     def test_can_find_authenticity_token(self):
-        configurator = GoCdConfigurator(empty_config())
+        empty_config = FakeHostRestClient(open('test-data/empty-config.xml').read(),
+                                          edit_config_page_html_file='test-data/editConfigPage.html')
+        configurator = GoCdConfigurator(empty_config)
         self.assertEquals("861gOYM6Hczw7JirgRJSjjQId1+t0EiCwAV/O0RJATs=", configurator.authenticity_token())
+
+    def test_can_find_authenticity_token_for_newer_version(self):
+        empty_config = FakeHostRestClient(open('test-data/empty-config.xml').read(),
+                                          edit_config_page_html_file='test-data/editConfigPage-14.3.html')
+        configurator = GoCdConfigurator(empty_config)
+        self.assertEquals("HxDFRZ5BCvo7nL+390qk4qRZ3GbwVSEHe60qcjZZ5Sw=", configurator.authenticity_token())
 
     def test_can_get_initial_config_md5(self):
         configurator = GoCdConfigurator(empty_config())

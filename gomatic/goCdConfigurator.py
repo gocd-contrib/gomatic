@@ -1084,7 +1084,8 @@ class GoCdConfigurator:
     def authenticity_token(self):
         html = self._host_rest_client.get("/go/admin/config_xml/edit")
         line = [l for l in html.split('\n') if l.count('authenticity_token')][0]
-        value = [e for e in line.split() if e.count('value')][1]
+        part_after_authenticity_token = line.split('authenticity_token')[-1]
+        value = [e for e in part_after_authenticity_token.split() if e.count('value')][0]
         return value.split('"')[1]
 
     def _md5(self, config):
