@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from distutils.version import StrictVersion
-
 from urllib2 import urlopen
 import time
 import subprocess
@@ -78,8 +77,9 @@ def check_installed(command, desired_version, versionNumberFromVersionOutput, in
             fail_with("Need %s version %s+. You have %s." % (command, desired_version, installed_version))
     except OSError:
         webbrowser.open_new_tab(installationInstructions)
-        fail_with("Need %s version %s+. See installation instructions at %s (opened in browser for your convenience)" % (
-            command, desired_version, installationInstructions))
+        fail_with(
+            "Need %s version %s+. See installation instructions at %s (opened in browser for your convenience)" % (
+                command, desired_version, installationInstructions))
 
 
 def check_docker():
@@ -94,30 +94,32 @@ def check_docker():
 
 class IntegrationTest(unittest.TestCase):
     def test_all_versions(self):
-        for gocd_version in [  # '13.1.1-16714',
-                               '13.2.2-17585',
-                               '13.3.1-18130',
-                               '13.4.0-18334',
-                               '13.4.1-18342',
-                               '14.1.0-18882',
-                               '14.2.0-377']:
-            # '14.3.0-1186',
-            # '14.4.0-1356']:
+        for gocd_version in [#'13.1.1-16714',
+                             '13.2.2-17585',
+                             '13.3.1-18130',
+                             '13.4.0-18334',
+                             '13.4.1-18342',
+                             '14.1.0-18882',
+                             '14.2.0-377',
+                             '14.3.0-1186',
+                             '14.4.0-1356']:
             print "*" * 60, gocd_version
             with populated_go_server(gocd_version) as configurator:
                 self.assertEquals(["P.Group"], [p.name() for p in configurator.pipeline_groups()])
                 self.assertEquals(["more-options"], [p.name() for p in configurator.pipeline_groups()[0].pipelines()])
                 pipeline = configurator.pipeline_groups()[0].pipelines()[0]
                 self.assertEquals("0 15 22 * * ?", pipeline.timer())
-                self.assertEquals(GitMaterial("git@bitbucket.org:springersbm/gomatic.git", material_name="some-material-name",
-                                              polling=False), pipeline.git_material())
+                self.assertEquals(
+                    GitMaterial("git@bitbucket.org:springersbm/gomatic.git", material_name="some-material-name",
+                                polling=False), pipeline.git_material())
                 self.assertEquals({'JAVA_HOME': '/opt/java/jdk-1.7'}, pipeline.environment_variables())
                 self.assertEquals({'environment': 'qa'}, pipeline.parameters())
                 self.assertEquals(['earlyStage'], [s.name() for s in pipeline.stages()])
                 self.assertEquals(['earlyWorm'], [j.name() for j in pipeline.stages()[0].jobs()])
                 job = pipeline.stages()[0].jobs()[0]
-                self.assertEquals({BuildArtifact("scripts/*", "files"), BuildArtifact("target/universal/myapp*.zip", "artifacts"),
-                                   TestArtifact("from", "to")}, job.artifacts())
+                self.assertEquals(
+                    {BuildArtifact("scripts/*", "files"), BuildArtifact("target/universal/myapp*.zip", "artifacts"),
+                     TestArtifact("from", "to")}, job.artifacts())
                 self.assertEquals(True, job.runs_on_all_agents())
                 self.assertEquals([ExecTask(['ls'])], job.tasks())
 
