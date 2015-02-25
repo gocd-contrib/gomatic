@@ -26,9 +26,12 @@ def start_go_server(gocd_version):
     wait_for_go_server_to_start()
 
 
-class IntegrationTest(unittest.TestCase):
-    def test_thing(self):
-        start_go_server('13.4.0-18334')  # Newest: 14.4.0-1356
+class populated_go_server:
+    def __init__(self, gocd_version):
+        self.gocd_version = gocd_version
+
+    def __enter__(self):
+        start_go_server(self.gocd_version)
 
         configurator = GoCdConfigurator(HostRestClient('localhost:8153'))
         pipeline = configurator \
@@ -48,10 +51,19 @@ class IntegrationTest(unittest.TestCase):
         job.add_task(ExecTask(['ls']))
 
         configurator.save_updated_config(save_config_locally=True)
+        return GoCdConfigurator(HostRestClient('localhost:8153'))
 
-        configurator = GoCdConfigurator(HostRestClient('localhost:8153'))
+    def __exit__(self, type, value, traceback):
+        # stop go server
+        pass
 
-        self.assertEquals(["P.Group"], [p.name() for p in configurator.pipeline_groups()])
+
+class IntegrationTest(unittest.TestCase):
+    def test_all_versions(self):
+        for gocd_version in ['13.4.0-18334']:  # , '14.4.0-1356']:
+            with populated_go_server(gocd_version) as configurator:
+                self.assertEquals(["P.Group"], [p.name() for p in configurator.pipeline_groups()])
+                self.assertEquals(["more-options"], [p.name() for p in configurator.pipeline_groups()[0].pipelines()])
 
 
 if __name__ == '__main__':
