@@ -19,4 +19,4 @@ IMAGE_NAME=springersbm/gocd:${GO_VERSION}
 
 docker build -t ${IMAGE_NAME} .
 
-docker run -d --name gocd-test-server -it -p 8153:8153 ${IMAGE_NAME}
+docker run -d --name gocd-test-server-${GO_VERSION} -it -p 8153:8153 ${IMAGE_NAME}

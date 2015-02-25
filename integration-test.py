@@ -14,16 +14,13 @@ def start_go_server(gocd_version):
 
     os.system("./build-and-run-go-server-in-docker %s" % gocd_version)
 
-    def wait_for_go_server_to_start():
-        for attempt in range(120):
-            try:
-                urlopen("http://localhost:8153").read()
-                return
-            except:
-                time.sleep(1)
-                print "Waiting for Docker-based Go server to start..."
-
-    wait_for_go_server_to_start()
+    for attempt in range(120):
+        try:
+            urlopen("http://localhost:8153").read()
+            return
+        except:
+            time.sleep(1)
+            print "Waiting for Docker-based Go server to start..."
 
 
 class populated_go_server:
@@ -54,13 +51,12 @@ class populated_go_server:
         return GoCdConfigurator(HostRestClient('localhost:8153'))
 
     def __exit__(self, type, value, traceback):
-        # stop go server
-        pass
-
+        os.system("docker rm -f gocd-test-server-%s" % self.gocd_version)
 
 class IntegrationTest(unittest.TestCase):
     def test_all_versions(self):
-        for gocd_version in ['13.4.0-18334']:  # , '14.4.0-1356']:
+        for gocd_version in ['13.4.0-18334', '14.4.0-1356']:
+            print "*" * 40, gocd_version
             with populated_go_server(gocd_version) as configurator:
                 self.assertEquals(["P.Group"], [p.name() for p in configurator.pipeline_groups()])
                 self.assertEquals(["more-options"], [p.name() for p in configurator.pipeline_groups()[0].pipelines()])
