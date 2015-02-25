@@ -1,0 +1,22 @@
+#! /bin/bash
+
+set -e
+
+GO_VERSION="$1"
+
+if [ -z "$GO_VERSION" ]; then
+  echo >&2 "No Go server version was provided"
+  exit 1
+fi
+
+GO_DOWNLOAD_URL=http://download.go.cd/gocd-deb/go-server-${GO_VERSION}.deb
+
+if [ ! -f go-server-${GO_VERSION}.deb ]; then
+  wget -O go-server-${GO_VERSION}.deb ${GO_DOWNLOAD_URL}
+fi
+
+IMAGE_NAME=springersbm/gocd:${GO_VERSION}
+
+docker build -t ${IMAGE_NAME} .
+
+docker run -d --name gocd-test-server -it -p 8153:8153 ${IMAGE_NAME}

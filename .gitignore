@@ -12,3 +12,5 @@
 /venv/
 /build
 
+/go-server-*.deb
+/Dockerfile
