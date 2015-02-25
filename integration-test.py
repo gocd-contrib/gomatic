@@ -65,7 +65,15 @@ class populated_go_server:
 
 class IntegrationTest(unittest.TestCase):
     def test_all_versions(self):
-        for gocd_version in ['13.4.0-18334', '14.4.0-1356']:
+        for gocd_version in [#'13.1.1-16714',
+                             '13.2.2-17585',
+                             '13.3.1-18130',
+                             '13.4.0-18334',
+                             '13.4.1-18342',
+                             '14.1.0-18882',
+                             '14.2.0-377']:
+                             #'14.3.0-1186',
+                             #'14.4.0-1356']:
             print "*" * 60, gocd_version
             with populated_go_server(gocd_version) as configurator:
                 self.assertEquals(["P.Group"], [p.name() for p in configurator.pipeline_groups()])
