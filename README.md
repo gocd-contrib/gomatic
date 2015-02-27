@@ -33,7 +33,17 @@ Gomatic doesn't use the [RESTful Go API](http://www.thoughtworks.com/products/do
 
 We wrote it for our purposes and find it very useful; however, the current version has limitations (e.g. only really supports "Custom Command" task type) and allows you to try to configure GoCD incorrectly (which GoCD will refuse to allow). We will continue to work on it and will address its current limitations.
 
-It has only been tested using GoCD versions 13.4.0 and 14.2.0-377 - I think it doesn't yet work with the newest versions.
+It has only been thoroughly tested using GoCD versions 13.4.0-18334 but we believe it works for these versions (as indicated by `integration-test.py`):
+
+* 13.2.2-17585
+* 13.3.1-18130
+* 13.4.0-18334
+* 13.4.1-18342
+* 14.1.0-18882
+* 14.2.0-377
+* 14.3.0-1186
+* 14.4.0-1356
+* 15.1.0-1535
 
 ## Install
 
