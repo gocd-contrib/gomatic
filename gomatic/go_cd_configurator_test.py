@@ -2,7 +2,7 @@
 
 import unittest
 
-from goCdConfigurator import *
+from go_cd_configurator import *
 
 
 class FakeHostRestClient:
