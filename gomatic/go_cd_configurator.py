@@ -797,7 +797,10 @@ class Pipeline(CommonEqualityMixin):
         return 'isLocked' in self.element.attrib and self.element.attrib['isLocked'] == 'true'
 
     def label_template(self):
-        return self.element.attrib['labeltemplate']
+        if self.has_label_template():
+            return self.element.attrib['labeltemplate']
+        else:
+            raise RuntimeError("Does not have a label template")
 
     def set_label_template(self, label_template):
         self.element.attrib['labeltemplate'] = label_template

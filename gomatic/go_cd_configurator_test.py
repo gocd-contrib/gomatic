@@ -824,7 +824,7 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals(False, pipeline.has_timer())
         try:
             pipeline.timer()
-            self.fail('_should have thrown an exception')
+            self.fail('should have thrown an exception')
         except RuntimeError:
             pass
 
@@ -842,6 +842,11 @@ class TestPipeline(unittest.TestCase):
     def test_might_not_have_label_template(self):
         pipeline = more_options_pipeline()  # TODO swap label with typical
         self.assertEquals(False, pipeline.has_label_template())
+        try:
+            pipeline.label_template()
+            self.fail('should have thrown an exception')
+        except RuntimeError:
+            pass
 
     def test_can_set_label_template(self):
         pipeline = GoCdConfigurator(empty_config()).ensure_pipeline_group('Group').ensure_pipeline('Pipeline')
