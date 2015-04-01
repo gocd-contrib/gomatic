@@ -818,6 +818,13 @@ class TestPipeline(unittest.TestCase):
         pipeline = more_options_pipeline()
         self.assertEquals(True, pipeline.has_timer())
         self.assertEquals("0 15 22 * * ?", pipeline.timer())
+        self.assertEquals(False, pipeline.timer_triggers_only_on_changes())
+
+    def test_can_have_timer_with_onlyOnChanges_option(self):
+        pipeline = GoCdConfigurator(config_with_more_options_pipeline()).ensure_pipeline_group('P.Group').find_pipeline('pipeline2')
+        self.assertEquals(True, pipeline.has_timer())
+        self.assertEquals("0 0 22 ? * MON-FRI", pipeline.timer())
+        self.assertEquals(True, pipeline.timer_triggers_only_on_changes())
 
     def test_need_not_have_timer(self):
         pipeline = GoCdConfigurator(empty_config()).ensure_pipeline_group('Group').ensure_pipeline('Pipeline')

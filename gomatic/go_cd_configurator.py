@@ -935,6 +935,12 @@ class Pipeline(CommonEqualityMixin):
     def make_empty(self):
         PossiblyMissingElement(self.element).remove_all_children().remove_attribute('labeltemplate')
 
+    def timer_triggers_only_on_changes(self):
+        element = self.element.find('timer')
+        if 'onlyOnChanges' in element.attrib:
+            if "true" in element.attrib['onlyOnChanges']:
+                return True
+        return False
 
 DEFAULT_LABEL_TEMPLATE = "0.${COUNT}" # TODO confirm what default really is. I am pretty sure this is mistaken!
 
