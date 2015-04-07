@@ -656,11 +656,11 @@ class TestPipeline(unittest.TestCase):
     def test_can_set_pipeline_git_url_with_options(self):
         pipeline = typical_pipeline()
         p = pipeline.set_git_material(GitMaterial(
-                                "git@bitbucket.org:springersbm/changed.git",
-                                 branch="branch",
-                                 material_name="material-name",
-                                 ignore_patterns={"ignoreMe", "ignoreThisToo"},
-                                 polling=False))
+            "git@bitbucket.org:springersbm/changed.git",
+            branch="branch",
+            material_name="material-name",
+            ignore_patterns={"ignoreMe", "ignoreThisToo"},
+            polling=False))
         self.assertEquals(p, pipeline)
         self.assertEquals("branch", pipeline.git_branch())
         self.assertEquals("material-name", pipeline.git_material().material_name())
@@ -1143,7 +1143,8 @@ class TestReverseEngineering(unittest.TestCase):
 
     def test_can_round_trip_git_extras(self):
         configurator = GoCdConfigurator(empty_config())
-        before = configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_git_material(GitMaterial("some git url", "some branch", "some material name", False, {"excluded", "things"}))
+        before = configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_git_material(
+            GitMaterial("some git url", "some branch", "some material name", False, {"excluded", "things"}))
         self.check_round_trip_pipeline(configurator, before)
 
     def test_can_round_trip_pipeline_parameters(self):

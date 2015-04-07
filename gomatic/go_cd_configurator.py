@@ -189,6 +189,7 @@ def move_all_to_end(parent_element, tag):
         parent_element.remove(element)
         parent_element.append(element)
 
+
 def runifFrom(element):
     runifs = [e.attrib['status'] for e in element.findall("runif")]
     if len(runifs) == 0:
@@ -198,6 +199,7 @@ def runifFrom(element):
     if len(runifs) == 2 and 'passed' in runifs and 'failed' in runifs:
         return 'any'
     raise RuntimeError("Don't know what multiple runif values (%s) means" % runifs)
+
 
 def Task(element):
     runif = runifFrom(element)
@@ -939,7 +941,8 @@ class Pipeline(CommonEqualityMixin):
         element = self.element.find('timer')
         return "true" == element.attrib.get('onlyOnChanges')
 
-DEFAULT_LABEL_TEMPLATE = "0.${COUNT}" # TODO confirm what default really is. I am pretty sure this is mistaken!
+
+DEFAULT_LABEL_TEMPLATE = "0.${COUNT}"  # TODO confirm what default really is. I am pretty sure this is mistaken!
 
 
 class PipelineGroup(CommonEqualityMixin):
