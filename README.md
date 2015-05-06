@@ -43,7 +43,7 @@ It has only been thoroughly tested using GoCD versions 13.4.0-18334 but we belie
 * 14.2.0-377
 * 14.3.0-1186
 * 14.4.0-1356
-* 15.1.0-1535
+* 15.1.0-1863
 
 ## Install
 
