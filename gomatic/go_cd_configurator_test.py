@@ -789,6 +789,18 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals(p, pipeline)
         self.assertEquals({}, pipeline.environment_variables())
 
+    def test_can_remove_specific_environment_variable(self):
+        pipeline = empty_pipeline()
+        pipeline.ensure_encrypted_environment_variables({'a' : 's'})
+        pipeline.ensure_environment_variables({'c' : 'v', 'd' : 'f'})
+
+        pipeline.remove_environment_variable('d')
+        p = pipeline.remove_environment_variable('unknown')
+
+        self.assertEquals(p, pipeline)
+        self.assertEquals({'a' : 's'}, pipeline.encrypted_environment_variables())
+        self.assertEquals({'c' : 'v'}, pipeline.environment_variables())
+
     def test_pipelines_have_parameters(self):
         pipeline = more_options_pipeline()
         self.assertEquals({"environment": "qa"}, pipeline.parameters())

@@ -182,6 +182,15 @@ class ThingWithEnvironmentVariables:
             result += '.ensure_encrypted_environment_variables(%s)' % encrypted_environment_variables
         return result
 
+    def remove(self, name):
+        env_vars = self.environment_variables()
+        encrypted_env_vars = self.encrypted_environment_variables()
+        self.remove_all()
+        if env_vars.has_key(name):
+            del env_vars[name]
+        self.ensure_environment_variables(env_vars)
+        self.ensure_encrypted_environment_variables(encrypted_env_vars)
+
 
 def move_all_to_end(parent_element, tag):
     elements = parent_element.findall(tag)
@@ -871,6 +880,10 @@ class Pipeline(CommonEqualityMixin):
 
     def without_any_environment_variables(self):
         ThingWithEnvironmentVariables(self.element).remove_all()
+        return self
+
+    def remove_environment_variable(self, name):
+        ThingWithEnvironmentVariables(self.element).remove(name)
         return self
 
     def parameters(self):
