@@ -10,6 +10,9 @@ from xml.dom.minidom import parseString
 from xml.sax.saxutils import escape
 
 
+version = "0.3.9"
+
+
 def prettify(xml_string):
     xml = parseString(xml_string)
     formatted_but_with_blank_lines = xml.toprettyxml()
@@ -1146,7 +1149,7 @@ class GoCdConfigurator:
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='API for configuring GoCD. Gomatic version %s' % version)
     parser.add_argument('-s', '--server', default='localhost:8153',
                         help='the go server (e.g. "localhost:8153" or "gocd.example.com")')
     parser.add_argument('-d', '--dry-run', action='store_true',
