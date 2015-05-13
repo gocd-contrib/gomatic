@@ -1040,7 +1040,7 @@ class HostRestClient:
 class GoCdConfigurator:
     def __init__(self, host_rest_client):
         self._host_rest_client = host_rest_client
-        self._initial_config = self.current_config()
+        self._initial_config = self.config_from_server()
         self._xml_root = ET.fromstring(self._initial_config)
 
     def __repr__(self):
@@ -1055,7 +1055,7 @@ class GoCdConfigurator:
             save_part = "\n\nconfigurator.save_updated_config(save_config_locally=True, dry_run=True)"
         return result + save_part
 
-    def current_config(self):
+    def config_from_server(self):
         return self._host_rest_client.get("/go/api/admin/config.xml")
 
     def reorder_elements_to_please_go(self):
@@ -1133,6 +1133,9 @@ class GoCdConfigurator:
             if dry_run and config_before != config_after and has_kdiff3():
                 subprocess.call(["kdiff3", "config-before.xml", "config-after.xml"])
 
+        if config_before == config_after:
+            return
+
         data = {
             'go_config[content]': self.config(),
             'commit': 'SAVE',
@@ -1141,7 +1144,11 @@ class GoCdConfigurator:
             'authenticity_token': self.authenticity_token()
         }
 
-        if not dry_run and config_before != config_after:
+        current_server_config_md5 = self._md5(self.config_from_server())
+        if self._initial_md5() != current_server_config_md5:
+            raise RuntimeError("Not trying to update because the config was changed by someone else.")
+
+        if not dry_run:
             self._host_rest_client.post('/go/admin/config_xml', data)
 
 
