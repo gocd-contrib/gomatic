@@ -27,12 +27,8 @@ class FakeHostRestClient:
         raise RuntimeError("not expecting to be asked for anything else")
 
 
-def config_string(config_name):
-    return open('test-data/' + config_name + '.xml').read()
-
-
 def config_with(config_name):
-    return FakeHostRestClient(config_string(config_name))
+    return FakeHostRestClient(open('test-data/' + config_name + '.xml').read())
 
 
 def config_with_more_options_pipeline():
@@ -1019,20 +1015,6 @@ class TestGoCdConfigurator(unittest.TestCase):
         configurator = GoCdConfigurator(config_with_two_pipeline_groups())
         configurator.ensure_removal_of_pipeline_group('pipeline-group-that-has-already-been-removed')
         self.assertEquals(2, len(configurator.pipeline_groups()))
-
-    def test_fails_if_changed_by_someone_else(self):
-        changable_host_rest_client = config_with_two_pipeline_groups()
-        configurator = GoCdConfigurator(changable_host_rest_client)
-
-        configurator.ensure_pipeline_group("another")
-
-        changable_host_rest_client.config_string = config_string('config-with-typical-pipeline')
-
-        try:
-            configurator.save_updated_config(False, True)
-            self.fail("should have thrown exception")
-        except RuntimeError as e:
-            self.assertTrue(e.message.lower().count("changed by someone else"))
 
     def test_top_level_elements_get_reordered_to_please_go(self):
         configurator = GoCdConfigurator(config_with('config-with-agents-and-templates-but-without-pipelines'))
