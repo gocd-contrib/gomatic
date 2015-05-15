@@ -33,7 +33,7 @@ Gomatic doesn't use the [RESTful Go API](http://www.thoughtworks.com/products/do
 
 We wrote it for our purposes and find it very useful; however, the current version has limitations (e.g. only really supports "Custom Command" task type) and allows you to try to configure GoCD incorrectly (which GoCD will refuse to allow). We will continue to work on it and will address its current limitations.
 
-We believe it works for the following versions (as indicated by `integration-test.py` - which requires [docker](https://www.docker.com/) to be installed in order to run):
+We believe it works for the following versions (as indicated by `integration-test.py`):
 
 * 13.2.2-17585
 * 13.3.1-18130
@@ -47,7 +47,7 @@ We believe it works for the following versions (as indicated by `integration-tes
 
 ## Install
 
-We've written it using Python 2 (for the moment - should be simple to port to Python 3 - which we might do in the future). You can install it using "pip":
+We've written it using Python 2.7 (for the moment - should be simple to port to Python 3 - which we might do in the future). You can install it using "pip":
 
     sudo pip install gomatic
 
@@ -110,3 +110,14 @@ If you only want to use the command line:
 Then, each time you want to run gomatic, if you need to activate the virtual environment (if it is not already activated - your command prompt will indicate if it is, e.g. `(venv)ivan@...`):
 
     source venv/bin/activate
+
+### Run the tests
+
+Unit tests:
+
+1. `cd gomatic`
+1. `python go_cd_configurator_test.py`
+
+Integration tests (takes a long time to download many versions of GoCD) (requires [docker](https://www.docker.com/) to be installed in order to run):
+ 
+1. `python integration-test.py`
