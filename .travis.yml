@@ -8,5 +8,6 @@ deploy:
   user: springersbm
   on:
     tags: true
+    repo: SpringerSBM/gomatic
   password:
     secure: iGYAnHBMHWB/2ijrNbaR5/d8obr4BiZJVSpHYz9AbQVAez2/6acXM1g2Ak4s/N0Fh49LCXMIUx5XYDqwcRWAeSkQ2MikxqbVRKAByTsIt0zXJQJrCFA2FhtkhBb5P0o+IpsTx9eNqr7nIyUpOXU7oWrbUl1zxOR7m0/kfnxirPY=
