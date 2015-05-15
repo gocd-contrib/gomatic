@@ -1113,7 +1113,7 @@ class TestReverseEngineering(unittest.TestCase):
             print
             print reverse_engineered_python
         pipeline = "evaluation failed"
-        exec reverse_engineered_python
+        exec reverse_engineered_python.replace("from gomatic import *", "from go_cd_configurator import *")
         self.assertEquals(sneakily_converted_to_xml(before), sneakily_converted_to_xml(pipeline))
 
     def test_can_round_trip_simplest_pipeline(self):
