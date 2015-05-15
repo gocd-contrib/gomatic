@@ -121,3 +121,12 @@ Unit tests:
 Integration tests (takes a long time to download many versions of GoCD) (requires [docker](https://www.docker.com/) to be installed in order to run):
  
 1. `python integration-test.py`
+
+### CI and releasing packages to pypi
+
+Gomatic uses [travis-ci](https://travis-ci.org/SpringerSBM/gomatic) to run the unit tests and deploy to [pypi](https://pypi.python.org/pypi/gomatic).
+Only tagged commits are deployed to pypi.
+
+1. update value of `version` in `./gomatic/go_cd_configurator.py`
+1. `git tag -a v<version> -m 'version <version>'` (e.g. `git tag -a v0.3.10 -m 'version 0.3.10'`)
+1. `git push origin --tags`
