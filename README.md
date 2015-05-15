@@ -47,7 +47,7 @@ We believe it works for the following versions (as indicated by `integration-tes
 
 ## Install
 
-We've written it using Python 2 (for the moment - should be simple to port to Python 3 - which we might do in the future). You can install it using "pip":
+We've written it using Python 2.7 (for the moment - should be simple to port to Python 3 - which we might do in the future). You can install it using "pip":
 
     sudo pip install gomatic
 
