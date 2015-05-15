@@ -10,7 +10,7 @@ from xml.dom.minidom import parseString
 from xml.sax.saxutils import escape
 
 
-version = "0.3.9"
+version = "0.3.10"
 
 
 def prettify(xml_string):
