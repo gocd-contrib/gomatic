@@ -1000,13 +1000,17 @@ class PipelineGroup(CommonEqualityMixin):
 
 class Agent:
     def __init__(self, element):
-        self.thing_with_resources = ThingWithResources(element)
+        self._element = element
+        self._thing_with_resources = ThingWithResources(element)
+
+    def hostname(self):
+        return self._element.attrib['hostname']
 
     def resources(self):
-        return self.thing_with_resources.resources()
+        return self._thing_with_resources.resources()
 
     def ensure_resource(self, resource):
-        self.thing_with_resources.ensure_resource(resource)
+        self._thing_with_resources.ensure_resource(resource)
 
 
 class HostRestClient:

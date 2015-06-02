@@ -100,6 +100,11 @@ class TestAgents(unittest.TestCase):
         self.assertEquals(2, len(agents))
         self.assertEquals({'a-resource', 'b-resource'}, agents[0].resources())
 
+    def test_agents_have_names(self):
+        agents = self._agents_from_config()
+        self.assertEquals('go-agent-1', agents[0].hostname())
+        self.assertEquals('go-agent-2', agents[1].hostname())
+
     def test_agent_could_have_no_resources(self):
         agents = self._agents_from_config()
         self.assertEquals(0, len(agents[1].resources()))
