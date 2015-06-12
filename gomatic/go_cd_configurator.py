@@ -1,6 +1,6 @@
 #!/usr/bin/env python
+import json
 import requests
-import webbrowser
 import xml.etree.ElementTree as ET
 import argparse
 import sys
@@ -1025,20 +1025,14 @@ class HostRestClient:
         return ('http://%s' % self._host) + path
 
     def get(self, path):
-        url = self._path(path)
-        r = requests.get(url)
-        if "JSESSIONID" not in r.cookies:
-            raise RuntimeError("Could not find JSESSIONID cookie when getting %s - got %s" % (url, r.cookies))
-        self.session_id = r.cookies["JSESSIONID"]
-        return r.text
+        return requests.get(self._path(path)).text
 
     def post(self, path, data):
-        result = requests.post(self._path(path), data, cookies={"JSESSIONID": self.session_id})
-        # strangely - you sometimes get a 200 even when there is an error
-        if result.status_code != 200 or result.text.count("The following error"):
-            open('result.html', 'w').write(result.text)
-            webbrowser.open('result.html')
-            raise RuntimeError("Could not post config to Go server - see browser to try to work out why")
+        result = requests.post(self._path(path), data)
+        if result.status_code != 200:
+            result_json = json.loads(result.text.replace("\\'", "'"))
+            message = result_json.get('result', result.text)
+            raise RuntimeError("Could not post config to Go server:\n%s" % message)
 
 
 class GoCdConfigurator:
@@ -1060,7 +1054,8 @@ class GoCdConfigurator:
         return result + save_part
 
     def current_config(self):
-        return self._host_rest_client.get("/go/api/admin/config.xml")
+        # TODO: remember X-CRUISE-CONFIG-MD5
+        return self._host_rest_client.get("/go/admin/restful/configuration/file/GET/xml")
 
     def reorder_elements_to_please_go(self):
         move_all_to_end(self._xml_root, 'pipelines')
@@ -1108,13 +1103,6 @@ class GoCdConfigurator:
     def git_urls(self):
         return [pipeline.git_url() for pipeline in self.pipelines() if pipeline.has_single_git_material()]
 
-    def authenticity_token(self):
-        html = self._host_rest_client.get("/go/admin/config_xml/edit")
-        line = [l for l in html.split('\n') if l.count('authenticity_token')][0]
-        part_after_authenticity_token = line.split('authenticity_token')[-1]
-        value = [e for e in part_after_authenticity_token.split() if e.count('value')][0]
-        return value.split('"')[1]
-
     def _md5(self, config):
         return hashlib.md5(config).hexdigest()
 
@@ -1138,15 +1126,12 @@ class GoCdConfigurator:
                 subprocess.call(["kdiff3", "config-before.xml", "config-after.xml"])
 
         data = {
-            'go_config[content]': self.config(),
-            'commit': 'SAVE',
-            '_method': 'put',
-            'go_config[md5]': self._initial_md5(),
-            'authenticity_token': self.authenticity_token()
+            'xmlFile': self.config(),
+            'md5': self._initial_md5()
         }
 
         if not dry_run and config_before != config_after:
-            self._host_rest_client.post('/go/admin/config_xml', data)
+            self._host_rest_client.post('/go/admin/restful/configuration/file/POST/xml', data)
 
 
 if __name__ == '__main__':
