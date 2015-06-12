@@ -35,6 +35,7 @@ We wrote it for our purposes and find it very useful; however, the current versi
 
 We believe it works for the following versions (as indicated by `integration-test.py`):
 
+* 13.1.1-16714
 * 13.2.2-17585
 * 13.3.1-18130
 * 13.4.0-18334

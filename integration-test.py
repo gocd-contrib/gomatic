@@ -94,7 +94,7 @@ def check_docker():
 
 class IntegrationTest(unittest.TestCase):
     def test_all_versions(self):
-        for gocd_version in [#'13.1.1-16714', # does not work with that version
+        for gocd_version in ['13.1.1-16714',
                              '13.2.2-17585',
                              '13.3.1-18130',
                              '13.4.0-18334',
