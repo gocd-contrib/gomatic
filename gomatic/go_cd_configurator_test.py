@@ -4,6 +4,11 @@ import unittest
 
 from go_cd_configurator import *
 
+empty_config_xml = """<?xml version="1.0" encoding="utf-8"?>
+<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">
+  <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="96eca4bf-210e-499f-9dc9-0cefdae38d0c" />
+</cruise>"""
+
 
 class FakeHostRestClient:
     def __init__(self, config_string, thing_to_recreate_itself=None, edit_config_page_html_file='test-data/editConfigPage.html'):
@@ -60,7 +65,7 @@ def config_with_encrypted_variable():
 
 
 def empty_config():
-    return FakeHostRestClient(open('test-data/empty-config.xml').read(), "empty_config()")
+    return FakeHostRestClient(empty_config_xml, "empty_config()")
 
 
 def find_with_matching_name(things, name):
@@ -955,7 +960,7 @@ class TestPipelineGroup(unittest.TestCase):
 
 class TestGoCdConfigurator(unittest.TestCase):
     def test_keeps_schema_version(self):
-        empty_config = FakeHostRestClient(open('test-data/empty-config.xml').read().replace('schemaVersion="72"', 'schemaVersion="73"'), "empty_config()")
+        empty_config = FakeHostRestClient(empty_config_xml.replace('schemaVersion="72"', 'schemaVersion="73"'), "empty_config()")
         configurator = GoCdConfigurator(empty_config)
         self.assertEquals(1, configurator.config().count('schemaVersion="73"'))
 
@@ -966,20 +971,18 @@ class TestGoCdConfigurator(unittest.TestCase):
         self.assertEquals(2, len(GoCdConfigurator(config_with_two_pipeline_groups()).pipeline_groups()))
 
     def test_can_find_authenticity_token(self):
-        empty_config = FakeHostRestClient(open('test-data/empty-config.xml').read(),
-                                          edit_config_page_html_file='test-data/editConfigPage.html')
+        empty_config = FakeHostRestClient(empty_config_xml, edit_config_page_html_file='test-data/editConfigPage.html')
         configurator = GoCdConfigurator(empty_config)
         self.assertEquals("861gOYM6Hczw7JirgRJSjjQId1+t0EiCwAV/O0RJATs=", configurator.authenticity_token())
 
     def test_can_find_authenticity_token_for_newer_version(self):
-        empty_config = FakeHostRestClient(open('test-data/empty-config.xml').read(),
-                                          edit_config_page_html_file='test-data/editConfigPage-14.3.html')
+        empty_config = FakeHostRestClient(empty_config_xml, edit_config_page_html_file='test-data/editConfigPage-14.3.html')
         configurator = GoCdConfigurator(empty_config)
         self.assertEquals("HxDFRZ5BCvo7nL+390qk4qRZ3GbwVSEHe60qcjZZ5Sw=", configurator.authenticity_token())
 
     def test_can_get_initial_config_md5(self):
         configurator = GoCdConfigurator(empty_config())
-        self.assertEquals("1caffb21b1a5b683164a9e1a3a69bd46", configurator._initial_md5())
+        self.assertEquals("c65fa5534e91f3e158a96381dd4531f2", configurator._initial_md5())
 
     def test_config_is_updated_as_result_of_updating_part_of_it(self):
         configurator = GoCdConfigurator(config_with_just_agents())
