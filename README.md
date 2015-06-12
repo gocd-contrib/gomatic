@@ -87,36 +87,31 @@ Bear in mind that Gomatic does not currently support every configuration option 
 * Gomatic does not prevent you from creating config XML that GoCD will not accept. For example, if you create a stage that has no jobs, Gomatic won't complain until you try to run `save_updated_config`, at which time the GoCD server will reject the config XML.
 * Gomatic currently only supports calling `save_updated_config` once per instance of `GoCdConfigurator`.
 
-## Developing gomatic
+## Developing Gomatic
 
 You need to install Python's virtualenv tool and create a virtual environment (once):
 
     pip install virtualenv
 
+Then, to create the virtual environment, either:
+
+* install [autoenv](https://github.com/kennethreitz/autoenv) and `cd` into the root directory of Gomatic
+
+Or:
+
+* execute `.env` in the root directory of Gomatic and then execute `source venv/bin/activate`
+
 Then, if you are using IntelliJ IDEA:
 
 1. File -> Project Structure -> Project SDK
-1. New -> Python SDK -> Create VirtualEnv
-1. for "Name" use "venv"
-1. for path, select Gomatic's directory, and location should become `.../gomatic/venv`
-1. follow the command line steps below (apart from "virtualenv venv").
-
-If you only want to use the command line:
-
-1. `virtualenv venv`
-1. `source venv/bin/activate`
-1. `pip install -r requirements.txt`
-
-Then, each time you want to run gomatic, if you need to activate the virtual environment (if it is not already activated - your command prompt will indicate if it is, e.g. `(venv)ivan@...`):
-
-    source venv/bin/activate
+1. New -> Python SDK -> Add local
+1. select `.../gomatic/venv/bin/python`
 
 ### Run the tests
 
 Unit tests:
 
-1. `cd gomatic`
-1. `python go_cd_configurator_test.py`
+1. `./build.sh`
 
 Integration tests (takes a long time to download many versions of GoCD) (requires [docker](https://www.docker.com/) to be installed in order to run):
  
