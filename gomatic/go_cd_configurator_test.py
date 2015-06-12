@@ -10,6 +10,12 @@ empty_config_xml = """<?xml version="1.0" encoding="utf-8"?>
 </cruise>"""
 
 
+class FakeResponse(object):
+    def __init__(self, text):
+        self.text = text
+        self.headers = {'x-cruise-config-md5': '42'}
+
+
 class FakeHostRestClient:
     def __init__(self, config_string, thing_to_recreate_itself=None):
         self.config_string = config_string
@@ -25,7 +31,7 @@ class FakeHostRestClient:
         # sorry for the duplication/shared knowledge of code but this is easiest way to test
         # what we want in a controlled way
         if path == "/go/admin/restful/configuration/file/GET/xml":
-            return self.config_string
+            return FakeResponse(self.config_string)
         raise RuntimeError("not expecting to be asked for anything else")
 
 
@@ -969,7 +975,7 @@ class TestGoCdConfigurator(unittest.TestCase):
 
     def test_can_get_initial_config_md5(self):
         configurator = GoCdConfigurator(empty_config())
-        self.assertEquals("c65fa5534e91f3e158a96381dd4531f2", configurator._initial_md5())
+        self.assertEquals("42", configurator._initial_md5)
 
     def test_config_is_updated_as_result_of_updating_part_of_it(self):
         configurator = GoCdConfigurator(config_with_just_agents())

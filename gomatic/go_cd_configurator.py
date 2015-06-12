@@ -1025,7 +1025,7 @@ class HostRestClient:
         return ('http://%s' % self._host) + path
 
     def get(self, path):
-        return requests.get(self._path(path)).text
+        return requests.get(self._path(path))
 
     def post(self, path, data):
         result = requests.post(self._path(path), data)
@@ -1038,7 +1038,7 @@ class HostRestClient:
 class GoCdConfigurator:
     def __init__(self, host_rest_client):
         self._host_rest_client = host_rest_client
-        self._initial_config = self.current_config()
+        self._initial_config, self._initial_md5 = self._current_config_response()
         self._xml_root = ET.fromstring(self._initial_config)
 
     def __repr__(self):
@@ -1054,8 +1054,11 @@ class GoCdConfigurator:
         return result + save_part
 
     def current_config(self):
-        # TODO: remember X-CRUISE-CONFIG-MD5
-        return self._host_rest_client.get("/go/admin/restful/configuration/file/GET/xml")
+        return self._current_config_response()[0]
+
+    def _current_config_response(self):
+        response = self._host_rest_client.get("/go/admin/restful/configuration/file/GET/xml")
+        return response.text, response.headers['x-cruise-config-md5']
 
     def reorder_elements_to_please_go(self):
         move_all_to_end(self._xml_root, 'pipelines')
@@ -1103,12 +1106,6 @@ class GoCdConfigurator:
     def git_urls(self):
         return [pipeline.git_url() for pipeline in self.pipelines() if pipeline.has_single_git_material()]
 
-    def _md5(self, config):
-        return hashlib.md5(config).hexdigest()
-
-    def _initial_md5(self):
-        return self._md5(self._initial_config)
-
     def save_updated_config(self, save_config_locally=False, dry_run=False):
         config_before = prettify(self._initial_config)
         config_after = prettify(self.config())
@@ -1127,7 +1124,7 @@ class GoCdConfigurator:
 
         data = {
             'xmlFile': self.config(),
-            'md5': self._initial_md5()
+            'md5': self._initial_md5
         }
 
         if not dry_run and config_before != config_after:
