@@ -1132,13 +1132,9 @@ class GoCdConfigurator:
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--server', default='localhost:8153',
-                        help='the go server (e.g. "localhost:8153" or "gocd.example.com")')
-    parser.add_argument('-d', '--dry-run', action='store_true',
-                        help='dry run - do not actually make the changes')
-    parser.add_argument('-c', '--do-not-save-config', action='store_true',
-                        help='do not save the config locally, before and after making a change (as "config-before.xml" and "config-after.xml")')
+    parser = argparse.ArgumentParser(description='Gomatic is an API for configuring GoCD. Run python -m gomatic.go_cd_configurator to reverse engineer code to configure an existing pipeline.')
+    parser.add_argument('-s', '--server', help='the go server (e.g. "localhost:8153" or "my.gocd.com")')
+    parser.add_argument('-p', '--pipeline', help='the name of the pipeline to reverse-engineer the config for')
 
     args = parser.parse_args()
 
@@ -1146,8 +1142,11 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(1)
 
-    configurator = GoCdConfigurator(HostRestClient(args.server))
+    go_server = GoCdConfigurator(HostRestClient(args.server))
 
-    # do what you want to configurator
+    matching_pipelines = [p for p in go_server.pipelines() if p.name() == args.pipeline]
+    if len(matching_pipelines) != 1:
+        raise RuntimeError("Should have found one matching pipeline but found %s" % matching_pipelines)
+    pipeline = matching_pipelines[0]
 
-    configurator.save_updated_config(save_config_locally=not args.do_not_save_config, dry_run=args.dry_run)
+    print go_server.as_python(pipeline)
