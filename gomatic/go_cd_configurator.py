@@ -947,6 +947,10 @@ class Pipeline(CommonEqualityMixin):
         Ensurance(self.element).ensure_child('timer').set_text(timer)
         return self
 
+    def remove_timer(self):
+        PossiblyMissingElement(self.element).remove_all_children('timer')
+        return self
+
     def make_empty(self):
         PossiblyMissingElement(self.element).remove_all_children().remove_attribute('labeltemplate')
 

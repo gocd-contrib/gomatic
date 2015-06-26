@@ -866,6 +866,13 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals(p, pipeline)
         self.assertEquals("one two three", pipeline.timer())
 
+    def test_can_remove_timer(self):
+        pipeline = GoCdConfigurator(empty_config()).ensure_pipeline_group('Group').ensure_pipeline('Pipeline')
+        pipeline.set_timer("one two three")
+        p = pipeline.remove_timer()
+        self.assertEquals(p, pipeline)
+        self.assertFalse(pipeline.has_timer())
+
     def test_can_have_label_template(self):
         pipeline = typical_pipeline()
         self.assertEquals("something-${COUNT}", pipeline.label_template())
