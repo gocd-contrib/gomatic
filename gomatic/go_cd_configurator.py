@@ -718,7 +718,9 @@ class GitMaterial(CommonEqualityMixin):
         if self.ignore_patterns():
             filter_element = ET.fromstring("<filter/>")
             new_element.append(filter_element)
-            for ignore_pattern in self.ignore_patterns():
+            sorted_ignore_patterns = list(self.ignore_patterns())
+            sorted_ignore_patterns.sort()
+            for ignore_pattern in sorted_ignore_patterns:
                 filter_element.append(ET.fromstring('<ignore pattern="%s"/>' % ignore_pattern))
         element.append(new_element)
 
