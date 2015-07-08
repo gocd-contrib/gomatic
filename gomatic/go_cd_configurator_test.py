@@ -933,6 +933,15 @@ class TestPipelineGroup(unittest.TestCase):
     def test_can_find_pipeline(self):
         found_pipeline = self._pipeline_group_from_config().find_pipeline("pipeline2")
         self.assertEquals("pipeline2", found_pipeline.name())
+        self.assertTrue(self._pipeline_group_from_config().has_pipeline("pipeline2"))
+
+    def test_does_not_find_missing_pipeline(self):
+        self.assertFalse(self._pipeline_group_from_config().has_pipeline("unknown-pipeline"))
+        try:
+            self._pipeline_group_from_config().find_pipeline("unknown-pipeline")
+            self.fail("should have thrown exception")
+        except RuntimeError as e:
+            self.assertTrue(e.message.count("unknown-pipeline"))
 
     def test_can_remove_pipeline(self):
         pipeline_group = self._pipeline_group_from_config()

@@ -980,22 +980,22 @@ class PipelineGroup(CommonEqualityMixin):
     def _matching_pipelines(self, name):
         return [p for p in self.pipelines() if p.name() == name]
 
+    def has_pipeline(self, name):
+        return len(self._matching_pipelines(name)) > 0
+
     def find_pipeline(self, name):
-        matching = self._matching_pipelines(name)
-        if len(matching) == 0:
-            raise RuntimeError('Cannot find pipeline with name "%s" in %s' % (name, self.pipelines()))
+        if self.has_pipeline(name):
+            return self._matching_pipelines(name)[0]
         else:
-            return matching[0]
+            raise RuntimeError('Cannot find pipeline with name "%s" in %s' % (name, self.pipelines()))
 
     def ensure_pipeline(self, name):
         pipeline_element = Ensurance(self.element).ensure_child_with_attribute('pipeline', 'name', name)._element
         return Pipeline(pipeline_element, self)
 
     def ensure_removal_of_pipeline(self, name):
-        matching_pipelines = self._matching_pipelines(name)
-        if len(matching_pipelines) != 0:
-            for pipeline in matching_pipelines:
-                self.element.remove(pipeline.element)
+        for pipeline in self._matching_pipelines(name):
+            self.element.remove(pipeline.element)
         return self
 
     def ensure_replacement_of_pipeline(self, name):
