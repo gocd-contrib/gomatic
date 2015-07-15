@@ -155,13 +155,13 @@ class ThingWithEnvironmentVariables:
 
     def _ensure_environment_variables(self, environment_variables, encrypted):
         environment_variables_ensurance = Ensurance(self.element).ensure_child("environmentvariables")
-        for key, value in environment_variables.iteritems():
-            variable_element = environment_variables_ensurance.ensure_child_with_attribute("variable", "name", key)
+        for environment_variable_name in sorted(environment_variables.keys()):
+            variable_element = environment_variables_ensurance.ensure_child_with_attribute("variable", "name", environment_variable_name)
             if encrypted:
                 value_element = variable_element.set("secure", "true").ensure_child("encryptedValue")
             else:
                 value_element = variable_element.ensure_child("value")
-            value_element.set_text(value)
+            value_element.set_text(environment_variables[environment_variable_name])
 
     def ensure_environment_variables(self, environment_variables):
         self._ensure_environment_variables(environment_variables, False)

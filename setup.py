@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='gomatic',
-      version='0.3.22',
+      version='0.3.23',
       description='API for configuring GoCD',
       url='https://github.com/SpringerSBM/gomatic',
       author='Springer Science+Business Media',
