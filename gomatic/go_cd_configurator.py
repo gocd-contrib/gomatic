@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 import json
-import requests
 import xml.etree.ElementTree as ET
 import argparse
 import sys
-import hashlib
 import subprocess
 from xml.dom.minidom import parseString
 from xml.sax.saxutils import escape
+
+import requests
 
 
 def prettify(xml_string):
