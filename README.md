@@ -45,6 +45,7 @@ We believe it works for the following versions (as indicated by `integration-tes
 * 14.3.0-1186
 * 14.4.0-1356
 * 15.1.0-1863
+* 15.2.0-2248
 
 ## Install
 
