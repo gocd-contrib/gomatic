@@ -1120,8 +1120,8 @@ class GoCdConfigurator:
         config_before = prettify(self._initial_config)
         config_after = prettify(self.config())
         if save_config_locally:
-            open('config-before.xml', 'w').write(config_before)
-            open('config-after.xml', 'w').write(config_after)
+            open('config-before.xml', 'w').write(config_before.encode('utf-8'))
+            open('config-after.xml', 'w').write(config_after.encode('utf-8'))
 
             def has_kdiff3():
                 try:
