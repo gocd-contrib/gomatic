@@ -103,7 +103,8 @@ class IntegrationTest(unittest.TestCase):
                              '14.2.0-377',
                              '14.3.0-1186',
                              '14.4.0-1356',
-                             '15.1.0-1863']:
+                             '15.1.0-1863',
+                             '15.2.0-2248']:
             print "*" * 60, gocd_version
             with populated_go_server(gocd_version) as configurator:
                 self.assertEquals(["P.Group"], [p.name() for p in configurator.pipeline_groups()])
