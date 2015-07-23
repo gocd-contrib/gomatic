@@ -70,48 +70,48 @@ class Ensurance:
 
 class PossiblyMissingElement:
     def __init__(self, element):
-        self.element = element
+        self.__element = element
 
     def possibly_missing_child(self, name):
-        if self.element is None:
+        if self.__element is None:
             return PossiblyMissingElement(None)
         else:
-            return PossiblyMissingElement(self.element.find(name))
+            return PossiblyMissingElement(self.__element.find(name))
 
     def findall(self, name):
-        if self.element is None:
+        if self.__element is None:
             return []
         else:
-            return self.element.findall(name)
+            return self.__element.findall(name)
 
     def iterator(self):
-        if self.element is None:
+        if self.__element is None:
             return []
         else:
-            return self.element
+            return self.__element
 
     def has_attribute(self, name, value):
-        if self.element is None:
+        if self.__element is None:
             return False
         else:
-            return name in self.element.attrib and self.element.attrib[name] == value
+            return name in self.__element.attrib and self.__element.attrib[name] == value
 
     def remove_all_children(self, tag_name_to_remove=None):
         children = []
-        if self.element is not None:
-            for child in self.element:
+        if self.__element is not None:
+            for child in self.__element:
                 if tag_name_to_remove is None or child.tag == tag_name_to_remove:
                     children.append(child)
 
         for child in children:
-            self.element.remove(child)
+            self.__element.remove(child)
 
         return self
 
     def remove_attribute(self, attribute_name):
-        if self.element is not None:
-            if attribute_name in self.element.attrib:
-                del self.element.attrib[attribute_name]
+        if self.__element is not None:
+            if attribute_name in self.__element.attrib:
+                del self.__element.attrib[attribute_name]
 
         return self
 
@@ -245,73 +245,73 @@ def fetch_artifact_src_from(element):
 
 class FetchArtifactFile(CommonEqualityMixin):
     def __init__(self, src_value):
-        self.src_value = src_value
+        self.__src_value = src_value
 
     def __repr__(self):
-        return 'FetchArtifactFile("%s")' % self.src_value
+        return 'FetchArtifactFile("%s")' % self.__src_value
 
     def as_xml_type_and_value(self):
-        return "srcfile", self.src_value
+        return "srcfile", self.__src_value
 
 
 class FetchArtifactDir(CommonEqualityMixin):
     def __init__(self, src_value):
-        self.src_value = src_value
+        self.__src_value = src_value
 
     def __repr__(self):
-        return 'FetchArtifactDir("%s")' % self.src_value
+        return 'FetchArtifactDir("%s")' % self.__src_value
 
     def as_xml_type_and_value(self):
-        return "srcdir", self.src_value
+        return "srcdir", self.__src_value
 
 
 class FetchArtifactTask(AbstractTask):
     def __init__(self, pipeline, stage, job, src, dest=None, runif="passed"):
         super(self.__class__, self).__init__(runif)
-        self._pipeline = pipeline
-        self._stage = stage
-        self._job = job
-        self._src = src
-        self._dest = dest
+        self.__pipeline = pipeline
+        self.__stage = stage
+        self.__job = job
+        self.__src = src
+        self.__dest = dest
 
     def __repr__(self):
         dest_parameter = ""
-        if self._dest is not None:
-            dest_parameter = ', dest="%s"' % self._dest
+        if self.__dest is not None:
+            dest_parameter = ', dest="%s"' % self.__dest
 
         runif_parameter = ""
         if self._runif != "passed":
             runif_parameter = ', runif="%s"' % self._runif
 
-        return ('FetchArtifactTask("%s", "%s", "%s", %s' % (self._pipeline, self._stage, self._job, self._src)) + dest_parameter + runif_parameter + ')'
+        return ('FetchArtifactTask("%s", "%s", "%s", %s' % (self.__pipeline, self.__stage, self.__job, self.__src)) + dest_parameter + runif_parameter + ')'
 
     def type(self):
         return "fetchartifact"
 
     def pipeline(self):
-        return self._pipeline
+        return self.__pipeline
 
     def stage(self):
-        return self._stage
+        return self.__stage
 
     def job(self):
-        return self._job
+        return self.__job
 
     def src(self):
-        return self._src
+        return self.__src
 
     def dest(self):
-        return self._dest
+        return self.__dest
 
     def append_to(self, element):
         src_type, src_value = self.src().as_xml_type_and_value()
-        if self._dest is None:
+        if self.__dest is None:
             new_element = ET.fromstring(
-                '<fetchartifact pipeline="%s" stage="%s" job="%s" %s="%s" />' % (self._pipeline, self._stage, self._job, src_type, src_value))
+                '<fetchartifact pipeline="%s" stage="%s" job="%s" %s="%s" />' % (self.__pipeline, self.__stage, self.__job, src_type, src_value))
         else:
             new_element = ET.fromstring(
                 '<fetchartifact pipeline="%s" stage="%s" job="%s" %s="%s" dest="%s"/>' % (
-                    self._pipeline, self._stage, self._job, src_type, src_value, self._dest))
+                    self.__pipeline, self.__stage, self.__job, src_type, src_value, self.__dest))
         new_element.append(ET.fromstring('<runif status="%s" />' % self.runif()))
 
         Ensurance(element).ensure_child("tasks").append(new_element)
@@ -321,13 +321,13 @@ class FetchArtifactTask(AbstractTask):
 class ExecTask(AbstractTask):
     def __init__(self, command_and_args, working_dir=None, runif="passed"):
         super(self.__class__, self).__init__(runif)
-        self._command_and_args = command_and_args
-        self._working_dir = working_dir
+        self.__command_and_args = command_and_args
+        self.__working_dir = working_dir
 
     def __repr__(self):
         working_dir_parameter = ""
-        if self._working_dir is not None:
-            working_dir_parameter = ', working_dir="%s"' % self._working_dir
+        if self.__working_dir is not None:
+            working_dir_parameter = ', working_dir="%s"' % self.__working_dir
 
         runif_parameter = ""
         if self._runif != "passed":
@@ -339,18 +339,18 @@ class ExecTask(AbstractTask):
         return "exec"
 
     def command_and_args(self):
-        return self._command_and_args
+        return self.__command_and_args
 
     def working_dir(self):
-        return self._working_dir
+        return self.__working_dir
 
     def append_to(self, element):
-        if self._working_dir is None:
-            new_element = ET.fromstring('<exec command="%s"></exec>' % self._command_and_args[0])
+        if self.__working_dir is None:
+            new_element = ET.fromstring('<exec command="%s"></exec>' % self.__command_and_args[0])
         else:
-            new_element = ET.fromstring('<exec command="%s" workingdir="%s"></exec>' % (self._command_and_args[0], self._working_dir))
+            new_element = ET.fromstring('<exec command="%s" workingdir="%s"></exec>' % (self.__command_and_args[0], self.__working_dir))
 
-        for arg in self._command_and_args[1:]:
+        for arg in self.__command_and_args[1:]:
             new_element.append(ET.fromstring('<arg>%s</arg>' % escape(arg)))
 
         new_element.append(ET.fromstring('<runif status="%s" />' % self.runif()))
@@ -362,19 +362,19 @@ class ExecTask(AbstractTask):
 class RakeTask(AbstractTask):
     def __init__(self, target, runif="passed"):
         super(self.__class__, self).__init__(runif)
-        self._target = target
+        self.__target = target
 
     def __repr__(self):
-        return 'RakeTask("%s", "%s")' % (self._target, self._runif)
+        return 'RakeTask("%s", "%s")' % (self.__target, self._runif)
 
     def type(self):
         return "rake"
 
     def target(self):
-        return self._target
+        return self.__target
 
     def append_to(self, element):
-        new_element = ET.fromstring('<rake target="%s"></rake>' % self._target)
+        new_element = ET.fromstring('<rake target="%s"></rake>' % self.__target)
         Ensurance(element).ensure_child("tasks").append(new_element)
         return Task(new_element)
 
@@ -394,132 +394,132 @@ def TestArtifact(src, dest=None):
 
 class Artifact(CommonEqualityMixin):
     def __init__(self, tag, src, dest=None):
-        self.tag = tag
-        self.src = src
-        self.dest = dest
+        self.__tag = tag
+        self.__src = src
+        self.__dest = dest
 
     def __repr__(self):
-        if self.dest is None:
-            return '%s("%s")' % (self.constructor(), self.src)
+        if self.__dest is None:
+            return '%s("%s")' % (self.constructor(), self.__src)
         else:
-            return '%s("%s", "%s")' % (self.constructor(), self.src, self.dest)
+            return '%s("%s", "%s")' % (self.constructor(), self.__src, self.__dest)
 
     def append_to(self, element):
-        if self.dest is None:
-            element.append(ET.fromstring('<%s src="%s" />' % (self.tag, self.src)))
+        if self.__dest is None:
+            element.append(ET.fromstring('<%s src="%s" />' % (self.__tag, self.__src)))
         else:
-            element.append(ET.fromstring('<%s src="%s" dest="%s" />' % (self.tag, self.src, self.dest)))
+            element.append(ET.fromstring('<%s src="%s" dest="%s" />' % (self.__tag, self.__src, self.__dest)))
 
     def constructor(self):
-        if self.tag == "artifact":
+        if self.__tag == "artifact":
             return "BuildArtifact"
-        if self.tag == "test":
+        if self.__tag == "test":
             return "TestArtifact"
-        raise RuntimeError("Unknown artifact tag %s" % self.tag)
+        raise RuntimeError("Unknown artifact tag %s" % self.__tag)
 
 
 class Tab(CommonEqualityMixin):
     def __init__(self, name, path):
-        self.name = name
-        self.path = path
+        self.__name = name
+        self.__path = path
 
     def __repr__(self):
-        return 'Tab("%s", "%s")' % (self.name, self.path)
+        return 'Tab("%s", "%s")' % (self.__name, self.__path)
 
     def append_to(self, element):
-        element.append(ET.fromstring('<tab name="%s" path="%s" />' % (self.name, self.path)))
+        element.append(ET.fromstring('<tab name="%s" path="%s" />' % (self.__name, self.__path)))
 
 
 class Job(CommonEqualityMixin):
     def __init__(self, element):
-        self.element = element
-        self.thing_with_resources = ThingWithResources(element)
+        self.__element = element
+        self.__thing_with_resources = ThingWithResources(element)
 
     def __repr__(self):
         return "Job('%s', %s)" % (self.name(), self.tasks())
 
     def name(self):
-        return self.element.attrib['name']
+        return self.__element.attrib['name']
 
     def has_timeout(self):
-        return 'timeout' in self.element.attrib
+        return 'timeout' in self.__element.attrib
 
     def timeout(self):
         if not self.has_timeout():
             raise RuntimeError("Job (%s) does not have timeout" % self)
-        return self.element.attrib['timeout']
+        return self.__element.attrib['timeout']
 
     def set_timeout(self, timeout):
-        self.element.attrib['timeout'] = timeout
+        self.__element.attrib['timeout'] = timeout
         return self
 
     def runs_on_all_agents(self):
-        return self.element.attrib.get('runOnAllAgents', 'false') == 'true'
+        return self.__element.attrib.get('runOnAllAgents', 'false') == 'true'
 
     def set_runs_on_all_agents(self):
-        self.element.attrib['runOnAllAgents'] = 'true'
+        self.__element.attrib['runOnAllAgents'] = 'true'
         return self
 
     def resources(self):
-        return self.thing_with_resources.resources()
+        return self.__thing_with_resources.resources()
 
     def ensure_resource(self, resource):
-        self.thing_with_resources.ensure_resource(resource)
+        self.__thing_with_resources.ensure_resource(resource)
         return self
 
     def artifacts(self):
-        artifact_elements = PossiblyMissingElement(self.element).possibly_missing_child("artifacts").iterator()
+        artifact_elements = PossiblyMissingElement(self.__element).possibly_missing_child("artifacts").iterator()
         return set([ArtifactFor(e) for e in artifact_elements])
 
     def ensure_artifacts(self, artifacts):
-        artifacts_ensurance = Ensurance(self.element).ensure_child("artifacts")
+        artifacts_ensurance = Ensurance(self.__element).ensure_child("artifacts")
         artifacts_to_add = artifacts.difference(self.artifacts())
         for artifact in artifacts_to_add:
             artifact.append_to(artifacts_ensurance)
         return self
 
     def tabs(self):
-        return [Tab(e.attrib['name'], e.attrib['path']) for e in PossiblyMissingElement(self.element).possibly_missing_child('tabs').findall('tab')]
+        return [Tab(e.attrib['name'], e.attrib['path']) for e in PossiblyMissingElement(self.__element).possibly_missing_child('tabs').findall('tab')]
 
     def ensure_tab(self, tab):
-        tab_ensurance = Ensurance(self.element).ensure_child("tabs")
+        tab_ensurance = Ensurance(self.__element).ensure_child("tabs")
         if self.tabs().count(tab) == 0:
             tab.append_to(tab_ensurance)
         return self
 
     def tasks(self):
-        return [Task(e) for e in PossiblyMissingElement(self.element).possibly_missing_child("tasks").iterator()]
+        return [Task(e) for e in PossiblyMissingElement(self.__element).possibly_missing_child("tasks").iterator()]
 
     def add_task(self, task):
-        return task.append_to(self.element)
+        return task.append_to(self.__element)
 
     def ensure_task(self, task):
         if self.tasks().count(task) == 0:
-            return task.append_to(self.element)
+            return task.append_to(self.__element)
         else:
             return task
 
     def without_any_tasks(self):
-        PossiblyMissingElement(self.element).possibly_missing_child("tasks").remove_all_children()
+        PossiblyMissingElement(self.__element).possibly_missing_child("tasks").remove_all_children()
         return self
 
     def environment_variables(self):
-        return ThingWithEnvironmentVariables(self.element).environment_variables()
+        return ThingWithEnvironmentVariables(self.__element).environment_variables()
 
     def ensure_environment_variables(self, environment_variables):
-        ThingWithEnvironmentVariables(self.element).ensure_environment_variables(environment_variables)
+        ThingWithEnvironmentVariables(self.__element).ensure_environment_variables(environment_variables)
         return self
 
     def without_any_environment_variables(self):
-        ThingWithEnvironmentVariables(self.element).remove_all()
+        ThingWithEnvironmentVariables(self.__element).remove_all()
         return self
 
     def reorder_elements_to_please_go(self):
-        move_all_to_end(self.element, "environment_variables")
-        move_all_to_end(self.element, "tasks")
-        move_all_to_end(self.element, "tabs")
-        move_all_to_end(self.element, "resources")
-        move_all_to_end(self.element, "artifacts")
+        move_all_to_end(self.__element, "environment_variables")
+        move_all_to_end(self.__element, "tasks")
+        move_all_to_end(self.__element, "tabs")
+        move_all_to_end(self.__element, "resources")
+        move_all_to_end(self.__element, "artifacts")
 
     def as_python_commands_applied_to_stage(self):
         result = 'job = stage.ensure_job("%s")' % self.name()
@@ -532,7 +532,7 @@ class Job(CommonEqualityMixin):
             else:
                 result += '.ensure_artifacts({%s})' % self.artifacts().pop()
 
-        result += ThingWithEnvironmentVariables(self.element).as_python()
+        result += ThingWithEnvironmentVariables(self.__element).as_python()
 
         for resource in self.resources():
             result += '.ensure_resource("%s")' % resource
@@ -650,71 +650,71 @@ def Materials(element):
 
 class GitMaterial(CommonEqualityMixin):
     def __init__(self, url, branch=None, material_name=None, polling=True, ignore_patterns=set()):
-        self._url = url
-        self._branch = branch
-        self._material_name = material_name
-        self._polling = polling
-        self._ignore_patterns = ignore_patterns
+        self.__url = url
+        self.__branch = branch
+        self.__material_name = material_name
+        self.__polling = polling
+        self.__ignore_patterns = ignore_patterns
 
     def __repr__(self):
         branch_part = ""
         if not self.is_on_master():
-            branch_part = ', branch="%s"' % self._branch
+            branch_part = ', branch="%s"' % self.__branch
         material_name_part = ""
-        if self._material_name is not None:
-            material_name_part = ', material_name="%s"' % self._material_name
+        if self.__material_name is not None:
+            material_name_part = ', material_name="%s"' % self.__material_name
         polling_part = ''
-        if not self._polling:
+        if not self.__polling:
             polling_part = ', polling=False'
         ignore_patterns_part = ''
         if self.ignore_patterns():
             ignore_patterns_part = ', ignore_patterns=%s' % self.ignore_patterns()
-        return ('GitMaterial("%s"' % self._url) + branch_part + material_name_part + polling_part + ignore_patterns_part + ')'
+        return ('GitMaterial("%s"' % self.__url) + branch_part + material_name_part + polling_part + ignore_patterns_part + ')'
 
     def __has_options(self):
-        return (not self.is_on_master()) or (self._material_name is not None) or (not self._polling)
+        return (not self.is_on_master()) or (self.__material_name is not None) or (not self.__polling)
 
     def is_on_master(self):
-        return self._branch is None or self._branch == 'master'
+        return self.__branch is None or self.__branch == 'master'
 
     def as_python_applied_to_pipeline(self):
         if self.__has_options():
             return 'set_git_material(%s)' % str(self)
         else:
-            return 'set_git_url("%s")' % self._url
+            return 'set_git_url("%s")' % self.__url
 
     def is_git(self):
         return True
 
     def url(self):
-        return self._url
+        return self.__url
 
     def polling(self):
-        return self._polling
+        return self.__polling
 
     def branch(self):
         if self.is_on_master():
             return 'master'
         else:
-            return self._branch
+            return self.__branch
 
     def material_name(self):
-        return self._material_name
+        return self.__material_name
 
     def ignore_patterns(self):
-        return self._ignore_patterns
+        return self.__ignore_patterns
 
     def append_to(self, element):
         branch_part = ""
         if not self.is_on_master():
-            branch_part = ' branch="%s"' % self._branch
+            branch_part = ' branch="%s"' % self.__branch
         material_name_part = ""
-        if self._material_name is not None:
-            material_name_part = ' materialName="%s"' % self._material_name
+        if self.__material_name is not None:
+            material_name_part = ' materialName="%s"' % self.__material_name
         polling_part = ''
-        if not self._polling:
+        if not self.__polling:
             polling_part = ' autoUpdate="false"'
-        new_element = ET.fromstring(('<git url="%s"' % self._url) + branch_part + material_name_part + polling_part + ' />')
+        new_element = ET.fromstring(('<git url="%s"' % self.__url) + branch_part + material_name_part + polling_part + ' />')
         if self.ignore_patterns():
             filter_element = ET.fromstring("<filter/>")
             new_element.append(filter_element)
@@ -727,25 +727,25 @@ class GitMaterial(CommonEqualityMixin):
 
 class PipelineMaterial(CommonEqualityMixin):
     def __init__(self, pipeline_name, stage_name, material_name=None):
-        self._pipeline_name = pipeline_name
-        self._stage_name = stage_name
-        self._material_name = material_name
+        self.__pipeline_name = pipeline_name
+        self.__stage_name = stage_name
+        self.__material_name = material_name
 
     def __repr__(self):
-        if self._material_name is None:
-            return 'PipelineMaterial("%s", "%s")' % (self._pipeline_name, self._stage_name)
+        if self.__material_name is None:
+            return 'PipelineMaterial("%s", "%s")' % (self.__pipeline_name, self.__stage_name)
         else:
-            return 'PipelineMaterial("%s", "%s", "%s")' % (self._pipeline_name, self._stage_name, self._material_name)
+            return 'PipelineMaterial("%s", "%s", "%s")' % (self.__pipeline_name, self.__stage_name, self.__material_name)
 
     def is_git(self):
         return False
 
     def append_to(self, element):
-        if self._material_name is None:
-            new_element = ET.fromstring('<pipeline pipelineName="%s" stageName="%s" />' % (self._pipeline_name, self._stage_name))
+        if self.__material_name is None:
+            new_element = ET.fromstring('<pipeline pipelineName="%s" stageName="%s" />' % (self.__pipeline_name, self.__stage_name))
         else:
             new_element = ET.fromstring(
-                '<pipeline pipelineName="%s" stageName="%s" materialName="%s"/>' % (self._pipeline_name, self._stage_name, self._material_name))
+                '<pipeline pipelineName="%s" stageName="%s" materialName="%s"/>' % (self.__pipeline_name, self.__stage_name, self.__material_name))
 
         element.append(new_element)
 
@@ -1006,29 +1006,29 @@ class PipelineGroup(CommonEqualityMixin):
 
 class Agent:
     def __init__(self, element):
-        self._element = element
-        self._thing_with_resources = ThingWithResources(element)
+        self.__element = element
+        self.__thing_with_resources = ThingWithResources(element)
 
     def hostname(self):
-        return self._element.attrib['hostname']
+        return self.__element.attrib['hostname']
 
     def resources(self):
-        return self._thing_with_resources.resources()
+        return self.__thing_with_resources.resources()
 
     def ensure_resource(self, resource):
-        self._thing_with_resources.ensure_resource(resource)
+        self.__thing_with_resources.ensure_resource(resource)
 
 
 class HostRestClient:
     def __init__(self, host):
-        self._host = host
+        self.__host = host
         self.session_id = None
 
     def __repr__(self):
-        return 'HostRestClient("%s")' % self._host
+        return 'HostRestClient("%s")' % self.__host
 
     def __path(self, path):
-        return ('http://%s' % self._host) + path
+        return ('http://%s' % self.__host) + path
 
     def get(self, path):
         return requests.get(self.__path(path))
