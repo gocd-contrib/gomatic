@@ -132,14 +132,14 @@ class ThingWithEnvironmentVariables:
     def __init__(self, element):
         self.element = element
 
-    def _is_encrypted(self, variable_element):
+    def __is_encrypted(self, variable_element):
         return 'secure' in variable_element.attrib and variable_element.attrib['secure'] == 'true'
 
-    def _environment_variables(self, encrypted):
+    def __environment_variables(self, encrypted):
         variable_elements = PossiblyMissingElement(self.element).possibly_missing_child("environmentvariables").findall("variable")
         result = {}
         for variable_element in variable_elements:
-            if encrypted == self._is_encrypted(variable_element):
+            if encrypted == self.__is_encrypted(variable_element):
                 if encrypted:
                     value_attribute = "encryptedValue"
                 else:
@@ -148,12 +148,12 @@ class ThingWithEnvironmentVariables:
         return result
 
     def environment_variables(self):
-        return self._environment_variables(False)
+        return self.__environment_variables(False)
 
     def encrypted_environment_variables(self):
-        return self._environment_variables(True)
+        return self.__environment_variables(True)
 
-    def _ensure_environment_variables(self, environment_variables, encrypted):
+    def __ensure_environment_variables(self, environment_variables, encrypted):
         environment_variables_ensurance = Ensurance(self.element).ensure_child("environmentvariables")
         for environment_variable_name in sorted(environment_variables.keys()):
             variable_element = environment_variables_ensurance.ensure_child_with_attribute("variable", "name", environment_variable_name)
@@ -164,10 +164,10 @@ class ThingWithEnvironmentVariables:
             value_element.set_text(environment_variables[environment_variable_name])
 
     def ensure_environment_variables(self, environment_variables):
-        self._ensure_environment_variables(environment_variables, False)
+        self.__ensure_environment_variables(environment_variables, False)
 
     def ensure_encrypted_environment_variables(self, environment_variables):
-        self._ensure_environment_variables(environment_variables, True)
+        self.__ensure_environment_variables(environment_variables, True)
 
     def remove_all(self):
         PossiblyMissingElement(self.element).possibly_missing_child("environmentvariables").remove_all_children()
@@ -671,14 +671,14 @@ class GitMaterial(CommonEqualityMixin):
             ignore_patterns_part = ', ignore_patterns=%s' % self.ignore_patterns()
         return ('GitMaterial("%s"' % self._url) + branch_part + material_name_part + polling_part + ignore_patterns_part + ')'
 
-    def _has_options(self):
+    def __has_options(self):
         return (not self.is_on_master()) or (self._material_name is not None) or (not self._polling)
 
     def is_on_master(self):
         return self._branch is None or self._branch == 'master'
 
     def as_python_applied_to_pipeline(self):
-        if self._has_options():
+        if self.__has_options():
             return 'set_git_material(%s)' % str(self)
         else:
             return 'set_git_url("%s")' % self._url
@@ -825,12 +825,12 @@ class Pipeline(CommonEqualityMixin):
     def materials(self):
         return [Materials(element) for element in PossiblyMissingElement(self.element).possibly_missing_child('materials').iterator()]
 
-    def _add_material(self, material):
+    def __add_material(self, material):
         material.append_to(Ensurance(self.element).ensure_child('materials'))
 
     def ensure_material(self, material):
         if self.materials().count(material) == 0:
-            self._add_material(material)
+            self.__add_material(material)
         return self
 
     def git_materials(self):
@@ -863,7 +863,7 @@ class Pipeline(CommonEqualityMixin):
         if len(self.git_materials()) > 1:
             raise RuntimeError('Cannot set git url for pipeline that already has multiple git materials. Use "ensure_material(GitMaterial(..." instead')
         PossiblyMissingElement(self.element).possibly_missing_child('materials').remove_all_children('git')
-        self._add_material(git_material)
+        self.__add_material(git_material)
         return self
 
     def environment_variables(self):
@@ -1027,14 +1027,14 @@ class HostRestClient:
     def __repr__(self):
         return 'HostRestClient("%s")' % self._host
 
-    def _path(self, path):
+    def __path(self, path):
         return ('http://%s' % self._host) + path
 
     def get(self, path):
-        return requests.get(self._path(path))
+        return requests.get(self.__path(path))
 
     def post(self, path, data):
-        url = self._path(path)
+        url = self.__path(path)
         result = requests.post(url, data)
         if result.status_code != 200:
             try:
@@ -1048,7 +1048,7 @@ class HostRestClient:
 class GoCdConfigurator:
     def __init__(self, host_rest_client):
         self._host_rest_client = host_rest_client
-        self._initial_config, self._initial_md5 = self._current_config_response()
+        self._initial_config, self._initial_md5 = self.__current_config_response()
         self._xml_root = ET.fromstring(self._initial_config)
 
     def __repr__(self):
@@ -1064,9 +1064,9 @@ class GoCdConfigurator:
         return result + save_part
 
     def current_config(self):
-        return self._current_config_response()[0]
+        return self.__current_config_response()[0]
 
-    def _current_config_response(self):
+    def __current_config_response(self):
         response = self._host_rest_client.get("/go/admin/restful/configuration/file/GET/xml")
         return response.text, response.headers['x-cruise-config-md5']
 
