@@ -1022,7 +1022,6 @@ class Agent:
 class HostRestClient:
     def __init__(self, host):
         self.__host = host
-        self.session_id = None
 
     def __repr__(self):
         return 'HostRestClient("%s")' % self.__host
