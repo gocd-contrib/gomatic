@@ -132,7 +132,8 @@ class ThingWithEnvironmentVariables:
     def __init__(self, element):
         self.element = element
 
-    def __is_encrypted(self, variable_element):
+    @staticmethod
+    def __is_encrypted(variable_element):
         return 'secure' in variable_element.attrib and variable_element.attrib['secure'] == 'true'
 
     def __environment_variables(self, encrypted):
@@ -186,7 +187,7 @@ class ThingWithEnvironmentVariables:
         env_vars = self.environment_variables()
         encrypted_env_vars = self.encrypted_environment_variables()
         self.remove_all()
-        if env_vars.has_key(name):
+        if name in env_vars:
             del env_vars[name]
         self.ensure_environment_variables(env_vars)
         self.ensure_encrypted_environment_variables(encrypted_env_vars)
@@ -199,7 +200,7 @@ def move_all_to_end(parent_element, tag):
         parent_element.append(element)
 
 
-def runifFrom(element):
+def runif_from(element):
     runifs = [e.attrib['status'] for e in element.findall("runif")]
     if len(runifs) == 0:
         return 'passed'
@@ -211,7 +212,7 @@ def runifFrom(element):
 
 
 def Task(element):
-    runif = runifFrom(element)
+    runif = runif_from(element)
     if element.tag == "exec":
         command_and_args = [element.attrib["command"]] + [e.text for e in element.findall('arg')]
         working_dir = element.attrib.get("workingdir", None)  # TODO not ideal to return "None" for working_dir
@@ -1141,7 +1142,8 @@ class GoCdConfigurator:
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Gomatic is an API for configuring GoCD. Run python -m gomatic.go_cd_configurator to reverse engineer code to configure an existing pipeline.')
+    parser = argparse.ArgumentParser(description='Gomatic is an API for configuring GoCD. '
+                                                 'Run python -m gomatic.go_cd_configurator to reverse engineer code to configure an existing pipeline.')
     parser.add_argument('-s', '--server', help='the go server (e.g. "localhost:8153" or "my.gocd.com")')
     parser.add_argument('-p', '--pipeline', help='the name of the pipeline to reverse-engineer the config for')
 
