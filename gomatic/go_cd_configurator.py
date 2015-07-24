@@ -1046,12 +1046,12 @@ class HostRestClient:
 
 class GoCdConfigurator:
     def __init__(self, host_rest_client):
-        self._host_rest_client = host_rest_client
-        self._initial_config, self._initial_md5 = self.__current_config_response()
-        self._xml_root = ET.fromstring(self._initial_config)
+        self.__host_rest_client = host_rest_client
+        self.__initial_config, self._initial_md5 = self.__current_config_response()
+        self.__xml_root = ET.fromstring(self.__initial_config)
 
     def __repr__(self):
-        return "GoCdConfigurator(%s)" % self._host_rest_client
+        return "GoCdConfigurator(%s)" % self.__host_rest_client
 
     def as_python(self, pipeline, with_save=True):
         result = "#!/usr/bin/env python\nfrom gomatic import *\n\nconfigurator = " + str(self) + "\n"
@@ -1066,41 +1066,41 @@ class GoCdConfigurator:
         return self.__current_config_response()[0]
 
     def __current_config_response(self):
-        response = self._host_rest_client.get("/go/admin/restful/configuration/file/GET/xml")
+        response = self.__host_rest_client.get("/go/admin/restful/configuration/file/GET/xml")
         return response.text, response.headers['x-cruise-config-md5']
 
     def reorder_elements_to_please_go(self):
-        move_all_to_end(self._xml_root, 'pipelines')
-        move_all_to_end(self._xml_root, 'templates')
-        move_all_to_end(self._xml_root, 'agents')
+        move_all_to_end(self.__xml_root, 'pipelines')
+        move_all_to_end(self.__xml_root, 'templates')
+        move_all_to_end(self.__xml_root, 'agents')
 
         for pipeline in self.pipelines():
             pipeline.reorder_elements_to_please_go()
 
     def config(self):
         self.reorder_elements_to_please_go()
-        return ET.tostring(self._xml_root, 'utf-8')
+        return ET.tostring(self.__xml_root, 'utf-8')
 
     def pipeline_groups(self):
-        return [PipelineGroup(e) for e in self._xml_root.findall('pipelines')]
+        return [PipelineGroup(e) for e in self.__xml_root.findall('pipelines')]
 
     def ensure_pipeline_group(self, group_name):
-        pipeline_group_element = Ensurance(self._xml_root).ensure_child_with_attribute("pipelines", "group", group_name)
+        pipeline_group_element = Ensurance(self.__xml_root).ensure_child_with_attribute("pipelines", "group", group_name)
         return PipelineGroup(pipeline_group_element._element)
 
     def ensure_removal_of_pipeline_group(self, group_name):
         matching = [g for g in self.pipeline_groups() if g.name() == group_name]
         for group in matching:
-            self._xml_root.remove(group.element)
+            self.__xml_root.remove(group.element)
         return self
 
     def remove_all_pipeline_groups(self):
-        for e in self._xml_root.findall('pipelines'):
-            self._xml_root.remove(e)
+        for e in self.__xml_root.findall('pipelines'):
+            self.__xml_root.remove(e)
         return self
 
     def agents(self):
-        return [Agent(e) for e in PossiblyMissingElement(self._xml_root).possibly_missing_child('agents').findall('agent')]
+        return [Agent(e) for e in PossiblyMissingElement(self.__xml_root).possibly_missing_child('agents').findall('agent')]
 
     def pipelines(self):
         result = []
@@ -1110,13 +1110,13 @@ class GoCdConfigurator:
         return result
 
     def templates(self):
-        return [Pipeline(e, 'templates') for e in PossiblyMissingElement(self._xml_root).possibly_missing_child('templates').findall('pipeline')]
+        return [Pipeline(e, 'templates') for e in PossiblyMissingElement(self.__xml_root).possibly_missing_child('templates').findall('pipeline')]
 
     def git_urls(self):
         return [pipeline.git_url() for pipeline in self.pipelines() if pipeline.has_single_git_material()]
 
     def save_updated_config(self, save_config_locally=False, dry_run=False):
-        config_before = prettify(self._initial_config)
+        config_before = prettify(self.__initial_config)
         config_after = prettify(self.config())
         if save_config_locally:
             open('config-before.xml', 'w').write(config_before.encode('utf-8'))
@@ -1137,7 +1137,7 @@ class GoCdConfigurator:
         }
 
         if not dry_run and config_before != config_after:
-            self._host_rest_client.post('/go/admin/restful/configuration/file/POST/xml', data)
+            self.__host_rest_client.post('/go/admin/restful/configuration/file/POST/xml', data)
 
 
 if __name__ == '__main__':
