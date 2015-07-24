@@ -33,7 +33,7 @@ Gomatic doesn't use the [RESTful Go API](http://www.thoughtworks.com/products/do
 
 We wrote it for our purposes and find it very useful; however, the current version has limitations (e.g. only really supports "Custom Command" task type) and allows you to try to configure GoCD incorrectly (which GoCD will refuse to allow). We will continue to work on it and will address its current limitations.
 
-We believe it works for the following versions (as indicated by `integration-test.py`):
+We believe it works for the following versions (as indicated by `integration_test.py`):
 
 * 13.1.1-16714
 * 13.2.2-17585
@@ -107,7 +107,7 @@ Unit tests:
 
 Integration tests (takes a long time to download many versions of GoCD) (requires [docker](https://www.docker.com/) to be installed in order to run):
  
-1. `python integration-test.py`
+1. `python integration_test.py`
 
 ### CI and releasing packages to pypi
 
