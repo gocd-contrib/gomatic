@@ -244,7 +244,8 @@ def Task(element):
         return FetchArtifactTask(element.attrib['pipeline'], element.attrib['stage'], element.attrib['job'], fetch_artifact_src_from(element), dest, runif)
     if element.tag == "rake":
         return RakeTask(element.attrib['target'])
-    raise RuntimeError("Don't know task type %s" % element.tag)
+    else:
+        raise RuntimeError("Don't know task type %s" % element.tag)
 
 
 class AbstractTask(CommonEqualityMixin):
