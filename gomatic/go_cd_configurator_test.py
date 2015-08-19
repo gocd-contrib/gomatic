@@ -39,34 +39,6 @@ def config(config_name):
     return FakeHostRestClient(open('test-data/' + config_name + '.xml').read())
 
 
-def config_with_more_options_pipeline():
-    return config('config-with-more-options-pipeline')
-
-
-def config_with_just_agents():
-    return config('config-with-just-agents')
-
-
-def config_with_just_templates():
-    return config('config-with-just-templates')
-
-
-def config_with_two_pipeline_groups():
-    return config('config-with-two-pipeline-groups')
-
-
-def config_with_two_pipelines():
-    return config('config-with-two-pipelines')
-
-
-def config_with_typical_pipeline():
-    return config('config-with-typical-pipeline')
-
-
-def config_with_encrypted_variable():
-    return config('config-with-encrypted-variable')
-
-
 def empty_config():
     return FakeHostRestClient(empty_config_xml, "empty_config()")
 
@@ -76,7 +48,7 @@ def find_with_matching_name(things, name):
 
 
 def standard_pipeline_group():
-    return GoCdConfigurator(config_with_typical_pipeline()).ensure_pipeline_group('P.Group')
+    return GoCdConfigurator(config('config-with-typical-pipeline')).ensure_pipeline_group('P.Group')
 
 
 def typical_pipeline():
@@ -84,7 +56,7 @@ def typical_pipeline():
 
 
 def more_options_pipeline():
-    return GoCdConfigurator(config_with_more_options_pipeline()).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+    return GoCdConfigurator(config('config-with-more-options-pipeline')).ensure_pipeline_group('P.Group').find_pipeline('more-options')
 
 
 def empty_pipeline():
@@ -97,7 +69,7 @@ def empty_stage():
 
 class TestAgents(unittest.TestCase):
     def _agents_from_config(self):
-        return GoCdConfigurator(config_with_just_agents()).agents()
+        return GoCdConfigurator(config('config-with-just-agents')).agents()
 
     def test_could_have_no_agents(self):
         agents = GoCdConfigurator(empty_config()).agents()
@@ -791,7 +763,7 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals({"JAVA_HOME": "/opt/java/jdk-1.8"}, pipeline.environment_variables())
 
     def test_pipelines_have_encrypted_environment_variables(self):
-        pipeline = GoCdConfigurator(config_with_encrypted_variable()).ensure_pipeline_group("defaultGroup").find_pipeline("example")
+        pipeline = GoCdConfigurator(config('config-with-encrypted-variable')).ensure_pipeline_group("defaultGroup").find_pipeline("example")
         self.assertEquals({"MY_SECURE_PASSWORD": "yq5qqPrrD9/htfwTWMYqGQ=="}, pipeline.encrypted_environment_variables())
 
     def test_can_add_environment_variables_to_pipeline(self):
@@ -864,7 +836,7 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals(False, pipeline.timer_triggers_only_on_changes())
 
     def test_can_have_timer_with_onlyOnChanges_option(self):
-        pipeline = GoCdConfigurator(config_with_more_options_pipeline()).ensure_pipeline_group('P.Group').find_pipeline('pipeline2')
+        pipeline = GoCdConfigurator(config('config-with-more-options-pipeline')).ensure_pipeline_group('P.Group').find_pipeline('pipeline2')
         self.assertEquals(True, pipeline.has_timer())
         self.assertEquals("0 0 22 ? * MON-FRI", pipeline.timer())
         self.assertEquals(True, pipeline.timer_triggers_only_on_changes())
@@ -927,7 +899,7 @@ class TestPipeline(unittest.TestCase):
 
 class TestPipelineGroup(unittest.TestCase):
     def _pipeline_group_from_config(self):
-        return GoCdConfigurator(config_with_two_pipelines()).ensure_pipeline_group('P.Group')
+        return GoCdConfigurator(config('config-with-two-pipelines')).ensure_pipeline_group('P.Group')
 
     def test_pipeline_groups_have_names(self):
         pipeline_group = standard_pipeline_group()
@@ -1005,14 +977,14 @@ class TestGoCdConfigurator(unittest.TestCase):
         self.assertEquals(0, len(GoCdConfigurator(empty_config()).pipeline_groups()))
 
     def test_gets_all_pipeline_groups(self):
-        self.assertEquals(2, len(GoCdConfigurator(config_with_two_pipeline_groups()).pipeline_groups()))
+        self.assertEquals(2, len(GoCdConfigurator(config('config-with-two-pipeline-groups')).pipeline_groups()))
 
     def test_can_get_initial_config_md5(self):
         configurator = GoCdConfigurator(empty_config())
         self.assertEquals("42", configurator._initial_md5)
 
     def test_config_is_updated_as_result_of_updating_part_of_it(self):
-        configurator = GoCdConfigurator(config_with_just_agents())
+        configurator = GoCdConfigurator(config('config-with-just-agents'))
         agent = configurator.agents()[0]
         self.assertEquals(2, len(agent.resources()))
         agent.ensure_resource('a-resource-that-it-does-not-already-have')
@@ -1028,31 +1000,31 @@ class TestGoCdConfigurator(unittest.TestCase):
         self.assertEquals("a_new_group", new_pipeline_group.name())
 
     def test_can_ensure_pipeline_group_exists(self):
-        configurator = GoCdConfigurator(config_with_two_pipeline_groups())
+        configurator = GoCdConfigurator(config('config-with-two-pipeline-groups'))
         self.assertEquals(2, len(configurator.pipeline_groups()))
         pre_existing_pipeline_group = configurator.ensure_pipeline_group('Second.Group')
         self.assertEquals(2, len(configurator.pipeline_groups()))
         self.assertEquals('Second.Group', pre_existing_pipeline_group.name())
 
     def test_can_remove_all_pipeline_groups(self):
-        configurator = GoCdConfigurator(config_with_two_pipeline_groups())
+        configurator = GoCdConfigurator(config('config-with-two-pipeline-groups'))
         s = configurator.remove_all_pipeline_groups()
         self.assertEquals(s, configurator)
         self.assertEquals(0, len(configurator.pipeline_groups()))
 
     def test_can_remove_pipeline_group(self):
-        configurator = GoCdConfigurator(config_with_two_pipeline_groups())
+        configurator = GoCdConfigurator(config('config-with-two-pipeline-groups'))
         s = configurator.ensure_removal_of_pipeline_group('P.Group')
         self.assertEquals(s, configurator)
         self.assertEquals(1, len(configurator.pipeline_groups()))
 
     def test_can_ensure_removal_of_pipeline_group(self):
-        configurator = GoCdConfigurator(config_with_two_pipeline_groups())
+        configurator = GoCdConfigurator(config('config-with-two-pipeline-groups'))
         configurator.ensure_removal_of_pipeline_group('pipeline-group-that-has-already-been-removed')
         self.assertEquals(2, len(configurator.pipeline_groups()))
 
     def test_can_have_templates(self):
-        templates = GoCdConfigurator(config_with_just_templates()).templates()
+        templates = GoCdConfigurator(config('config-with-just-templates')).templates()
         self.assertEquals(2, len(templates))
         self.assertEquals('api-component', templates[0].name())
         self.assertEquals('deploy-stack', templates[1].name())
@@ -1069,12 +1041,12 @@ class TestGoCdConfigurator(unittest.TestCase):
         self.assertTrue(isinstance(configurator.templates()[0], Pipeline), "so all methods that use to configure pipeline don't need to be tested for template")
 
     def test_can_ensure_template(self):
-        configurator = GoCdConfigurator(config_with_just_templates())
+        configurator = GoCdConfigurator(config('config-with-just-templates'))
         template = configurator.ensure_template('deploy-stack')
         self.assertEquals('deploy-components', template.stages()[0].name())
 
     def test_can_ensure_replacement_of_template(self):
-        configurator = GoCdConfigurator(config_with_just_templates())
+        configurator = GoCdConfigurator(config('config-with-just-templates'))
         template = configurator.ensure_replacement_of_template('deploy-stack')
         self.assertEquals(0, len(template.stages()))
 
@@ -1301,7 +1273,7 @@ class TestReverseEngineering(unittest.TestCase):
         self.check_round_trip_pipeline(configurator, before)
 
     def test_can_reverse_engineer_pipeline(self):
-        configurator = GoCdConfigurator(config_with_more_options_pipeline())
+        configurator = GoCdConfigurator(config('config-with-more-options-pipeline'))
         actual = configurator.as_python(more_options_pipeline(), with_save=False)
         expected = """#!/usr/bin/env python
 from gomatic import *
