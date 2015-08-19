@@ -1006,8 +1006,10 @@ class PipelineGroup(CommonEqualityMixin):
         else:
             raise RuntimeError('Cannot find pipeline with name "%s" in %s' % (name, self.pipelines()))
 
-    def ensure_pipeline(self, name):
+    def ensure_pipeline(self, name, template_name=None):
         pipeline_element = Ensurance(self.element).ensure_child_with_attribute('pipeline', 'name', name)._element
+        if template_name:
+            pipeline_element.attrib['template'] = template_name
         return Pipeline(pipeline_element, self)
 
     def ensure_removal_of_pipeline(self, name):

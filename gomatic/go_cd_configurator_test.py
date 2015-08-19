@@ -769,6 +769,12 @@ class TestPipeline(unittest.TestCase):
         template = GoCdConfigurator(config('pipeline-based-on-template')).templates()[0]
         self.assertEquals(template, pipeline.template())
 
+    def test_pipelines_can_be_created_based_on_template(self):
+        configurator = GoCdConfigurator(empty_config())
+        configurator.ensure_template('temple').ensure_stage('s').ensure_job('j')
+        pipeline = configurator.ensure_pipeline_group("g").ensure_pipeline('p', template_name='temple')
+        self.assertEquals('temple', pipeline.template().name())
+
     def test_pipelines_have_environment_variables(self):
         pipeline = typical_pipeline()
         self.assertEquals({"JAVA_HOME": "/opt/java/jdk-1.8"}, pipeline.environment_variables())
