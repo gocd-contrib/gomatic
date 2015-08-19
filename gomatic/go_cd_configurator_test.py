@@ -129,18 +129,6 @@ class TestAgents(unittest.TestCase):
         self.assertEquals(3, len(agent.resources()))
 
 
-class TestTemplates(unittest.TestCase):
-    def test_templates_have_stages(self):
-        templates = GoCdConfigurator(config_with_just_templates()).templates()
-        self.assertEquals(2, len(templates))
-        self.assertEquals('api-component', templates[0].name())
-        self.assertEquals('deploy-stack', templates[1].name())
-        self.assertEquals('deploy-components', templates[1].stages()[0].name())
-
-    def test_can_have_no_templates(self):
-        self.assertEquals(0, len(GoCdConfigurator(empty_config()).templates()))
-
-
 class TestJobs(unittest.TestCase):
     def test_jobs_have_resources(self):
         stages = typical_pipeline().stages()
@@ -1062,6 +1050,16 @@ class TestGoCdConfigurator(unittest.TestCase):
         configurator = GoCdConfigurator(config_with_two_pipeline_groups())
         configurator.ensure_removal_of_pipeline_group('pipeline-group-that-has-already-been-removed')
         self.assertEquals(2, len(configurator.pipeline_groups()))
+
+    def test_can_have_templates(self):
+        templates = GoCdConfigurator(config_with_just_templates()).templates()
+        self.assertEquals(2, len(templates))
+        self.assertEquals('api-component', templates[0].name())
+        self.assertEquals('deploy-stack', templates[1].name())
+        self.assertEquals('deploy-components', templates[1].stages()[0].name())
+
+    def test_can_have_no_templates(self):
+        self.assertEquals(0, len(GoCdConfigurator(empty_config()).templates()))
 
     def test_top_level_elements_get_reordered_to_please_go(self):
         configurator = GoCdConfigurator(config_with('config-with-agents-and-templates-but-without-pipelines'))
