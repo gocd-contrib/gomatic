@@ -1113,6 +1113,15 @@ class GoCdConfigurator:
     def templates(self):
         return [Pipeline(e, 'templates') for e in PossiblyMissingElement(self.__xml_root).possibly_missing_child('templates').findall('pipeline')]
 
+    def ensure_template(self, template_name):
+        pipeline_element = Ensurance(self.__xml_root).ensure_child('templates').ensure_child_with_attribute('pipeline', 'name', template_name)._element
+        return Pipeline(pipeline_element, 'templates')
+
+    def ensure_replacement_of_template(self, template_name):
+        template = self.ensure_template(template_name)
+        template.make_empty()
+        return template
+
     def git_urls(self):
         return [pipeline.git_url() for pipeline in self.pipelines() if pipeline.has_single_git_material()]
 

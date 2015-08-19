@@ -1061,6 +1061,23 @@ class TestGoCdConfigurator(unittest.TestCase):
     def test_can_have_no_templates(self):
         self.assertEquals(0, len(GoCdConfigurator(empty_config()).templates()))
 
+    def test_can_add_template(self):
+        configurator = GoCdConfigurator(empty_config())
+        template = configurator.ensure_template('foo')
+        self.assertEquals(1, len(configurator.templates()))
+        self.assertEquals(template, configurator.templates()[0])
+        self.assertTrue(isinstance(configurator.templates()[0], Pipeline), "so all methods that use to configure pipeline don't need to be tested for template")
+
+    def test_can_ensure_template(self):
+        configurator = GoCdConfigurator(config_with_just_templates())
+        template = configurator.ensure_template('deploy-stack')
+        self.assertEquals('deploy-components', template.stages()[0].name())
+
+    def test_can_ensure_replacement_of_template(self):
+        configurator = GoCdConfigurator(config_with_just_templates())
+        template = configurator.ensure_replacement_of_template('deploy-stack')
+        self.assertEquals(0, len(template.stages()))
+
     def test_top_level_elements_get_reordered_to_please_go(self):
         configurator = GoCdConfigurator(config_with('config-with-agents-and-templates-but-without-pipelines'))
         configurator.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")
