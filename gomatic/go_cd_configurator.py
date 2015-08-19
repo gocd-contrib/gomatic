@@ -613,8 +613,8 @@ class Stage(CommonEqualityMixin):
         for job in self.jobs():
             job.reorder_elements_to_please_go()
 
-    def as_python_commands_applied_to_pipeline(self):
-        result = 'stage = pipeline.ensure_stage("%s")' % self.name()
+    def as_python_commands_applied_to(self, receiver):
+        result = 'stage = %s.ensure_stage("%s")' % (receiver, self.name())
 
         result += ThingWithEnvironmentVariables(self.element).as_python()
 
@@ -751,6 +751,10 @@ class PipelineMaterial(CommonEqualityMixin):
         element.append(new_element)
 
 
+def then(s):
+    return '\\\n\t.' + s
+
+
 class Pipeline(CommonEqualityMixin):
     def __init__(self, element, parent):
         self.element = element
@@ -760,13 +764,19 @@ class Pipeline(CommonEqualityMixin):
         return self.element.attrib['name']
 
     def as_python_commands_applied_to_server(self):
-        def then(s):
-            return '\\\n\t.' + s
-
         result = (
                      then('ensure_pipeline_group("%s")') +
                      then('ensure_replacement_of_pipeline("%s")')
                  ) % (self.parent.name(), self.name())
+        return self.__appended_python_commands_to_create_pipeline_or_template_applied_to_configurator(result, 'pipeline')
+
+    def __as_python_commands_to_create_template_applied_to_configurator(self):
+        result = 'template = configurator.ensure_replacement_of_template("%s")' % self.name()
+        return self.__appended_python_commands_to_create_pipeline_or_template_applied_to_configurator(result, 'template')
+
+    def __appended_python_commands_to_create_pipeline_or_template_applied_to_configurator(self, result, receiver):
+        if self.is_based_on_template():
+            result += then('set_template_name("%s")' % self.__template_name())
 
         if self.has_timer():
             result += then('set_timer("%s")' % self.timer())
@@ -792,10 +802,16 @@ class Pipeline(CommonEqualityMixin):
         if len(self.parameters()) != 0:
             result += then('ensure_parameters(%s)' % self.parameters())
 
+        if self.is_based_on_template():
+            result += "\n" + self.template().__as_python_commands_to_create_template_applied_to_configurator()
+
         for stage in self.stages():
-            result += "\n" + stage.as_python_commands_applied_to_pipeline()
+            result += "\n" + stage.as_python_commands_applied_to(receiver)
 
         return result
+
+    def is_template(self):
+        return self.parent == 'templates'  # but for a pipeline, parent is the pipeline group
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and ET.tostring(self.element, 'utf-8') == ET.tostring(other.element, 'utf-8') and self.parent == other.parent
@@ -825,6 +841,10 @@ class Pipeline(CommonEqualityMixin):
 
     def set_default_label_template(self):
         return self.set_label_template(DEFAULT_LABEL_TEMPLATE)
+
+    def set_template_name(self, template_name):
+        self.element.attrib['template'] = template_name
+        return self
 
     def materials(self):
         return [Materials(element) for element in PossiblyMissingElement(self.element).possibly_missing_child('materials').iterator()]
@@ -1006,10 +1026,8 @@ class PipelineGroup(CommonEqualityMixin):
         else:
             raise RuntimeError('Cannot find pipeline with name "%s" in %s' % (name, self.pipelines()))
 
-    def ensure_pipeline(self, name, template_name=None):
+    def ensure_pipeline(self, name):
         pipeline_element = Ensurance(self.element).ensure_child_with_attribute('pipeline', 'name', name)._element
-        if template_name:
-            pipeline_element.attrib['template'] = template_name
         return Pipeline(pipeline_element, self)
 
     def ensure_removal_of_pipeline(self, name):

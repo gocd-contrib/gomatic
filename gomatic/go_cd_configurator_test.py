@@ -772,7 +772,7 @@ class TestPipeline(unittest.TestCase):
     def test_pipelines_can_be_created_based_on_template(self):
         configurator = GoCdConfigurator(empty_config())
         configurator.ensure_template('temple').ensure_stage('s').ensure_job('j')
-        pipeline = configurator.ensure_pipeline_group("g").ensure_pipeline('p', template_name='temple')
+        pipeline = configurator.ensure_pipeline_group("g").ensure_pipeline('p').set_template_name('temple')
         self.assertEquals('temple', pipeline.template().name())
 
     def test_pipelines_have_environment_variables(self):
@@ -1154,7 +1154,10 @@ def simplified(s):
 
 
 def sneakily_converted_to_xml(pipeline):
-    return ET.tostring(pipeline.parent.element)
+    if pipeline.is_template():
+        return ET.tostring(pipeline.element)
+    else:
+        return ET.tostring(pipeline.parent.element)
 
 
 class TestReverseEngineering(unittest.TestCase):
@@ -1164,9 +1167,14 @@ class TestReverseEngineering(unittest.TestCase):
             print
             print reverse_engineered_python
         pipeline = "evaluation failed"
+        template = "evaluation failed"
         exec reverse_engineered_python.replace("from gomatic import *", "from go_cd_configurator import *")
         # noinspection PyTypeChecker
         self.assertEquals(sneakily_converted_to_xml(before), sneakily_converted_to_xml(pipeline))
+
+        if before.is_based_on_template():
+            # noinspection PyTypeChecker
+            self.assertEquals(sneakily_converted_to_xml(before.template()), sneakily_converted_to_xml(template))
 
     def test_can_round_trip_simplest_pipeline(self):
         configurator = GoCdConfigurator(empty_config())
@@ -1287,6 +1295,13 @@ class TestReverseEngineering(unittest.TestCase):
 
         job.ensure_task(RakeTask('t1', runif="any"))
         job.ensure_task(RakeTask('t2'))
+
+        self.check_round_trip_pipeline(configurator, before)
+
+    def test_can_round_trip_pipeline_base_on_template(self):
+        configurator = GoCdConfigurator(empty_config())
+        before = configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_template_name("temple")
+        configurator.ensure_template("temple").ensure_stage("stage").ensure_job("job")
 
         self.check_round_trip_pipeline(configurator, before)
 
