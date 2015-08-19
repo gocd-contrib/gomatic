@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">
+  <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="590fc344-be24-4a80-aa6e-c4e3f05e8f41" />
+  <pipelines group="defaultGroup">
+    <pipeline name="siberian" template="a-template">
+      <materials>
+        <git url="https://github.com/SpringerSBM/gomatic.git" />
+      </materials>
+    </pipeline>
+  </pipelines>
+  <templates>
+    <pipeline name="a-template">
+      <stage name="defaultStage">
+        <jobs>
+          <job name="defaultJob" />
+        </jobs>
+      </stage>
+    </pipeline>
+  </templates>
+</cruise>

@@ -758,6 +758,17 @@ class TestPipeline(unittest.TestCase):
         new_pipeline.set_git_url("git@bitbucket.org:springersbm/changed.git")
         self.assertEquals("git@bitbucket.org:springersbm/changed.git", new_pipeline.git_url())
 
+    def test_pipelines_do_not_have_to_be_based_on_template(self):
+        pipeline = more_options_pipeline()
+        self.assertFalse(pipeline.is_based_on_template())
+
+    def test_pipelines_can_be_based_on_template(self):
+        pipeline = GoCdConfigurator(config('pipeline-based-on-template')).ensure_pipeline_group('defaultGroup').find_pipeline('siberian')
+        assert isinstance(pipeline, Pipeline)
+        self.assertTrue(pipeline.is_based_on_template())
+        template = GoCdConfigurator(config('pipeline-based-on-template')).templates()[0]
+        self.assertEquals(template, pipeline.template())
+
     def test_pipelines_have_environment_variables(self):
         pipeline = typical_pipeline()
         self.assertEquals({"JAVA_HOME": "/opt/java/jdk-1.8"}, pipeline.environment_variables())

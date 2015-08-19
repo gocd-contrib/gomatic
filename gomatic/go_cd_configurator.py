@@ -753,8 +753,8 @@ class PipelineMaterial(CommonEqualityMixin):
 
 class Pipeline(CommonEqualityMixin):
     def __init__(self, element, parent):
-        self.parent = parent
         self.element = element
+        self.parent = parent
 
     def name(self):
         return self.element.attrib['name']
@@ -796,6 +796,9 @@ class Pipeline(CommonEqualityMixin):
             result += "\n" + stage.as_python_commands_applied_to_pipeline()
 
         return result
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and ET.tostring(self.element, 'utf-8') == ET.tostring(other.element, 'utf-8') and self.parent == other.parent
 
     def __repr__(self):
         return 'Pipeline("%s", "%s")' % (self.name(), self.parent)
@@ -866,6 +869,15 @@ class Pipeline(CommonEqualityMixin):
         PossiblyMissingElement(self.element).possibly_missing_child('materials').remove_all_children('git')
         self.__add_material(git_material)
         return self
+
+    def __template_name(self):
+        return self.element.attrib.get('template', None)
+
+    def is_based_on_template(self):
+        return self.__template_name() is not None
+
+    def template(self):
+        return next(template for template in self.parent.templates() if template.name() == self.__template_name())
 
     def environment_variables(self):
         return ThingWithEnvironmentVariables(self.element).environment_variables()
@@ -966,14 +978,18 @@ DEFAULT_LABEL_TEMPLATE = "0.${COUNT}"  # TODO confirm what default really is. I 
 
 
 class PipelineGroup(CommonEqualityMixin):
-    def __init__(self, element):
+    def __init__(self, element, configurator):
         self.element = element
+        self.__configurator = configurator
 
     def __repr__(self):
         return 'PipelineGroup("%s")' % self.name()
 
     def name(self):
         return self.element.attrib['group']
+
+    def templates(self):
+        return self.__configurator.templates()
 
     def pipelines(self):
         return [Pipeline(e, self) for e in self.element.findall('pipeline')]
@@ -1083,11 +1099,11 @@ class GoCdConfigurator:
         return ET.tostring(self.__xml_root, 'utf-8')
 
     def pipeline_groups(self):
-        return [PipelineGroup(e) for e in self.__xml_root.findall('pipelines')]
+        return [PipelineGroup(e, self) for e in self.__xml_root.findall('pipelines')]
 
     def ensure_pipeline_group(self, group_name):
         pipeline_group_element = Ensurance(self.__xml_root).ensure_child_with_attribute("pipelines", "group", group_name)
-        return PipelineGroup(pipeline_group_element._element)
+        return PipelineGroup(pipeline_group_element._element, self)
 
     def ensure_removal_of_pipeline_group(self, group_name):
         matching = [g for g in self.pipeline_groups() if g.name() == group_name]
