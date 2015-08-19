@@ -133,7 +133,9 @@ class TestTemplates(unittest.TestCase):
     def test_templates_have_stages(self):
         templates = GoCdConfigurator(config_with_just_templates()).templates()
         self.assertEquals(2, len(templates))
+        self.assertEquals('api-component', templates[0].name())
         self.assertEquals('deploy-stack', templates[1].name())
+        self.assertEquals('deploy-components', templates[1].stages()[0].name())
 
     def test_can_have_no_templates(self):
         self.assertEquals(0, len(GoCdConfigurator(empty_config()).templates()))
