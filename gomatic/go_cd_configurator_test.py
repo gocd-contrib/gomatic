@@ -35,36 +35,36 @@ class FakeHostRestClient:
         raise RuntimeError("not expecting to be asked for anything else")
 
 
-def config_with(config_name):
+def config(config_name):
     return FakeHostRestClient(open('test-data/' + config_name + '.xml').read())
 
 
 def config_with_more_options_pipeline():
-    return config_with('config-with-more-options-pipeline')
+    return config('config-with-more-options-pipeline')
 
 
 def config_with_just_agents():
-    return config_with('config-with-just-agents')
+    return config('config-with-just-agents')
 
 
 def config_with_just_templates():
-    return config_with('config-with-just-templates')
+    return config('config-with-just-templates')
 
 
 def config_with_two_pipeline_groups():
-    return config_with('config-with-two-pipeline-groups')
+    return config('config-with-two-pipeline-groups')
 
 
 def config_with_two_pipelines():
-    return config_with('config-with-two-pipelines')
+    return config('config-with-two-pipelines')
 
 
 def config_with_typical_pipeline():
-    return config_with('config-with-typical-pipeline')
+    return config('config-with-typical-pipeline')
 
 
 def config_with_encrypted_variable():
-    return config_with('config-with-encrypted-variable')
+    return config('config-with-encrypted-variable')
 
 
 def empty_config():
@@ -674,7 +674,7 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals("some-material-name", pipeline.git_material().material_name())
 
     def test_git_material_can_ignore_sources(self):
-        pipeline = GoCdConfigurator(config_with('config-with-source-exclusions')).ensure_pipeline_group("P.Group").find_pipeline("with-exclusions")
+        pipeline = GoCdConfigurator(config('config-with-source-exclusions')).ensure_pipeline_group("P.Group").find_pipeline("with-exclusions")
         self.assertEquals({"excluded-folder", "another-excluded-folder"}, pipeline.git_material().ignore_patterns())
 
     def test_can_set_pipeline_git_url(self):
@@ -1079,7 +1079,7 @@ class TestGoCdConfigurator(unittest.TestCase):
         self.assertEquals(0, len(template.stages()))
 
     def test_top_level_elements_get_reordered_to_please_go(self):
-        configurator = GoCdConfigurator(config_with('config-with-agents-and-templates-but-without-pipelines'))
+        configurator = GoCdConfigurator(config('config-with-agents-and-templates-but-without-pipelines'))
         configurator.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")
         xml = configurator.config()
         root = ET.fromstring(xml)
