@@ -985,6 +985,24 @@ class TestPipelineGroup(unittest.TestCase):
 
 
 class TestGoCdConfigurator(unittest.TestCase):
+    def test_can_tell_if_there_is_no_change_to_save(self):
+        configurator = GoCdConfigurator(config('config-with-two-pipeline-groups'))
+
+        p = configurator.ensure_pipeline_group('Second.Group').ensure_replacement_of_pipeline('smoke-tests')
+        p.set_git_url('git@bitbucket.org:springersbm/gomatic.git')
+        p.ensure_stage('build').ensure_job('compile').ensure_task(ExecTask(['make', 'source code']))
+
+        self.assertFalse(configurator.has_changes())
+
+    def test_can_tell_if_there_is_a_change_to_save(self):
+        configurator = GoCdConfigurator(config('config-with-two-pipeline-groups'))
+
+        p = configurator.ensure_pipeline_group('Second.Group').ensure_replacement_of_pipeline('smoke-tests')
+        p.set_git_url('git@bitbucket.org:springersbm/gomatic.git')
+        p.ensure_stage('moo').ensure_job('bar')
+
+        self.assertTrue(configurator.has_changes())
+
     def test_keeps_schema_version(self):
         empty_config = FakeHostRestClient(empty_config_xml.replace('schemaVersion="72"', 'schemaVersion="73"'), "empty_config()")
         configurator = GoCdConfigurator(empty_config)

@@ -22,6 +22,12 @@
       <stage name="build">
         <jobs>
           <job name="compile">
+            <tasks>
+              <exec command="make">
+                <arg>source code</arg>
+                <runif status="passed"/>
+              </exec>
+            </tasks>
           </job>
         </jobs>
       </stage>

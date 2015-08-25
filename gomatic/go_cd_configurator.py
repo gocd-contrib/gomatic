@@ -1161,6 +1161,9 @@ class GoCdConfigurator:
     def git_urls(self):
         return [pipeline.git_url() for pipeline in self.pipelines() if pipeline.has_single_git_material()]
 
+    def has_changes(self):
+        return prettify(self.__initial_config) != prettify(self.config())
+
     def save_updated_config(self, save_config_locally=False, dry_run=False):
         config_before = prettify(self.__initial_config)
         config_after = prettify(self.config())
