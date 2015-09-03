@@ -1113,6 +1113,8 @@ class GoCdConfigurator:
 
         for pipeline in self.pipelines():
             pipeline.reorder_elements_to_please_go()
+        for template in self.templates():
+            template.reorder_elements_to_please_go()
 
     def config(self):
         self.reorder_elements_to_please_go()

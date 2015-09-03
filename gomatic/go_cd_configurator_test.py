@@ -1118,16 +1118,7 @@ class TestGoCdConfigurator(unittest.TestCase):
         self.assertEquals("materials", pipeline_root[3].tag)
         self.assertEquals("stage", pipeline_root[4].tag)
 
-        stage_root = pipeline_root.find('stage')
-        self.assertEquals("environmentvariables", stage_root[0].tag)
-        self.assertEquals("jobs", stage_root[1].tag)
-
-        job_root = stage_root.find('jobs').find('job')
-        self.assertEquals("environmentvariables", job_root[0].tag)
-        self.assertEquals("tasks", job_root[1].tag)
-        self.assertEquals("tabs", job_root[2].tag)
-        self.assertEquals("resources", job_root[3].tag)
-        self.assertEquals("artifacts", job_root[4].tag)
+        self.__check_stage(pipeline_root)
 
     def test_elements_are_reordered_in_order_to_please_go(self):
         configurator = GoCdConfigurator(empty_config())
@@ -1137,17 +1128,11 @@ class TestGoCdConfigurator(unittest.TestCase):
         pipeline.set_timer("some timer")
         pipeline.ensure_parameters({'p': 'p'})
 
-        stage = pipeline.ensure_stage("s")
-        job = stage.ensure_job("j")
-        stage.ensure_environment_variables({'s': 's'})
-
-        job.ensure_tab(Tab("n", "p"))
-        job.ensure_artifacts({BuildArtifact('s', 'd')})
-        job.ensure_task(ExecTask(['ls']))
-        job.ensure_resource("r")
-        job.ensure_environment_variables({'j': 'j'})
+        self.__configure_stage(pipeline)
+        self.__configure_stage(configurator.ensure_template('templ'))
 
         xml = configurator.config()
+
         pipeline_root = ET.fromstring(xml).find('pipelines').find('pipeline')
         self.assertEquals("params", pipeline_root[0].tag)
         self.assertEquals("timer", pipeline_root[1].tag)
@@ -1155,16 +1140,33 @@ class TestGoCdConfigurator(unittest.TestCase):
         self.assertEquals("materials", pipeline_root[3].tag)
         self.assertEquals("stage", pipeline_root[4].tag)
 
+        self.__check_stage(pipeline_root)
+
+        template_root = ET.fromstring(xml).find('templates').find('pipeline')
+        self.assertEquals("stage", template_root[0].tag)
+
+        self.__check_stage(template_root)
+
+    def __check_stage(self, pipeline_root):
         stage_root = pipeline_root.find('stage')
         self.assertEquals("environmentvariables", stage_root[0].tag)
         self.assertEquals("jobs", stage_root[1].tag)
-
         job_root = stage_root.find('jobs').find('job')
         self.assertEquals("environmentvariables", job_root[0].tag)
         self.assertEquals("tasks", job_root[1].tag)
         self.assertEquals("tabs", job_root[2].tag)
         self.assertEquals("resources", job_root[3].tag)
         self.assertEquals("artifacts", job_root[4].tag)
+
+    def __configure_stage(self, pipeline):
+        stage = pipeline.ensure_stage("s")
+        job = stage.ensure_job("j")
+        stage.ensure_environment_variables({'s': 's'})
+        job.ensure_tab(Tab("n", "p"))
+        job.ensure_artifacts({BuildArtifact('s', 'd')})
+        job.ensure_task(ExecTask(['ls']))
+        job.ensure_resource("r")
+        job.ensure_environment_variables({'j': 'j'})
 
 
 def simplified(s):
