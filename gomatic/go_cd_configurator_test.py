@@ -752,6 +752,32 @@ class TestPipeline(unittest.TestCase):
         pipeline.ensure_material(PipelineMaterial('pipeline2', 'build'))
         self.assertEquals(2, len(pipeline.materials()))
 
+    def test_materials_are_sorted(self):
+        go_cd_configurator = GoCdConfigurator(empty_config())
+        pipeline = go_cd_configurator.ensure_pipeline_group("g").ensure_pipeline("p")
+        pipeline.ensure_material(PipelineMaterial('zeta', 'build'))
+        pipeline.ensure_material(GitMaterial('git@bitbucket.org:springersbm/zebra.git'))
+        pipeline.ensure_material(PipelineMaterial('alpha', 'build'))
+        pipeline.ensure_material(GitMaterial('git@bitbucket.org:springersbm/art.git'))
+        pipeline.ensure_material(PipelineMaterial('theta', 'build'))
+        pipeline.ensure_material(GitMaterial('git@bitbucket.org:springersbm/this.git'))
+
+        xml = parseString(go_cd_configurator.config())
+        materials = xml.getElementsByTagName('materials')[0].childNodes
+        self.assertEquals('git', materials[0].tagName)
+        self.assertEquals('git', materials[1].tagName)
+        self.assertEquals('git', materials[2].tagName)
+        self.assertEquals('pipeline', materials[3].tagName)
+        self.assertEquals('pipeline', materials[4].tagName)
+        self.assertEquals('pipeline', materials[5].tagName)
+
+        self.assertEquals('git@bitbucket.org:springersbm/art.git', materials[0].attributes['url'].value)
+        self.assertEquals('git@bitbucket.org:springersbm/this.git', materials[1].attributes['url'].value)
+        self.assertEquals('git@bitbucket.org:springersbm/zebra.git', materials[2].attributes['url'].value)
+        self.assertEquals('alpha', materials[3].attributes['pipelineName'].value)
+        self.assertEquals('theta', materials[4].attributes['pipelineName'].value)
+        self.assertEquals('zeta', materials[5].attributes['pipelineName'].value)
+
     def test_can_set_pipeline_git_url_for_new_pipeline(self):
         pipeline_group = standard_pipeline_group()
         new_pipeline = pipeline_group.ensure_pipeline("some_name")

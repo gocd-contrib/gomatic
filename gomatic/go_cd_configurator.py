@@ -960,6 +960,11 @@ class Pipeline(CommonEqualityMixin):
         return stage
 
     def reorder_elements_to_please_go(self):
+        materials = self.materials()
+        self.__remove_materials()
+        for material in self.__reordered_materials_to_reduce_thrash(materials):
+            self.__add_material(material)
+
         move_all_to_end(self.element, "params")
         move_all_to_end(self.element, "timer")
         move_all_to_end(self.element, "environmentvariables")
@@ -992,6 +997,24 @@ class Pipeline(CommonEqualityMixin):
     def timer_triggers_only_on_changes(self):
         element = self.element.find('timer')
         return "true" == element.attrib.get('onlyOnChanges')
+
+    def __remove_materials(self):
+        PossiblyMissingElement(self.element).remove_all_children('materials')
+
+    def __reordered_materials_to_reduce_thrash(self, materials):
+        def cmp_materials(m1, m2):
+            if m1.is_git():
+                if m2.is_git():
+                    return cmp(m1.url(), m2.url())
+                else:
+                    return -1
+            else:
+                if m2.is_git():
+                    return 1
+                else:
+                    return cmp(str(m1), str(m2))
+
+        return sorted(materials, cmp_materials)
 
 
 DEFAULT_LABEL_TEMPLATE = "0.${COUNT}"  # TODO confirm what default really is. I am pretty sure this is mistaken!
