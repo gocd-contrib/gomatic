@@ -133,33 +133,49 @@ class ThingWithEnvironmentVariables:
         self.element = element
 
     @staticmethod
-    def __is_encrypted(variable_element):
+    def __is_secure(variable_element):
         return 'secure' in variable_element.attrib and variable_element.attrib['secure'] == 'true'
 
-    def __environment_variables(self, encrypted):
+    @staticmethod
+    def __is_encrypted(variable_element):
+        return variable_element.find('encryptedValue') is not None
+
+    def __environment_variables(self, secure, encrypted=False):
         variable_elements = PossiblyMissingElement(self.element).possibly_missing_child("environmentvariables").findall("variable")
         result = {}
         for variable_element in variable_elements:
-            if encrypted == self.__is_encrypted(variable_element):
-                if encrypted:
+            if secure == self.__is_secure(variable_element):
+                is_encrypted = self.__is_encrypted(variable_element)
+                if is_encrypted:
                     value_attribute = "encryptedValue"
                 else:
                     value_attribute = "value"
-                result[variable_element.attrib['name']] = variable_element.find(value_attribute).text
+                if encrypted == is_encrypted:
+                    result[variable_element.attrib['name']] = variable_element.find(value_attribute).text
         return result
 
     def environment_variables(self):
         return self.__environment_variables(False)
 
     def encrypted_environment_variables(self):
-        return self.__environment_variables(True)
+        return self.__environment_variables(True, True)
 
-    def __ensure_environment_variables(self, environment_variables, encrypted):
+    def unencrypted_secure_environment_variables(self):
+        return self.__environment_variables(True, False)
+
+    def __ensure_environment_variables(self, environment_variables, secure, encrypted=None):
+        if encrypted is None:
+            encrypted = secure
+
         environment_variables_ensurance = Ensurance(self.element).ensure_child("environmentvariables")
         for environment_variable_name in sorted(environment_variables.keys()):
             variable_element = environment_variables_ensurance.ensure_child_with_attribute("variable", "name", environment_variable_name)
+            if secure:
+                variable_element.set("secure", "true")
+            else:
+                variable_element.set("secure", "false")
             if encrypted:
-                value_element = variable_element.set("secure", "true").ensure_child("encryptedValue")
+                value_element = variable_element.ensure_child("encryptedValue")
             else:
                 value_element = variable_element.ensure_child("value")
             value_element.set_text(environment_variables[environment_variable_name])
@@ -169,6 +185,9 @@ class ThingWithEnvironmentVariables:
 
     def ensure_encrypted_environment_variables(self, environment_variables):
         self.__ensure_environment_variables(environment_variables, True)
+
+    def ensure_unencrypted_secure_environment_variables(self, environment_variables):
+        self.__ensure_environment_variables(environment_variables, True, False)
 
     def remove_all(self):
         PossiblyMissingElement(self.element).possibly_missing_child("environmentvariables").remove_all_children()
@@ -181,6 +200,9 @@ class ThingWithEnvironmentVariables:
         encrypted_environment_variables = self.encrypted_environment_variables()
         if encrypted_environment_variables:
             result += '.ensure_encrypted_environment_variables(%s)' % encrypted_environment_variables
+        unencrypted_secure_environment_variables = self.unencrypted_secure_environment_variables()
+        if unencrypted_secure_environment_variables:
+            result += '.ensure_unencrypted_secure_environment_variables(%s)' % unencrypted_secure_environment_variables
         return result
 
     def remove(self, name):
@@ -905,12 +927,19 @@ class Pipeline(CommonEqualityMixin):
     def encrypted_environment_variables(self):
         return ThingWithEnvironmentVariables(self.element).encrypted_environment_variables()
 
+    def unencrypted_secure_environment_variables(self):
+        return ThingWithEnvironmentVariables(self.element).unencrypted_secure_environment_variables()
+
     def ensure_environment_variables(self, environment_variables):
         ThingWithEnvironmentVariables(self.element).ensure_environment_variables(environment_variables)
         return self
 
     def ensure_encrypted_environment_variables(self, environment_variables):
         ThingWithEnvironmentVariables(self.element).ensure_encrypted_environment_variables(environment_variables)
+        return self
+
+    def ensure_unencrypted_secure_environment_variables(self, environment_variables):
+        ThingWithEnvironmentVariables(self.element).ensure_unencrypted_secure_environment_variables(environment_variables)
         return self
 
     def without_any_environment_variables(self):

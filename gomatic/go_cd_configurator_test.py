@@ -809,15 +809,24 @@ class TestPipeline(unittest.TestCase):
         pipeline = GoCdConfigurator(config('config-with-encrypted-variable')).ensure_pipeline_group("defaultGroup").find_pipeline("example")
         self.assertEquals({"MY_SECURE_PASSWORD": "yq5qqPrrD9/htfwTWMYqGQ=="}, pipeline.encrypted_environment_variables())
 
+    def test_pipelines_have_unencrypted_secure_environment_variables(self):
+        pipeline = GoCdConfigurator(config('config-with-unencrypted-secure-variable')).ensure_pipeline_group("defaultGroup").find_pipeline("example")
+        self.assertEquals({"MY_SECURE_PASSWORD": "hunter2"}, pipeline.unencrypted_secure_environment_variables())
+
     def test_can_add_environment_variables_to_pipeline(self):
         pipeline = empty_pipeline()
         pipeline.ensure_environment_variables({"new": "one", "again": "two"})
         self.assertEquals({"new": "one", "again": "two"}, pipeline.environment_variables())
 
-    def test_can_add_encrypted_environment_variables_to_pipeline(self):
+    def test_can_add_encrypted_secure_environment_variables_to_pipeline(self):
         pipeline = empty_pipeline()
         pipeline.ensure_encrypted_environment_variables({"new": "one", "again": "two"})
         self.assertEquals({"new": "one", "again": "two"}, pipeline.encrypted_environment_variables())
+
+    def test_can_add_unencrypted_secure_environment_variables_to_pipeline(self):
+        pipeline = empty_pipeline()
+        pipeline.ensure_unencrypted_secure_environment_variables({"new": "one", "again": "two"})
+        self.assertEquals({"new": "one", "again": "two"}, pipeline.unencrypted_secure_environment_variables())
 
     def test_can_add_environment_variables_to_new_pipeline(self):
         pipeline = typical_pipeline()
