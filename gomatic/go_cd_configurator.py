@@ -239,13 +239,18 @@ def Task(element):
         command_and_args = [element.attrib["command"]] + [e.text for e in element.findall('arg')]
         working_dir = element.attrib.get("workingdir", None)  # TODO not ideal to return "None" for working_dir
         return ExecTask(command_and_args, working_dir, runif)
-    if element.tag == "fetchartifact":
+    elif element.tag == "fetchartifact":
         dest = element.attrib.get('dest', None)
         return FetchArtifactTask(element.attrib['pipeline'], element.attrib['stage'], element.attrib['job'], fetch_artifact_src_from(element), dest, runif)
-    if element.tag == "rake":
+    elif element.tag == "rake":
         return RakeTask(element.attrib['target'])
-    else:
-        raise RuntimeError("Don't know task type %s" % element.tag)
+    elif element.tag == "task":
+        plugin_config = element.findall('pluginConfiguration')
+        if len(plugin_config) and plugin_config[0].attrib['id'] == 'script-executor':
+            script = element.findall('configuration/property/value')
+            if len(script):
+                return ScriptExecutorTask(script[0].text)
+    raise RuntimeError("Don't know task type %s" % element.tag)
 
 
 class AbstractTask(CommonEqualityMixin):
@@ -336,6 +341,37 @@ class FetchArtifactTask(AbstractTask):
             new_element = ET.fromstring(
                 '<fetchartifact pipeline="%s" stage="%s" job="%s" %s="%s" dest="%s"/>' % (
                     self.__pipeline, self.__stage, self.__job, src_type, src_value, self.__dest))
+        new_element.append(ET.fromstring('<runif status="%s" />' % self.runif()))
+
+        Ensurance(element).ensure_child("tasks").append(new_element)
+        return Task(new_element)
+
+
+class ScriptExecutorTask(AbstractTask):
+    def __init__(self, script, runif="passed"):
+        super(self.__class__, self).__init__(runif)
+        self._script = script
+
+    def __repr__(self):
+        return 'ScriptExecutorTask(runif="%s", script="%s")' % (self._runif, self._script)
+
+    def type(self):
+        return "script-executor"
+
+    def append_to(self, element):
+        new_element = ET.fromstring('<task></task>')
+        plugin_config = ET.fromstring(
+            '<pluginConfiguration id="script-executor" version="1" />')
+        script_config = ET.fromstring(
+        ''' <configuration>
+                  <property>
+                    <key>script</key>
+                    <value>%s</value>
+                  </property>
+                </configuration>''' % self._script)
+
+        new_element.append(plugin_config)
+        new_element.append(script_config)
         new_element.append(ET.fromstring('<runif status="%s" />' % self.runif()))
 
         Ensurance(element).ensure_child("tasks").append(new_element)
