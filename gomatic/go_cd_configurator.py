@@ -314,6 +314,17 @@ class FetchArtifactTask(AbstractTask):
 
         return ('FetchArtifactTask("%s", "%s", "%s", %s' % (self.__pipeline, self.__stage, self.__job, self.__src)) + dest_parameter + runif_parameter + ')'
 
+    def to_dict(self):
+        return {
+            'type': self.type(),
+            'runif': self.runif(),
+            'pipeline': self.pipeline(),
+            'stage': self.stage(),
+            'job': self.job(),
+            'src': self.src(),
+            'dest': self.dest()
+        }
+
     def type(self):
         return "fetchartifact"
 
@@ -355,8 +366,18 @@ class ScriptExecutorTask(AbstractTask):
     def __repr__(self):
         return 'ScriptExecutorTask(runif="%s", script="%s")' % (self._runif, self._script)
 
+    def to_dict(self):
+        return {
+            'type': self.type(),
+            'runif': self.runif(),
+            'script': self.script()
+        }
+
     def type(self):
-        return "script-executor"
+        return "script"
+
+    def script(self):
+        return self._script
 
     def append_to(self, element):
         new_element = ET.fromstring('<task></task>')
@@ -395,6 +416,14 @@ class ExecTask(AbstractTask):
 
         return ('ExecTask(%s' % self.command_and_args()) + working_dir_parameter + runif_parameter + ')'
 
+    def to_dict(self):
+        return {
+            'type': self.type(),
+            'runif': self.runif(),
+            'command': self.command_and_args(),
+            'working_dir': self.working_dir()
+        }
+
     def type(self):
         return "exec"
 
@@ -426,6 +455,13 @@ class RakeTask(AbstractTask):
 
     def __repr__(self):
         return 'RakeTask("%s", "%s")' % (self.__target, self._runif)
+
+    def to_dict(self):
+        return {
+            'type': self.type(),
+            'runif': self.runif(),
+            'target': self.target()
+        }
 
     def type(self):
         return "rake"
@@ -751,6 +787,9 @@ class GitMaterial(CommonEqualityMixin):
         else:
             return 'set_git_url("%s")' % self.__url
 
+    def dest(self):
+        return self.__dest
+
     def is_git(self):
         return True
 
@@ -810,6 +849,15 @@ class PipelineMaterial(CommonEqualityMixin):
 
     def is_git(self):
         return False
+
+    def pipeline_name(self):
+        return self.__pipeline_name
+
+    def stage_name(self):
+        return self.__stage_name
+
+    def material_name(self):
+        return self.__material_name
 
     def append_to(self, element):
         if self.__material_name is None:
