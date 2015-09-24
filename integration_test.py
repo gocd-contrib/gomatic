@@ -8,7 +8,7 @@ import os
 import unittest
 import sys
 
-from gomatic import GoCdConfigurator, HostRestClient, GitMaterial, BuildArtifact, TestArtifact
+from gomatic import GoCdConfigurator, HostRestClient, GitMaterial, BuildArtifact, TestArtifact, ExecTask
 
 
 def start_go_server(gocd_version):
@@ -91,21 +91,13 @@ def check_docker():
         url = "https://docs.docker.com/installation/mac/"
     check_installed("docker", "1.3.0", lambda o: o.split(" ")[2][:-1], url)
 
-#'13.1.1-16714',
-#-                             '13.2.2-17585',
-#-                             '13.3.1-18130',
-#-                             '13.4.0-18334',
-#-                             '13.4.1-18342',
-#                             '14.1.0-18882',
-#-                             '14.2.0-377',
-#-                             '14.3.0-1186',
-#-                             '14.4.0-1356',
 
 class IntegrationTest(unittest.TestCase):
     gocd_versions = [
         '13.1.1-16714',
         '13.2.2-17585',
         '13.3.1-18130',
+#        '13.4.0-18334',
         '13.4.1-18342',
         '14.1.0-18882',
         '14.2.0-377',
