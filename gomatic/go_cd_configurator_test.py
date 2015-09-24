@@ -1120,6 +1120,14 @@ class TestGoCdConfigurator(unittest.TestCase):
         self.assertEquals("templates", root[1].tag)
         self.assertEquals("agents", root[2].tag)
 
+    def test_top_level_elements_with_environment_get_reordered_to_please_go(self):
+        configurator = GoCdConfigurator(config('config-with-pipelines-environments-and-agents'))
+        configurator.ensure_pipeline_group("P.Group").ensure_pipeline("some_pipeline")
+
+        xml = configurator.config()
+        root = ET.fromstring(xml)
+        self.assertEqual(['server', 'pipelines', 'environments', 'agents'], [element.tag for element in root])
+
     def test_elements_can_be_created_in_order_to_please_go(self):
         configurator = GoCdConfigurator(empty_config())
         pipeline = configurator.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")
