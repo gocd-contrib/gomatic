@@ -500,6 +500,13 @@ class Artifact(CommonEqualityMixin):
         else:
             return '%s("%s", "%s")' % (self.constructor(), self.__src, self.__dest)
 
+    def to_dict(self):
+        return {
+            'type': self.__tag,
+            'src': self.__src,
+            'dest': self.__dest
+        }
+
     def append_to(self, element):
         if self.__dest is None:
             element.append(ET.fromstring('<%s src="%s" />' % (self.__tag, self.__src)))
@@ -522,6 +529,12 @@ class Tab(CommonEqualityMixin):
     def __repr__(self):
         return 'Tab("%s", "%s")' % (self.__name, self.__path)
 
+    def to_dict(self):
+        return {
+            'name': self.__name,
+            'path': self.__path
+        }
+
     def append_to(self, element):
         element.append(ET.fromstring('<tab name="%s" path="%s" />' % (self.__name, self.__path)))
 
@@ -533,6 +546,21 @@ class Job(CommonEqualityMixin):
 
     def __repr__(self):
         return "Job('%s', %s)" % (self.name(), self.tasks())
+
+    def to_dict(self):
+        result = {
+            'name': self.name(),
+            'resources': list(self.resources()),
+            'tasks': [t.to_dict() for t in self.tasks()],
+            'artifacts': [a.to_dict() for a in self.artifacts()],
+            'tabs': [t.to_dict() for t in self.tabs()],
+            'environment_variables': self.environment_variables()
+        }
+        if self.has_timeout():
+            result['timeout'] = self.timeout()
+        if self.runs_on_all_agents():
+            result['runs_on_all_agents'] = True
+        return result
 
     def name(self):
         return self.__element.attrib['name']
@@ -657,6 +685,17 @@ class Stage(CommonEqualityMixin):
     def __repr__(self):
         return 'Stage(%s)' % self.name()
 
+    def to_dict(self):
+        return {
+            'name': self.name(),
+            'type': 'manual' if self.has_manual_approval() else 'on_success',
+            'fetch_materials': self.fetch_materials(),
+            'clean_working_dir': self.clean_working_dir(),
+            'never_cleanup_artifacts': self.never_cleanup_artifacts(),
+            'jobs': [j.to_dict() for j in self.jobs()],
+            'environment_variables': self.environment_variables()
+        }
+
     def name(self):
         return self.element.attrib['name']
 
@@ -684,6 +723,13 @@ class Stage(CommonEqualityMixin):
 
     def clean_working_dir(self):
         return PossiblyMissingElement(self.element).has_attribute('cleanWorkingDir', "true")
+
+    def set_never_cleanup_artifacts(self):
+        self.element.attrib['artifactCleanupProhibited'] = "true"
+        return self
+
+    def never_cleanup_artifacts(self):
+        return PossiblyMissingElement(self.element).has_attribute('artifactCleanupProhibited', "true")
 
     def has_manual_approval(self):
         return PossiblyMissingElement(self.element).possibly_missing_child("approval").has_attribute("type", "manual")
@@ -756,6 +802,17 @@ class GitMaterial(CommonEqualityMixin):
         self.__polling = polling
         self.__ignore_patterns = ignore_patterns
         self.__dest = dest
+
+    def to_dict(self):
+        return {
+            'type': 'git',
+            'name': self.__material_name,
+            'branch': self.branch(),
+            'url': self.url(),
+            'dest': self.dest(),
+            'poll_new_changes': self.polling(),
+            'blacklist': list(self.ignore_patterns())
+        }
 
     def __repr__(self):
         branch_part = ""
@@ -847,6 +904,14 @@ class PipelineMaterial(CommonEqualityMixin):
         else:
             return 'PipelineMaterial("%s", "%s", "%s")' % (self.__pipeline_name, self.__stage_name, self.__material_name)
 
+    def to_dict(self):
+        return {
+            'type': 'pipeline',
+            'name': self.material_name(),
+            'pipeline_name': self.pipeline_name(),
+            'stage_name': self.stage_name()
+        }
+
     def is_git(self):
         return False
 
@@ -877,6 +942,25 @@ class Pipeline(CommonEqualityMixin):
     def __init__(self, element, parent):
         self.element = element
         self.parent = parent
+
+    def to_dict(self):
+        result = {
+            'name': self.name(),
+            'automatic_pipeline_locking': self.has_automatic_pipeline_locking(),
+            'stages': [s.to_dict() for s in self.stages()],
+            'template': self.__template_name(),
+            'materials': [m.to_dict() for m in self.materials()],
+            'environment_variables': self.environment_variables(),
+            'encrypted_environment_variables': self.encrypted_environment_variables(),
+            'parameters': self.parameters(),
+            'cron_timer_spec': self.timer() if self.has_timer() else None
+        }
+        if self.has_label_template():
+            result['label_template'] = self.label_template()
+        if self.has_timer():
+            result['cron_timer_run_only_on_new_material'] = \
+                self.timer_triggers_only_on_changes()
+        return result
 
     def name(self):
         return self.element.attrib['name']
