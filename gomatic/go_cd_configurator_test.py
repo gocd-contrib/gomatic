@@ -1289,6 +1289,11 @@ class TestReverseEngineering(unittest.TestCase):
         before = configurator.ensure_pipeline_group("group").ensure_pipeline("line").ensure_encrypted_environment_variables({"p": "v"})
         self.check_round_trip_pipeline(configurator, before)
 
+    def test_can_round_trip_pipeline_unencrypted_secure_environment_variables(self):
+        configurator = GoCdConfigurator(empty_config())
+        before = configurator.ensure_pipeline_group("group").ensure_pipeline("line").ensure_unencrypted_secure_environment_variables({"p": "v"})
+        self.check_round_trip_pipeline(configurator, before)
+
     def test_can_round_trip_timer(self):
         configurator = GoCdConfigurator(empty_config())
         before = configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_timer("some timer")
