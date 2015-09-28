@@ -1207,6 +1207,10 @@ class Pipeline(CommonEqualityMixin):
         element = self.element.find('timer')
         return "true" == element.attrib.get('onlyOnChanges')
 
+    def set_timer_triggers_only_on_changes(self):
+        element = self.element.find('timer')
+        element.attrib['onlyOnChanges'] = 'true'
+
     def __remove_materials(self):
         PossiblyMissingElement(self.element).remove_all_children('materials')
 
