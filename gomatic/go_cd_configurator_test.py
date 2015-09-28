@@ -1137,6 +1137,15 @@ class TestGoCdConfigurator(unittest.TestCase):
         root = ET.fromstring(xml)
         self.assertEqual(['server', 'pipelines', 'environments', 'agents'], [element.tag for element in root])
 
+    def test_top_level_elements_that_cannot_be_created_get_reordered_to_please_go(self):
+        configurator = GoCdConfigurator(config('config-with-many-of-the-top-level-elements-that-cannot-be-added'))
+        configurator.ensure_pipeline_group("P.Group").ensure_pipeline("some_pipeline")
+
+        xml = configurator.config()
+        root = ET.fromstring(xml)
+        self.assertEqual(['server', 'repositories', 'pipelines', 'environments', 'agents'],
+                         [element.tag for element in root])
+
     def test_elements_can_be_created_in_order_to_please_go(self):
         configurator = GoCdConfigurator(empty_config())
         pipeline = configurator.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")

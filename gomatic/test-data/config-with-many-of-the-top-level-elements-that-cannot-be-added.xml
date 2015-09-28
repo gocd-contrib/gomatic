@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">
+  <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="590fc344-be24-4a80-aa6e-c4e3f05e8f41" />
+  <repositories>
+      <repository id="24f19f1f-ab87-40a0-9561-099039a266ca" name="baboon">
+          <pluginConfiguration id="yum" version="2"/>
+          <configuration>
+              <property>
+                  <key>REPO_URL</key>
+                  <value>http://yum.com</value>
+              </property>
+              <property>
+                  <key>USERNAME</key>
+                  <value>u</value>
+              </property>
+              <property>
+                  <key>PASSWORD</key>
+                  <encryptedValue>95nDQKzOP44=</encryptedValue>
+              </property>
+          </configuration>
+      </repository>
+  </repositories>
+  <environments>
+    <environment name="build">
+      <environmentvariables>
+        <variable name="DOCKER_HOST">
+          <value>tcp://1.1.1.1:2375</value>
+        </variable>
+        <variable name="JAVA_HOME">
+          <value />
+        </variable>
+      </environmentvariables>
+      <agents>
+        <physical uuid="d86795de-5b9e-48cb-92ec-7f3d80cf08b1" />
+      </agents>
+      <pipelines>
+        <pipeline name="typical" />
+      </pipelines>
+    </environment>
+  </environments>
+  <agents>
+      <agent hostname="go-agent" ipaddress="10.0.42.1" uuid="d86795de-5b9e-48cb-92ec-7f3d80cf08b1">
+          <resources>
+              <resource>docker</resource>
+          </resources>
+      </agent>
+  </agents>
+</cruise>
