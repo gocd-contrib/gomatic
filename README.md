@@ -109,6 +109,15 @@ Integration tests (takes a long time to download many versions of GoCD) (require
  
 1. `python integration_test.py`
 
+### Contributing to Gomatic via pull request
+
+To have the best chance of your pull request being merged, please:
+
+1. Include tests for any new functionality
+1. Separate out different changes into different pull requests
+1. Don't delete any existing tests unless absolutely necessary
+1. Don't change too much in one pull request
+
 ### CI and releasing packages to pypi
 
 Gomatic uses [travis-ci](https://travis-ci.org/SpringerSBM/gomatic) to run the unit tests and deploy to [pypi](https://pypi.python.org/pypi/gomatic).
