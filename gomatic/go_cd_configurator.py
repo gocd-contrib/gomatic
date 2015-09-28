@@ -1161,6 +1161,7 @@ class GoCdConfigurator:
     def reorder_elements_to_please_go(self):
         move_all_to_end(self.__xml_root, 'pipelines')
         move_all_to_end(self.__xml_root, 'templates')
+        move_all_to_end(self.__xml_root, 'environments')
         move_all_to_end(self.__xml_root, 'agents')
 
         for pipeline in self.pipelines():

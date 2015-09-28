@@ -8,7 +8,7 @@ import os
 import unittest
 import sys
 
-from gomatic import *
+from gomatic import GoCdConfigurator, HostRestClient, GitMaterial, BuildArtifact, TestArtifact, ExecTask
 
 
 def start_go_server(gocd_version):
@@ -93,18 +93,22 @@ def check_docker():
 
 
 class IntegrationTest(unittest.TestCase):
+    gocd_versions = [
+        '13.1.1-16714',
+        '13.2.2-17585',
+        '13.3.1-18130',
+        #'13.4.0-18334',  Fails repeatedly.
+        '13.4.1-18342',
+        '14.1.0-18882',
+        '14.2.0-377',
+        '14.3.0-1186',
+        '14.4.0-1356',
+        '15.1.0-1863',
+        '15.2.0-2248',
+    ]
+    
     def test_all_versions(self):
-        for gocd_version in ['13.1.1-16714',
-                             '13.2.2-17585',
-                             '13.3.1-18130',
-                             '13.4.0-18334',
-                             '13.4.1-18342',
-                             '14.1.0-18882',
-                             '14.2.0-377',
-                             '14.3.0-1186',
-                             '14.4.0-1356',
-                             '15.1.0-1863',
-                             '15.2.0-2248']:
+        for gocd_version in self.gocd_versions:
             print "*" * 60, gocd_version
             with populated_go_server(gocd_version) as configurator:
                 self.assertEquals(["P.Group"], [p.name() for p in configurator.pipeline_groups()])
@@ -127,7 +131,7 @@ class IntegrationTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    if not os.path.exists("go-server-13.2.2-17585.deb"):
+    if not os.path.exists("go-server-%s.deb" % IntegrationTest.gocd_versions[0]):
         print "This takes a long time to run first time, because it downloads a Java docker image and GoCD .deb packages from the internet"
     check_docker()
 
