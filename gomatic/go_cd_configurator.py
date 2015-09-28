@@ -538,6 +538,7 @@ class Job(CommonEqualityMixin):
         return self
 
     def reorder_elements_to_please_go(self):
+        # see https://github.com/SpringerSBM/gomatic/issues/6
         move_all_to_end(self.__element, "environment_variables")
         move_all_to_end(self.__element, "tasks")
         move_all_to_end(self.__element, "tabs")

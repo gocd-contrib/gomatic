@@ -44,6 +44,14 @@
                         <xsd:field xpath="@name"/>
                     </xsd:unique>
                 </xsd:element>
+                <xsd:element minOccurs="0" maxOccurs="1" name="scms" type="scmsType">
+                    <xsd:unique name="uniqueSCMName">
+                        <xsd:selector xpath="scm"/>
+                        <xsd:field xpath="@name"/>
+                    </xsd:unique>
+                </xsd:element>
+                <xsd:element minOccurs="0" maxOccurs="1" name="config-repos" type="configReposType">
+                </xsd:element>
                 <xsd:element minOccurs="0" maxOccurs="unbounded" name="pipelines" type="pipelinesType"/>
                 <xsd:element minOccurs="0" maxOccurs="1" name="templates" type="templatesType">
                     <xsd:unique name="uniquePipelineTemplateName">
@@ -68,7 +76,7 @@
                     </xsd:unique>
                 </xsd:element>
             </xsd:sequence>
-            <xsd:attribute name="schemaVersion" type="xsd:int" use="required" fixed="72"/>
+            <xsd:attribute name="schemaVersion" type="xsd:int" use="required" fixed="76"/>
         </xsd:complexType>
         <xsd:unique name="uniquePipelines">
             <xsd:selector xpath="pipelines"/>
@@ -80,6 +88,14 @@
         </xsd:unique>
         <xsd:keyref name="packageIdReferredByMaterial" refer="uniquePackageId">
             <xsd:selector xpath="pipelines/pipeline/materials/package"/>
+            <xsd:field xpath="@ref"/>
+        </xsd:keyref>
+        <xsd:unique name="uniqueSCMId">
+            <xsd:selector xpath="scms/scm"/>
+            <xsd:field xpath="@id"/>
+        </xsd:unique>
+        <xsd:keyref name="scmIdReferredByMaterial" refer="uniqueSCMId">
+            <xsd:selector xpath="pipelines/pipeline/materials/scm"/>
             <xsd:field xpath="@ref"/>
         </xsd:keyref>
     </xsd:element>
@@ -116,6 +132,41 @@
         </xsd:sequence>
         <xsd:attribute type="repoIdType" name="id"/>
         <xsd:attribute type="nameType" name="name" use="required"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="configReposType">
+        <xsd:sequence>
+            <xsd:element name="config-repo" minOccurs="0" maxOccurs="unbounded" type="configRepoType"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="configRepoType">
+        <xsd:sequence>
+            <xsd:choice minOccurs="1" maxOccurs="1">
+                <xsd:element name="svn" type="svnType"/>
+                <xsd:element name="hg" type="hgType"/>
+                <xsd:element name="p4" type="p4Type"/>
+                <xsd:element name="git" type="gitType"/>
+                <xsd:element name="tfs" type="tfsType"/>
+                <xsd:element name="scm" type="scmReferenceType"/>
+            </xsd:choice>
+            <xsd:element name="configuration" minOccurs="0" maxOccurs="1" type="configurationType"/>
+        </xsd:sequence>
+        <xsd:attribute type="nameType" name="plugin" use="optional"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="scmsType">
+        <xsd:sequence>
+            <xsd:element name="scm" minOccurs="0" maxOccurs="unbounded" type="scmType"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="scmType">
+        <xsd:sequence>
+            <xsd:element name="pluginConfiguration" minOccurs="1" maxOccurs="1" type="pluginConfigurationType"/>
+            <xsd:element name="configuration" minOccurs="1" maxOccurs="1" type="configurationType"/>
+        </xsd:sequence>
+        <xsd:attribute type="scmIdType" name="id"/>
+        <xsd:attribute type="nameType" name="name" use="required"/>
+        <xsd:attribute type="xsd:boolean" name="autoUpdate" use="optional"/>
     </xsd:complexType>
     <xsd:complexType name="pluginConfigurationType">
         <xsd:attribute type="xsd:string" name="id"/>
@@ -300,6 +351,7 @@
             <xsd:element name="git" type="gitType"/>
             <xsd:element name="tfs" type="tfsType"/>
             <xsd:element name="package" type="packageType"/>
+            <xsd:element name="scm" type="scmReferenceType"/>
         </xsd:choice>
     </xsd:complexType>
     <xsd:complexType name="pipelineType">
@@ -371,6 +423,13 @@
         <xsd:attribute name="ref" type="xsd:string" use="required">
         </xsd:attribute>
     </xsd:complexType>
+    <xsd:complexType name="scmReferenceType">
+        <xsd:sequence>
+            <xsd:element name="filter" type="filterType" minOccurs="0" maxOccurs="1"/>
+        </xsd:sequence>
+        <xsd:attribute name="ref" type="xsd:string" use="required" />
+        <xsd:attribute name="dest" type="filePathType" use="optional"/>
+    </xsd:complexType>
     <xsd:complexType name="jobsType">
         <xsd:sequence>
             <xsd:element maxOccurs="unbounded" name="job" type="jobType"/>
@@ -397,6 +456,7 @@
         </xsd:all>
         <xsd:attribute name="name" type="jobnameType" use="required"/>
         <xsd:attribute name="runOnAllAgents" type="xsd:boolean" use="optional" default="false"/>
+        <xsd:attribute name="runInstanceCount" type="xsd:positiveInteger" use="optional"/>
         <xsd:attribute name="timeout" type="xsd:double" use="optional"/>
     </xsd:complexType>
     <xsd:complexType name="resourcesType">
@@ -652,6 +712,9 @@
     <xsd:simpleType name="packageIdType">
         <xsd:restriction base="nameType"/>
     </xsd:simpleType>
+    <xsd:simpleType name="scmIdType">
+        <xsd:restriction base="nameType"/>
+    </xsd:simpleType>
     <xsd:simpleType name="environmentName">
         <xsd:restriction base="nameType"/>
     </xsd:simpleType>
@@ -672,7 +735,7 @@
     </xsd:simpleType>
     <xsd:simpleType name="labelType">
         <xsd:restriction base="xsd:string">
-            <xsd:pattern value="(([a-zA-Z0-9_\-.!~*'()#:])*[$#]\{[a-zA-Z0-9_\-.!~*'()#:]+\}([a-zA-Z0-9_\-.!~*'()#:])*)+"/>
+            <xsd:pattern value="(([a-zA-Z0-9_\-.!~*'()#:])*[$#]\{[a-zA-Z0-9_\-.!~*'()#:]+(\[:(\d+)\])?\}([a-zA-Z0-9_\-.!~*'()#:])*)+"/>
         </xsd:restriction>
     </xsd:simpleType>
     <xsd:simpleType name="jobnameType">
@@ -712,7 +775,7 @@
     </xsd:attributeGroup>
     <xsd:simpleType name="commandType">
         <xsd:restriction base="xsd:string">
-            <xsd:pattern value=".*[\S]+.*"/>
+            <xsd:pattern value="\S+(.*\S+)*"/>
         </xsd:restriction>
     </xsd:simpleType>
     <xsd:complexType name="dependsType">
