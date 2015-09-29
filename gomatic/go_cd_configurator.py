@@ -383,13 +383,23 @@ class ScriptExecutorTask(AbstractTask):
         new_element = ET.fromstring('<task></task>')
         plugin_config = ET.fromstring(
             '<pluginConfiguration id="script-executor" version="1" />')
-        script_config = ET.fromstring(
-        ''' <configuration>
-                  <property>
-                    <key>script</key>
-                    <value>%s</value>
-                  </property>
-                </configuration>''' % self._script)
+        script_xml_str = \
+            ''' <configuration>
+                      <property>
+                        <key>script</key>
+                        <value>%s</value>
+                      </property>
+                    </configuration>''' % escape(self._script)
+
+        try:
+            script_config = ET.fromstring(script_xml_str)
+        except Exception as e:
+            msg = '''
+                Could not parse script as XML,
+                reason: {0}
+                script XML: {1}
+            '''.format(e, script_xml_str)
+            raise Exception(msg)
 
         new_element.append(plugin_config)
         new_element.append(script_config)
@@ -828,9 +838,9 @@ class GitMaterial(CommonEqualityMixin):
         if self.ignore_patterns():
             ignore_patterns_part = ', ignore_patterns=%s' % self.ignore_patterns()
         destination = ' dest="%s"' % self.__dest if self.__dest else ''
-        return (('GitMaterial("%s"' % self.__url)
-                + branch_part + material_name_part + polling_part
-                + ignore_patterns_part + destination + ')')
+        return (('GitMaterial("%s"' % self.__url) +
+                branch_part + material_name_part + polling_part +
+                ignore_patterns_part + destination + ')')
 
     def __has_options(self):
         return (not self.is_on_master()) or (self.__material_name is not None) or (not self.__polling)
@@ -1027,6 +1037,12 @@ class Pipeline(CommonEqualityMixin):
     def set_automatic_pipeline_locking(self):
         self.element.attrib['isLocked'] = 'true'
         return self
+
+    def clear_automatic_pipeline_locking(self):
+        try:
+            del self.element.attrib['isLocked']
+        except Exception:
+            pass
 
     def has_automatic_pipeline_locking(self):
         return 'isLocked' in self.element.attrib and self.element.attrib['isLocked'] == 'true'
