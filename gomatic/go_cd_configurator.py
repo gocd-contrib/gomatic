@@ -249,7 +249,7 @@ def Task(element):
         if len(plugin_config) and plugin_config[0].attrib['id'] == 'script-executor':
             script = element.findall('configuration/property/value')
             if len(script):
-                return ScriptExecutorTask(script[0].text)
+                return ScriptExecutorTask(script[0].text, runif)
     raise RuntimeError("Don't know task type %s" % element.tag)
 
 
