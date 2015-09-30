@@ -975,6 +975,20 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals(p, pipeline)
         self.assertEquals(True, pipeline.has_automatic_pipeline_locking())
 
+    def test_pipelines_to_dict(self):
+        pipeline = typical_pipeline()
+        pp_dict = pipeline.to_dict()
+        self.assertEquals('typical', pp_dict['name'])
+        self.assertEquals({'JAVA_HOME': '/opt/java/jdk-1.8'},
+                          pp_dict['environment_variables'])
+        self.assertEquals({}, pp_dict['encrypted_environment_variables'])
+        self.assertEquals({}, pp_dict['parameters'])
+        self.assertEquals(2, len(pp_dict['stages']))
+        self.assertEquals(1, len(pp_dict['materials']))
+        self.assertTrue(pp_dict['template'] is None)
+        self.assertTrue(pp_dict['cron_timer_spec'] is None)
+        self.assertFalse(pp_dict['automatic_pipeline_locking'])
+
 
 class TestPipelineGroup(unittest.TestCase):
     def _pipeline_group_from_config(self):
