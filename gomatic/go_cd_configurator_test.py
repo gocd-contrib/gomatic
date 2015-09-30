@@ -248,6 +248,33 @@ class TestJobs(unittest.TestCase):
         self.assertEquals(2, len(job.tasks()))
         self.assertEquals("another", job.tasks()[1].target())
 
+    def test_script_executor_task(self):
+        script = '''
+        echo This is script
+        echo 'This is a string in single quotes'
+        echo "This is a string in double quotes"
+        '''
+
+        job = more_options_pipeline().ensure_stage("script-executor").\
+            ensure_job('test-script-executor')
+        job.ensure_task(ScriptExecutorTask(script, runif='any'))
+        self.assertEquals(1, len(job.tasks()))
+        self.assertEquals('script', job.tasks()[0].type())
+        self.assertEquals(script, job.tasks()[0].script())
+        self.assertEquals('any', job.tasks()[0].runif())
+
+        job.ensure_task(ScriptExecutorTask(script, runif='failed'))
+        self.assertEquals(2, len(job.tasks()))
+        self.assertEquals('script', job.tasks()[1].type())
+        self.assertEquals(script, job.tasks()[1].script())
+        self.assertEquals('failed', job.tasks()[1].runif())
+
+        job.ensure_task(ScriptExecutorTask(script))
+        self.assertEquals(3, len(job.tasks()))
+        self.assertEquals('script', job.tasks()[2].type())
+        self.assertEquals(script, job.tasks()[2].script())
+        self.assertEquals('passed', job.tasks()[2].runif())
+
     def test_can_add_exec_task_with_runif(self):
         stages = typical_pipeline().stages()
         job = stages[0].jobs()[0]
