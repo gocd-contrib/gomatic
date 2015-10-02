@@ -246,10 +246,27 @@ def Task(element):
         return RakeTask(element.attrib['target'])
     elif element.tag == "task":
         plugin_config = element.findall('pluginConfiguration')
-        if len(plugin_config) and plugin_config[0].attrib['id'] == 'script-executor':
-            script = element.findall('configuration/property/value')
-            if len(script):
-                return ScriptExecutorTask(script[0].text, runif)
+        if len(plugin_config):
+            if plugin_config[0].attrib['id'] == 'script-executor':
+                script = element.findall('configuration/property/value')
+                if len(script):
+                    return ScriptExecutorTask(script[0].text, runif)
+            elif plugin_config[0].attrib['id'] == 'maven':
+                args = {'runif': runif}
+                args['arguments'] = element.findall(
+                    'configuration/property[key="Arguments"]/value')[0].text
+                args['profiles'] = element.findall(
+                    'configuration/property[key="Profiles"]/value')[0].text
+                args['offline'] = element.findall(
+                    'configuration/property[key="Offline"]/value')[0].text
+                args['quiet'] = element.findall(
+                    'configuration/property[key="Quiet"]/value')[0].text
+                args['debug'] = element.findall(
+                    'configuration/property[key="Debug"]/value')[0].text
+                args['batch'] = element.findall(
+                    'configuration/property[key="Batch"]/value')[0].text
+                # properties = element.findall('configuration/property')
+                return MavenTask(**args)
     raise RuntimeError("Don't know task type %s" % element.tag)
 
 
@@ -403,6 +420,95 @@ class ScriptExecutorTask(AbstractTask):
 
         new_element.append(plugin_config)
         new_element.append(script_config)
+        new_element.append(ET.fromstring('<runif status="%s" />' % self.runif()))
+
+        Ensurance(element).ensure_child("tasks").append(new_element)
+        return Task(new_element)
+
+
+class MavenTask(AbstractTask):
+    def __init__(self, arguments, profiles='', offline='false', quiet='false',
+                 debug='false', batch='false', runif="passed"):
+        super(self.__class__, self).__init__(runif)
+        self._arguments = arguments
+        self._profiles = profiles
+        self._offline = offline
+        self._quiet = quiet
+        self._debug = debug
+        self._batch = batch
+
+    def __repr__(self):
+        return '''
+            MavenTask(runif="%s", arguments="%s", profiles="%s", offline="%s",
+                      quiet="%s", debug="%s", batch="%s")
+        ''' % (self._runif, self._arguments, self._profiles, self._offline,
+               self._quiet, self._debug, self._batch)
+
+    def to_dict(self):
+        return {
+            'type': self.type(),
+            'runif': self.runif(),
+            'arguments': self._arguments,
+            'profiles': self._profiles,
+            'offline': self._offline,
+            'quiet': self._quiet,
+            'debug': self._debug,
+            'batch': self._batch
+        }
+
+    def type(self):
+        return "maven"
+
+    def append_to(self, element):
+        new_element = ET.fromstring('<task></task>')
+        plugin_config = ET.fromstring(
+            '<pluginConfiguration id="maven" version="1" />')
+        config = ET.fromstring('<configuration></configuration>')
+        config.append(ET.fromstring(
+            '''<property>
+                <key>Arguments</key>
+                <value>%s</value>
+               </property>
+            ''' % self._arguments)
+        )
+        config.append(ET.fromstring(
+            '''<property>
+                <key>Profiles</key>
+                <value>%s</value>
+               </property>
+            ''' % self._profiles)
+        )
+        config.append(ET.fromstring(
+            '''<property>
+                <key>Offline</key>
+                <value>%s</value>
+               </property>
+            ''' % self._offline)
+        )
+        config.append(ET.fromstring(
+            '''<property>
+                <key>Quiet</key>
+                <value>%s</value>
+               </property>
+            ''' % self._quiet)
+        )
+        config.append(ET.fromstring(
+            '''<property>
+                <key>Debug</key>
+                <value>%s</value>
+               </property>
+            ''' % self._debug)
+        )
+        config.append(ET.fromstring(
+            '''<property>
+                <key>Batch</key>
+                <value>%s</value>
+               </property>
+            ''' % self._batch)
+        )
+
+        new_element.append(plugin_config)
+        new_element.append(config)
         new_element.append(ET.fromstring('<runif status="%s" />' % self.runif()))
 
         Ensurance(element).ensure_child("tasks").append(new_element)

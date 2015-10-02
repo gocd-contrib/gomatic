@@ -4,6 +4,6 @@ from .go_cd_configurator import (Agent, BuildArtifact, ExecTask,
                                  GoCdConfigurator, HostRestClient, Job,
                                  Pipeline, PipelineGroup, PipelineMaterial,
                                  RakeTask, Tab, TestArtifact,
-                                 ScriptExecutorTask)
+                                 ScriptExecutorTask, MavenTask)
 
 from .go_cd_configurator_test import FakeHostRestClient, empty_config_xml
