@@ -1129,9 +1129,9 @@ class HostRestClient:
             try:
                 result_json = json.loads(result.text.replace("\\'", "'"))
                 message = result_json.get('result', result.text)
-                raise RuntimeError("Could not post config to Go server (%s):\n%s" % (url, message))
+                raise RuntimeError("Could not post config to Go server (%s) [status code=%s]:\n%s" % (url, result.status_code, message))
             except ValueError:
-                raise RuntimeError("Could not post config to Go server (%s) (and result was not json):\n%s" % (url, result))
+                raise RuntimeError("Could not post config to Go server (%s) [status code=%s] (and result was not json):\n%s" % (url, result.status_code, result))
 
 
 class GoCdConfigurator:
