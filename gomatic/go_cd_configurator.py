@@ -338,7 +338,8 @@ class FetchArtifactTask(AbstractTask):
             'pipeline': self.pipeline(),
             'stage': self.stage(),
             'job': self.job(),
-            'src': self.src(),
+            'src_type': self.src().as_xml_type_and_value()[0],
+            'src_value': self.src().as_xml_type_and_value()[1],
             'dest': self.dest()
         }
 
