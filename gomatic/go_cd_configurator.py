@@ -1137,6 +1137,9 @@ class HostRestClient:
 class GoCdConfigurator:
     def __init__(self, host_rest_client):
         self.__host_rest_client = host_rest_client
+        self.__set_initial_config_xml()
+
+    def __set_initial_config_xml(self):
         self.__initial_config, self._initial_md5 = self.__current_config_response()
         self.__xml_root = ET.fromstring(self.__initial_config)
 
@@ -1243,6 +1246,7 @@ class GoCdConfigurator:
 
         if not dry_run and config_before != config_after:
             self.__host_rest_client.post('/go/admin/restful/configuration/file/POST/xml', data)
+            self.__set_initial_config_xml()
 
 
 if __name__ == '__main__':
