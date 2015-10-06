@@ -479,8 +479,8 @@ class Job(CommonEqualityMixin):
     def runs_on_all_agents(self):
         return self.__element.attrib.get('runOnAllAgents', 'false') == 'true'
 
-    def set_runs_on_all_agents(self):
-        self.__element.attrib['runOnAllAgents'] = 'true'
+    def set_runs_on_all_agents(self, run_on_all_agents=True):
+        self.__element.attrib['runOnAllAgents'] = 'true' if run_on_all_agents else 'false'
         return self
 
     def resources(self):

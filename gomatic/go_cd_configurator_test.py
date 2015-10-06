@@ -149,6 +149,12 @@ class TestJobs(unittest.TestCase):
         self.assertEquals(j, job)
         self.assertEquals(True, job.runs_on_all_agents())
 
+    def test_jobs_can_be_made_to_not_run_on_all_agents(self):
+        job = typical_pipeline().ensure_stage("build").ensure_job("compile")
+        j = job.set_runs_on_all_agents(False)
+        self.assertEquals(j, job)
+        self.assertEquals(False, job.runs_on_all_agents())
+
     def test_can_ensure_job_has_resource(self):
         stages = typical_pipeline().stages()
         job = stages[0].jobs()[0]
