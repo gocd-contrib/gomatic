@@ -665,7 +665,13 @@ def Materials(element):
         branch = element.attrib.get('branch', None)
         material_name = element.attrib.get('materialName', None)
         polling = element.attrib.get('autoUpdate', 'true') == 'true'
-        return GitMaterial(element.attrib['url'], branch, material_name, polling, ignore_patterns_in(element))
+        destination_directory = element.attrib.get('dest', None)
+        return GitMaterial(element.attrib['url'],
+                           branch=branch,
+                           material_name=material_name,
+                           polling=polling,
+                           ignore_patterns=ignore_patterns_in(element),
+                           destination_directory=destination_directory)
     if element.tag == "pipeline":
         material_name = element.attrib.get('materialName', None)
         return PipelineMaterial(element.attrib['pipelineName'], element.attrib['stageName'], material_name)
@@ -673,12 +679,13 @@ def Materials(element):
 
 
 class GitMaterial(CommonEqualityMixin):
-    def __init__(self, url, branch=None, material_name=None, polling=True, ignore_patterns=set()):
+    def __init__(self, url, branch=None, material_name=None, polling=True, ignore_patterns=set(), destination_directory=None):
         self.__url = url
         self.__branch = branch
         self.__material_name = material_name
         self.__polling = polling
         self.__ignore_patterns = ignore_patterns
+        self.__destination_directory = destination_directory
 
     def __repr__(self):
         branch_part = ""
@@ -728,17 +735,28 @@ class GitMaterial(CommonEqualityMixin):
     def ignore_patterns(self):
         return self.__ignore_patterns
 
+    def destination_directory(self):
+        return self.__destination_directory
+
     def append_to(self, element):
         branch_part = ""
         if not self.is_on_master():
             branch_part = ' branch="%s"' % self.__branch
+
         material_name_part = ""
         if self.__material_name is not None:
             material_name_part = ' materialName="%s"' % self.__material_name
+
         polling_part = ''
         if not self.__polling:
             polling_part = ' autoUpdate="false"'
-        new_element = ET.fromstring(('<git url="%s"' % self.__url) + branch_part + material_name_part + polling_part + ' />')
+
+        destination_directory_part= ''
+        if self.__destination_directory:
+            destination_directory_part = ' dest="%s"' % self.__destination_directory
+
+        new_element = ET.fromstring(('<git url="%s"' % self.__url) + branch_part + material_name_part + polling_part + destination_directory_part + ' />')
+
         if self.ignore_patterns():
             filter_element = ET.fromstring("<filter/>")
             new_element.append(filter_element)
@@ -746,6 +764,7 @@ class GitMaterial(CommonEqualityMixin):
             sorted_ignore_patterns.sort()
             for ignore_pattern in sorted_ignore_patterns:
                 filter_element.append(ET.fromstring('<ignore pattern="%s"/>' % ignore_pattern))
+
         element.append(new_element)
 
 

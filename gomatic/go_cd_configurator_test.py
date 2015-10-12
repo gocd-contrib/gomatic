@@ -667,11 +667,13 @@ class TestPipeline(unittest.TestCase):
         p = pipeline.set_git_material(GitMaterial(
             "git@bitbucket.org:springersbm/changed.git",
             branch="branch",
+            destination_directory="foo",
             material_name="material-name",
             ignore_patterns={"ignoreMe", "ignoreThisToo"},
             polling=False))
         self.assertEquals(p, pipeline)
         self.assertEquals("branch", pipeline.git_branch())
+        self.assertEquals("foo", pipeline.git_material().destination_directory())
         self.assertEquals("material-name", pipeline.git_material().material_name())
         self.assertEquals({"ignoreMe", "ignoreThisToo"}, pipeline.git_material().ignore_patterns())
         self.assertFalse(pipeline.git_material().polling(), "git polling")
