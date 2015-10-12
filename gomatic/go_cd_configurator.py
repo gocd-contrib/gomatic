@@ -6,6 +6,7 @@ import sys
 import subprocess
 from xml.dom.minidom import parseString
 from xml.sax.saxutils import escape
+from collections import OrderedDict
 
 import requests
 
@@ -331,17 +332,20 @@ class FetchArtifactTask(AbstractTask):
 
         return ('FetchArtifactTask("%s", "%s", "%s", %s' % (self.__pipeline, self.__stage, self.__job, self.__src)) + dest_parameter + runif_parameter + ')'
 
-    def to_dict(self):
-        return {
-            'type': self.type(),
-            'runif': self.runif(),
-            'pipeline': self.pipeline(),
-            'stage': self.stage(),
-            'job': self.job(),
-            'src_type': self.src().as_xml_type_and_value()[0],
-            'src_value': self.src().as_xml_type_and_value()[1],
-            'dest': self.dest()
-        }
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = self.type()
+        result['runif'] = self.runif()
+        result['pipeline'] = self.pipeline()
+        result['stage'] = self.stage()
+        result['job'] = self.job()
+        result['src_type'] = self.src().as_xml_type_and_value()[0]
+        result['src_value'] = self.src().as_xml_type_and_value()[1]
+        result['dest'] = self.dest()
+        return result
 
     def type(self):
         return "fetchartifact"
@@ -384,12 +388,15 @@ class ScriptExecutorTask(AbstractTask):
     def __repr__(self):
         return 'ScriptExecutorTask(runif="%s", script="%s")' % (self._runif, self._script)
 
-    def to_dict(self):
-        return {
-            'type': self.type(),
-            'runif': self.runif(),
-            'script': self.script()
-        }
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = self.type()
+        result['runif'] = self.runif()
+        result['script'] = self.script()
+        return result
 
     def type(self):
         return "script"
@@ -445,17 +452,20 @@ class MavenTask(AbstractTask):
         ''' % (self._runif, self._arguments, self._profiles, self._offline,
                self._quiet, self._debug, self._batch)
 
-    def to_dict(self):
-        return {
-            'type': self.type(),
-            'runif': self.runif(),
-            'arguments': self._arguments,
-            'profiles': self._profiles,
-            'offline': self._offline,
-            'quiet': self._quiet,
-            'debug': self._debug,
-            'batch': self._batch
-        }
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = self.type()
+        result['runif'] = self.runif()
+        result['arguments'] = self._arguments
+        result['profiles'] = self._profiles
+        result['offline'] = self._offline
+        result['quiet'] = self._quiet
+        result['debug'] = self._debug
+        result['batch'] = self._batch
+        return result
 
     def type(self):
         return "maven"
@@ -533,13 +543,16 @@ class ExecTask(AbstractTask):
 
         return ('ExecTask(%s' % self.command_and_args()) + working_dir_parameter + runif_parameter + ')'
 
-    def to_dict(self):
-        return {
-            'type': self.type(),
-            'runif': self.runif(),
-            'command': self.command_and_args(),
-            'working_dir': self.working_dir()
-        }
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = self.type()
+        result['runif'] = self.runif()
+        result['command'] = self.command_and_args()
+        result['working_dir'] = self.working_dir()
+        return result
 
     def type(self):
         return "exec"
@@ -573,12 +586,15 @@ class RakeTask(AbstractTask):
     def __repr__(self):
         return 'RakeTask("%s", "%s")' % (self.__target, self._runif)
 
-    def to_dict(self):
-        return {
-            'type': self.type(),
-            'runif': self.runif(),
-            'target': self.target()
-        }
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = self.type()
+        result['runif'] = self.runif
+        result['target'] = self.target()
+        return result
 
     def type(self):
         return "rake"
@@ -617,12 +633,15 @@ class Artifact(CommonEqualityMixin):
         else:
             return '%s("%s", "%s")' % (self.constructor(), self.__src, self.__dest)
 
-    def to_dict(self):
-        return {
-            'type': self.__tag,
-            'src': self.__src,
-            'dest': self.__dest
-        }
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = self.__tag
+        result['src'] = self.__src
+        result['dest'] = self.__dest
+        return result
 
     def append_to(self, element):
         if self.__dest is None:
@@ -646,11 +665,14 @@ class Tab(CommonEqualityMixin):
     def __repr__(self):
         return 'Tab("%s", "%s")' % (self.__name, self.__path)
 
-    def to_dict(self):
-        return {
-            'name': self.__name,
-            'path': self.__path
-        }
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['name'] = self.__name
+        result['path'] = self.__path
+        return result
 
     def append_to(self, element):
         element.append(ET.fromstring('<tab name="%s" path="%s" />' % (self.__name, self.__path)))
@@ -664,19 +686,24 @@ class Job(CommonEqualityMixin):
     def __repr__(self):
         return "Job('%s', %s)" % (self.name(), self.tasks())
 
-    def to_dict(self):
-        result = {
-            'name': self.name(),
-            'resources': list(self.resources()),
-            'tasks': [t.to_dict() for t in self.tasks()],
-            'artifacts': [a.to_dict() for a in self.artifacts()],
-            'tabs': [t.to_dict() for t in self.tabs()],
-            'environment_variables': self.environment_variables()
-        }
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['name'] = self.name()
+        result['resources'] = list(self.resources())
         if self.has_timeout():
             result['timeout'] = self.timeout()
         if self.runs_on_all_agents():
             result['runs_on_all_agents'] = True
+        result['tasks'] = [t.to_dict(ordered=ordered) for t in self.tasks()]
+        result['artifacts'] = [a.to_dict(ordered=ordered)
+                               for a in self.artifacts()]
+        result['environment_variables'] = self.environment_variables()
+        result['encrypted_environment_variables'] = \
+            self.encrypted_environment_variables()
+        result['tabs'] = [t.to_dict(ordered=ordered) for t in self.tabs()]
         return result
 
     def name(self):
@@ -747,8 +774,15 @@ class Job(CommonEqualityMixin):
     def environment_variables(self):
         return ThingWithEnvironmentVariables(self.__element).environment_variables()
 
+    def encrypted_environment_variables(self):
+        return ThingWithEnvironmentVariables(self.__element).encrypted_environment_variables()
+
     def ensure_environment_variables(self, environment_variables):
         ThingWithEnvironmentVariables(self.__element).ensure_environment_variables(environment_variables)
+        return self
+
+    def ensure_encrypted_environment_variables(self, environment_variables):
+        ThingWithEnvironmentVariables(self.__element).ensure_encrypted_environment_variables(environment_variables)
         return self
 
     def without_any_environment_variables(self):
@@ -802,16 +836,22 @@ class Stage(CommonEqualityMixin):
     def __repr__(self):
         return 'Stage(%s)' % self.name()
 
-    def to_dict(self):
-        return {
-            'name': self.name(),
-            'type': 'manual' if self.has_manual_approval() else 'on_success',
-            'fetch_materials': self.fetch_materials(),
-            'clean_working_dir': self.clean_working_dir(),
-            'never_cleanup_artifacts': self.never_cleanup_artifacts(),
-            'jobs': [j.to_dict() for j in self.jobs()],
-            'environment_variables': self.environment_variables()
-        }
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['name'] = self.name()
+        result['type'] = ('manual' if self.has_manual_approval()
+                          else 'on_success')
+        result['fetch_materials'] = self.fetch_materials()
+        result['clean_working_dir'] = self.clean_working_dir()
+        result['never_cleanup_artifacts'] = self.never_cleanup_artifacts()
+        result['jobs'] = [j.to_dict(ordered=ordered) for j in self.jobs()]
+        result['environment_variables'] = self.environment_variables()
+        result['encrypted_environment_variables'] = \
+            self.encrypted_environment_variables()
+        return result
 
     def name(self):
         return self.element.attrib['name']
@@ -826,8 +866,15 @@ class Stage(CommonEqualityMixin):
     def environment_variables(self):
         return ThingWithEnvironmentVariables(self.element).environment_variables()
 
+    def encrypted_environment_variables(self):
+        return ThingWithEnvironmentVariables(self.element).encrypted_environment_variables()
+
     def ensure_environment_variables(self, environment_variables):
         ThingWithEnvironmentVariables(self.element).ensure_environment_variables(environment_variables)
+        return self
+
+    def ensure_encrypted_environment_variables(self, environment_variables):
+        ThingWithEnvironmentVariables(self.element).ensure_encrypted_environment_variables(environment_variables)
         return self
 
     def without_any_environment_variables(self):
@@ -920,16 +967,19 @@ class GitMaterial(CommonEqualityMixin):
         self.__ignore_patterns = ignore_patterns
         self.__dest = dest
 
-    def to_dict(self):
-        return {
-            'type': 'git',
-            'name': self.__material_name,
-            'branch': self.branch(),
-            'url': self.url(),
-            'dest': self.dest(),
-            'poll_new_changes': self.polling(),
-            'blacklist': list(self.ignore_patterns())
-        }
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = 'git'
+        result['name'] = self.__material_name
+        result['url'] = self.url()
+        result['branch'] = self.branch()
+        result['dest'] = self.dest()
+        result['poll_new_changes'] = self.polling()
+        result['blacklist'] = list(self.ignore_patterns())
+        return result
 
     def __repr__(self):
         branch_part = ""
@@ -1021,13 +1071,16 @@ class PipelineMaterial(CommonEqualityMixin):
         else:
             return 'PipelineMaterial("%s", "%s", "%s")' % (self.__pipeline_name, self.__stage_name, self.__material_name)
 
-    def to_dict(self):
-        return {
-            'type': 'pipeline',
-            'name': self.material_name(),
-            'pipeline_name': self.pipeline_name(),
-            'stage_name': self.stage_name()
-        }
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = 'pipeline'
+        result['name'] = self.material_name()
+        result['pipeline_name'] = self.pipeline_name()
+        result['stage_name'] = self.stage_name()
+        return result
 
     def is_git(self):
         return False
@@ -1060,23 +1113,31 @@ class Pipeline(CommonEqualityMixin):
         self.element = element
         self.parent = parent
 
-    def to_dict(self):
-        result = {
-            'name': self.name(),
-            'automatic_pipeline_locking': self.has_automatic_pipeline_locking(),
-            'stages': [s.to_dict() for s in self.stages()],
-            'template': self.__template_name(),
-            'materials': [m.to_dict() for m in self.materials()],
-            'environment_variables': self.environment_variables(),
-            'encrypted_environment_variables': self.encrypted_environment_variables(),
-            'parameters': self.parameters(),
-            'cron_timer_spec': self.timer() if self.has_timer() else None
-        }
+    def to_dict(self, group_name, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['name'] = self.name()
+        result['group'] = group_name
         if self.has_label_template():
             result['label_template'] = self.label_template()
+        result['automatic_pipeline_locking'] = \
+            self.has_automatic_pipeline_locking()
+        result['cron_timer_spec'] = self.timer() if self.has_timer() else None
         if self.has_timer():
             result['cron_timer_run_only_on_new_material'] = \
                 self.timer_triggers_only_on_changes()
+        result['materials'] = [m.to_dict(ordered=ordered)
+                               for m in self.materials()]
+        if self.__template_name():
+            result['template'] = self.__template_name()
+        result['stages'] = [s.to_dict(ordered=ordered) for s in self.stages()]
+        result['environment_variables'] = self.environment_variables()
+        result['encrypted_environment_variables'] = \
+            self.encrypted_environment_variables()
+        result['parameters'] = self.parameters()
+
         return result
 
     def name(self):
