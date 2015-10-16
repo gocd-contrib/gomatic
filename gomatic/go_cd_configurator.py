@@ -824,7 +824,10 @@ class Pipeline(CommonEqualityMixin):
             result += then('set_template_name("%s")' % self.__template_name())
 
         if self.has_timer():
-            result += then('set_timer("%s")' % self.timer())
+            if self.timer_triggers_only_on_changes():
+                result += then('set_timer("%s", only_on_changes=True)' % self.timer())
+            else:
+                result += then('set_timer("%s")' % self.timer())
 
         if self.has_label_template():
             if self.label_template() == DEFAULT_LABEL_TEMPLATE:

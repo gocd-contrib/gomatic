@@ -1343,6 +1343,11 @@ class TestReverseEngineering(unittest.TestCase):
         before = configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_timer("some timer")
         self.check_round_trip_pipeline(configurator, before)
 
+    def test_can_round_trip_timer_only_on_changes(self):
+        configurator = GoCdConfigurator(empty_config())
+        before = configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_timer("some timer", only_on_changes=True)
+        self.check_round_trip_pipeline(configurator, before)
+
     def test_can_round_trip_stage_bits(self):
         configurator = GoCdConfigurator(empty_config())
         before = configurator.ensure_pipeline_group("group").ensure_pipeline("line")
