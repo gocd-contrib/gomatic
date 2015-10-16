@@ -1039,7 +1039,10 @@ class Pipeline(CommonEqualityMixin):
         return self.element.find('timer') is not None
 
     def set_timer(self, timer, only_on_changes=False):
-        Ensurance(self.element).ensure_child_with_attribute('timer', 'onlyOnChanges', 'true' if only_on_changes else 'false').set_text(timer)
+        if only_on_changes:
+            Ensurance(self.element).ensure_child_with_attribute('timer', 'onlyOnChanges', 'true').set_text(timer)
+        else:
+            Ensurance(self.element).ensure_child('timer').set_text(timer)
         return self
 
     def remove_timer(self):
