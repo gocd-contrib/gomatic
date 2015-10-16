@@ -916,6 +916,20 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals(p, pipeline)
         self.assertEquals("one two three", pipeline.timer())
 
+    def test_can_set_timer_with_only_on_changes_flag_off(self):
+        pipeline = GoCdConfigurator(empty_config()).ensure_pipeline_group('Group').ensure_pipeline('Pipeline')
+        p = pipeline.set_timer("one two three", only_on_changes=False)
+        self.assertEquals(p, pipeline)
+        self.assertEquals("one two three", pipeline.timer())
+        self.assertEquals(False, pipeline.timer_triggers_only_on_changes())
+
+    def test_can_set_timer_with_only_on_changes_flag(self):
+        pipeline = GoCdConfigurator(empty_config()).ensure_pipeline_group('Group').ensure_pipeline('Pipeline')
+        p = pipeline.set_timer("one two three", only_on_changes=True)
+        self.assertEquals(p, pipeline)
+        self.assertEquals("one two three", pipeline.timer())
+        self.assertEquals(True, pipeline.timer_triggers_only_on_changes())
+
     def test_can_remove_timer(self):
         pipeline = GoCdConfigurator(empty_config()).ensure_pipeline_group('Group').ensure_pipeline('Pipeline')
         pipeline.set_timer("one two three")
