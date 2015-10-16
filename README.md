@@ -77,7 +77,7 @@ Bear in mind that Gomatic does not currently support every configuration option 
 ### Gotchas
 
 * Gomatic does not prevent you from creating config XML that GoCD will not accept. For example, if you create a stage that has no jobs, Gomatic won't complain until you try to run `save_updated_config`, at which time the GoCD server will reject the config XML.
-* Gomatic currently only supports calling `save_updated_config` once per instance of `GoCdConfigurator`.
+* Gomatic does not check that the version of GoCD it is configuring supports all the features used. For example, versions of GoCD before 15.2 do not support encrypted environment variables on stages and jobs.
 
 ## Developing Gomatic
 

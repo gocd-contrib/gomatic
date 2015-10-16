@@ -529,8 +529,15 @@ class Job(CommonEqualityMixin):
     def environment_variables(self):
         return ThingWithEnvironmentVariables(self.__element).environment_variables()
 
+    def encrypted_environment_variables(self):
+        return ThingWithEnvironmentVariables(self.__element).encrypted_environment_variables()
+
     def ensure_environment_variables(self, environment_variables):
         ThingWithEnvironmentVariables(self.__element).ensure_environment_variables(environment_variables)
+        return self
+
+    def ensure_encrypted_environment_variables(self, environment_variables):
+        ThingWithEnvironmentVariables(self.__element).ensure_encrypted_environment_variables(environment_variables)
         return self
 
     def without_any_environment_variables(self):
@@ -597,8 +604,15 @@ class Stage(CommonEqualityMixin):
     def environment_variables(self):
         return ThingWithEnvironmentVariables(self.element).environment_variables()
 
+    def encrypted_environment_variables(self):
+        return ThingWithEnvironmentVariables(self.element).encrypted_environment_variables()
+
     def ensure_environment_variables(self, environment_variables):
         ThingWithEnvironmentVariables(self.element).ensure_environment_variables(environment_variables)
+        return self
+
+    def ensure_encrypted_environment_variables(self, environment_variables):
+        ThingWithEnvironmentVariables(self.element).ensure_encrypted_environment_variables(environment_variables)
         return self
 
     def without_any_environment_variables(self):

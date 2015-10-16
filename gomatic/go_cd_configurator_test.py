@@ -433,6 +433,16 @@ class TestJobs(unittest.TestCase):
         self.assertEquals(j, job)
         self.assertEquals(0, len(job.tasks()))
 
+    def test_can_have_encrypted_environment_variables(self):
+        pipeline = GoCdConfigurator(config('config-with-encrypted-variable')).ensure_pipeline_group("defaultGroup").find_pipeline("example")
+        job = pipeline.ensure_stage('defaultStage').ensure_job('defaultJob')
+        self.assertEquals({"MY_JOB_PASSWORD": "yq5qqPrrD9/j=="}, job.encrypted_environment_variables())
+
+    def test_can_set_encrypted_environment_variables(self):
+        job = empty_stage().ensure_job("j")
+        job.ensure_encrypted_environment_variables({'one': 'blah=='})
+        self.assertEquals({"one": "blah=="}, job.encrypted_environment_variables())
+
     def test_can_add_environment_variables(self):
         job = typical_pipeline() \
             .ensure_stage("build") \
@@ -548,6 +558,16 @@ class TestStages(unittest.TestCase):
         ensured_job = stage.ensure_job("upload")
         self.assertEquals(1, len(stage.jobs()))
         self.assertEquals("upload", ensured_job.name())
+
+    def test_can_have_encrypted_environment_variables(self):
+        pipeline = GoCdConfigurator(config('config-with-encrypted-variable')).ensure_pipeline_group("defaultGroup").find_pipeline("example")
+        stage = pipeline.ensure_stage('defaultStage')
+        self.assertEquals({"MY_STAGE_PASSWORD": "yq5qqPrrD9/s=="}, stage.encrypted_environment_variables())
+
+    def test_can_set_encrypted_environment_variables(self):
+        stage = typical_pipeline().ensure_stage("deploy")
+        stage.ensure_encrypted_environment_variables({'one': 'blah=='})
+        self.assertEquals({"one": "blah=="}, stage.encrypted_environment_variables())
 
     def test_can_set_environment_variables(self):
         stage = typical_pipeline().ensure_stage("deploy")

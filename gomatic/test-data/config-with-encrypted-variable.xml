@@ -12,8 +12,18 @@
                 <git url="gitUrl" />
             </materials>
             <stage name="defaultStage">
+                <environmentvariables>
+                    <variable name="MY_STAGE_PASSWORD" secure="true">
+                        <encryptedValue>yq5qqPrrD9/s==</encryptedValue>
+                    </variable>
+                </environmentvariables>
                 <jobs>
                     <job name="defaultJob">
+                        <environmentvariables>
+                            <variable name="MY_JOB_PASSWORD" secure="true">
+                                <encryptedValue>yq5qqPrrD9/j==</encryptedValue>
+                            </variable>
+                        </environmentvariables>
                         <tasks>
                             <exec command="ls" />
                         </tasks>
