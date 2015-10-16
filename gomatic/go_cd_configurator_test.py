@@ -456,19 +456,6 @@ class TestJobs(unittest.TestCase):
         names = [e.getAttribute('name') for e in xml.getElementsByTagName('variable')]
         self.assertEquals([u'ant', u'badger', u'zebra'], names)
 
-    def test_encrypted_environment_variables_get_added_in_sorted_order_to_reduce_config_thrash(self):
-        go_cd_configurator = GoCdConfigurator(empty_config())
-
-        pipeline = go_cd_configurator \
-            .ensure_pipeline_group('P.Group') \
-            .ensure_pipeline('P.Name')
-
-        pipeline.ensure_encrypted_environment_variables({"ant": "a", "badger": "a", "zebra": "a"})
-
-        xml = parseString(go_cd_configurator.config())
-        names = [e.getAttribute('name') for e in xml.getElementsByTagName('variable')]
-        self.assertEquals([u'ant', u'badger', u'zebra'], names)
-
     def test_can_remove_all_environment_variables(self):
         job = typical_pipeline() \
             .ensure_stage("build") \
@@ -863,6 +850,19 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals(p, pipeline)
         self.assertEquals({'a': 's'}, pipeline.encrypted_environment_variables())
         self.assertEquals({'c': 'v'}, pipeline.environment_variables())
+
+    def test_encrypted_environment_variables_get_added_in_sorted_order_to_reduce_config_thrash(self):
+        go_cd_configurator = GoCdConfigurator(empty_config())
+
+        pipeline = go_cd_configurator \
+            .ensure_pipeline_group('P.Group') \
+            .ensure_pipeline('P.Name')
+
+        pipeline.ensure_encrypted_environment_variables({"ant": "a", "badger": "a", "zebra": "a"})
+
+        xml = parseString(go_cd_configurator.config())
+        names = [e.getAttribute('name') for e in xml.getElementsByTagName('variable')]
+        self.assertEquals([u'ant', u'badger', u'zebra'], names)
 
     def test_pipelines_have_parameters(self):
         pipeline = more_options_pipeline()
