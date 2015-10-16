@@ -527,22 +527,25 @@ class Job(CommonEqualityMixin):
         return self
 
     def environment_variables(self):
-        return ThingWithEnvironmentVariables(self.__element).environment_variables()
+        return self.__thing_with_environment_variables().environment_variables()
 
     def encrypted_environment_variables(self):
-        return ThingWithEnvironmentVariables(self.__element).encrypted_environment_variables()
+        return self.__thing_with_environment_variables().encrypted_environment_variables()
 
     def ensure_environment_variables(self, environment_variables):
-        ThingWithEnvironmentVariables(self.__element).ensure_environment_variables(environment_variables)
+        self.__thing_with_environment_variables().ensure_environment_variables(environment_variables)
         return self
 
     def ensure_encrypted_environment_variables(self, environment_variables):
-        ThingWithEnvironmentVariables(self.__element).ensure_encrypted_environment_variables(environment_variables)
+        self.__thing_with_environment_variables().ensure_encrypted_environment_variables(environment_variables)
         return self
 
     def without_any_environment_variables(self):
-        ThingWithEnvironmentVariables(self.__element).remove_all()
+        self.__thing_with_environment_variables().remove_all()
         return self
+
+    def __thing_with_environment_variables(self):
+        return ThingWithEnvironmentVariables(self.__element)
 
     def reorder_elements_to_please_go(self):
         # see https://github.com/SpringerSBM/gomatic/issues/6
@@ -563,7 +566,7 @@ class Job(CommonEqualityMixin):
             else:
                 result += '.ensure_artifacts({%s})' % self.artifacts().pop()
 
-        result += ThingWithEnvironmentVariables(self.__element).as_python()
+        result += self.__thing_with_environment_variables().as_python()
 
         for resource in self.resources():
             result += '.ensure_resource("%s")' % resource
@@ -602,22 +605,25 @@ class Stage(CommonEqualityMixin):
         return Job(job_element._element)
 
     def environment_variables(self):
-        return ThingWithEnvironmentVariables(self.element).environment_variables()
+        return self.__thing_with_environment_variables().environment_variables()
 
     def encrypted_environment_variables(self):
-        return ThingWithEnvironmentVariables(self.element).encrypted_environment_variables()
+        return self.__thing_with_environment_variables().encrypted_environment_variables()
 
     def ensure_environment_variables(self, environment_variables):
-        ThingWithEnvironmentVariables(self.element).ensure_environment_variables(environment_variables)
+        self.__thing_with_environment_variables().ensure_environment_variables(environment_variables)
         return self
 
     def ensure_encrypted_environment_variables(self, environment_variables):
-        ThingWithEnvironmentVariables(self.element).ensure_encrypted_environment_variables(environment_variables)
+        self.__thing_with_environment_variables().ensure_encrypted_environment_variables(environment_variables)
         return self
 
     def without_any_environment_variables(self):
-        ThingWithEnvironmentVariables(self.element).remove_all()
+        self.__thing_with_environment_variables().remove_all()
         return self
+
+    def __thing_with_environment_variables(self):
+        return ThingWithEnvironmentVariables(self.element)
 
     def set_clean_working_dir(self):
         self.element.attrib['cleanWorkingDir'] = "true"
@@ -653,7 +659,7 @@ class Stage(CommonEqualityMixin):
     def as_python_commands_applied_to(self, receiver):
         result = 'stage = %s.ensure_stage("%s")' % (receiver, self.name())
 
-        result += ThingWithEnvironmentVariables(self.element).as_python()
+        result += self.__thing_with_environment_variables().as_python()
 
         if self.clean_working_dir():
             result += '.set_clean_working_dir()'
@@ -859,7 +865,7 @@ class Pipeline(CommonEqualityMixin):
             if not (self.has_single_git_material() and material.is_git()):
                 result += then('ensure_material(%s)' % material)
 
-        result += ThingWithEnvironmentVariables(self.element).as_python()
+        result += self.__thing_with_environment_variables().as_python()
 
         if len(self.parameters()) != 0:
             result += then('ensure_parameters(%s)' % self.parameters())
@@ -962,33 +968,36 @@ class Pipeline(CommonEqualityMixin):
         return next(template for template in self.parent.templates() if template.name() == self.__template_name())
 
     def environment_variables(self):
-        return ThingWithEnvironmentVariables(self.element).environment_variables()
+        return self.__thing_with_environment_variables().environment_variables()
 
     def encrypted_environment_variables(self):
-        return ThingWithEnvironmentVariables(self.element).encrypted_environment_variables()
+        return self.__thing_with_environment_variables().encrypted_environment_variables()
 
     def unencrypted_secure_environment_variables(self):
-        return ThingWithEnvironmentVariables(self.element).unencrypted_secure_environment_variables()
+        return self.__thing_with_environment_variables().unencrypted_secure_environment_variables()
 
     def ensure_environment_variables(self, environment_variables):
-        ThingWithEnvironmentVariables(self.element).ensure_environment_variables(environment_variables)
+        self.__thing_with_environment_variables().ensure_environment_variables(environment_variables)
         return self
 
     def ensure_encrypted_environment_variables(self, environment_variables):
-        ThingWithEnvironmentVariables(self.element).ensure_encrypted_environment_variables(environment_variables)
+        self.__thing_with_environment_variables().ensure_encrypted_environment_variables(environment_variables)
         return self
 
     def ensure_unencrypted_secure_environment_variables(self, environment_variables):
-        ThingWithEnvironmentVariables(self.element).ensure_unencrypted_secure_environment_variables(environment_variables)
+        self.__thing_with_environment_variables().ensure_unencrypted_secure_environment_variables(environment_variables)
         return self
 
     def without_any_environment_variables(self):
-        ThingWithEnvironmentVariables(self.element).remove_all()
+        self.__thing_with_environment_variables().remove_all()
         return self
 
     def remove_environment_variable(self, name):
-        ThingWithEnvironmentVariables(self.element).remove(name)
+        self.__thing_with_environment_variables().remove(name)
         return self
+
+    def __thing_with_environment_variables(self):
+        return ThingWithEnvironmentVariables(self.element)
 
     def parameters(self):
         param_elements = PossiblyMissingElement(self.element).possibly_missing_child("params").findall("param")
