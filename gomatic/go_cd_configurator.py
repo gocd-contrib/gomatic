@@ -1319,4 +1319,4 @@ if __name__ == '__main__':
         raise RuntimeError("Should have found one matching pipeline but found %s" % matching_pipelines)
     pipeline = matching_pipelines[0]
 
-    print go_server.as_python(pipeline)
+    print(go_server.as_python(pipeline))
