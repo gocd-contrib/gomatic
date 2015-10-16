@@ -39,7 +39,7 @@ class populated_go_server:
                 .ensure_pipeline_group("P.Group") \
                 .ensure_replacement_of_pipeline("more-options") \
                 .set_timer("0 15 22 * * ?") \
-                .set_git_material(GitMaterial("git@bitbucket.org:springersbm/gomatic.git", material_name="some-material-name", polling=False)) \
+                .set_git_material(GitMaterial("https://github.com/SpringerSBM/gomatic.git", material_name="some-material-name", polling=False)) \
                 .ensure_environment_variables({'JAVA_HOME': '/opt/java/jdk-1.7'}) \
                 .ensure_parameters({'environment': 'qa'})
             stage = pipeline.ensure_stage("earlyStage")
@@ -132,7 +132,7 @@ class IntegrationTest(unittest.TestCase):
             pipeline = configurator \
                 .ensure_pipeline_group("Test") \
                 .ensure_replacement_of_pipeline("new-one")
-            pipeline.set_git_material(GitMaterial("https://github.com/SpringerSBM/gomatic.git"))
+            pipeline.set_git_material(GitMaterial("https://github.com/SpringerSBM/gomatic.git", polling=False))
             job = pipeline.ensure_stage("build").ensure_job("build")
             job.ensure_task(ExecTask(["ls"]))
 
@@ -141,7 +141,7 @@ class IntegrationTest(unittest.TestCase):
             pipeline = configurator \
                 .ensure_pipeline_group("Test") \
                 .ensure_replacement_of_pipeline("new-two")
-            pipeline.set_git_material(GitMaterial("https://github.com/SpringerSBM/gomatic.git"))
+            pipeline.set_git_material(GitMaterial("https://github.com/SpringerSBM/gomatic.git", polling=False))
             job = pipeline.ensure_stage("build").ensure_job("build")
             job.ensure_task(ExecTask(["ls"]))
 
