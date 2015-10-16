@@ -706,7 +706,7 @@ class GitMaterial(CommonEqualityMixin):
         return ('GitMaterial("%s"' % self.__url) + branch_part + material_name_part + polling_part + ignore_patterns_part + destination_directory_part + ')'
 
     def __has_options(self):
-        return (not self.is_on_master()) or (self.__material_name is not None) or (not self.__polling)
+        return (not self.is_on_master()) or (self.material_name() is not None) or (not self.polling()) or self.ignore_patterns() or self.destination_directory()
 
     def is_on_master(self):
         return self.__branch is None or self.__branch == 'master'

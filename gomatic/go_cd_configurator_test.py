@@ -1258,13 +1258,20 @@ class TestReverseEngineering(unittest.TestCase):
     def check_round_trip_pipeline(self, configurator, before, show=False):
         reverse_engineered_python = configurator.as_python(before, with_save=False)
         if show:
-            print
-            print reverse_engineered_python
+            print('r' * 88)
+            print(reverse_engineered_python)
         pipeline = "evaluation failed"
         template = "evaluation failed"
         exec reverse_engineered_python.replace("from gomatic import *", "from go_cd_configurator import *")
+        xml_before = sneakily_converted_to_xml(before)
         # noinspection PyTypeChecker
-        self.assertEquals(sneakily_converted_to_xml(before), sneakily_converted_to_xml(pipeline))
+        xml_after = sneakily_converted_to_xml(pipeline)
+        if show:
+            print('b' * 88)
+            print(prettify(xml_before))
+            print('a' * 88)
+            print(prettify(xml_after))
+        self.assertEquals(xml_before, xml_after)
 
         if before.is_based_on_template():
             # noinspection PyTypeChecker
@@ -1316,6 +1323,31 @@ class TestReverseEngineering(unittest.TestCase):
                         polling=False,
                         ignore_patterns={"excluded", "things"},
                         destination_directory='foo/bar'))
+        self.check_round_trip_pipeline(configurator, before)
+
+    def test_can_round_trip_git_branch_only(self):
+        configurator = GoCdConfigurator(empty_config())
+        before = configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_git_material(GitMaterial("some git url", branch="some branch"))
+        self.check_round_trip_pipeline(configurator, before)
+
+    def test_can_round_trip_git_material_only(self):
+        configurator = GoCdConfigurator(empty_config())
+        before = configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_git_material(GitMaterial("some git url", material_name="m name"))
+        self.check_round_trip_pipeline(configurator, before)
+
+    def test_can_round_trip_git_polling_only(self):
+        configurator = GoCdConfigurator(empty_config())
+        before = configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_git_material(GitMaterial("some git url", polling=False))
+        self.check_round_trip_pipeline(configurator, before)
+
+    def test_can_round_trip_git_ignore_patterns_only_ISSUE_4(self):
+        configurator = GoCdConfigurator(empty_config())
+        before = configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_git_material(GitMaterial("git url", ignore_patterns={"ex", "cluded"}))
+        self.check_round_trip_pipeline(configurator, before)
+
+    def test_can_round_trip_git_destination_directory_only(self):
+        configurator = GoCdConfigurator(empty_config())
+        before = configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_git_material(GitMaterial("git url", destination_directory='foo/bar'))
         self.check_round_trip_pipeline(configurator, before)
 
     def test_can_round_trip_pipeline_parameters(self):
