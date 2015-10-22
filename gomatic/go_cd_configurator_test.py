@@ -830,7 +830,8 @@ class TestPipeline(unittest.TestCase):
 
     def test_can_add_environment_variables_to_pipeline(self):
         pipeline = empty_pipeline()
-        pipeline.ensure_environment_variables({"new": "one", "again": "two"})
+        p = pipeline.ensure_environment_variables({"new": "one", "again": "two"})
+        self.assertEquals(p, pipeline)
         self.assertEquals({"new": "one", "again": "two"}, pipeline.environment_variables())
 
     def test_can_add_encrypted_secure_environment_variables_to_pipeline(self):
