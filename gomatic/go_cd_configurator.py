@@ -1478,13 +1478,13 @@ class Agent:
 
 class HostRestClient:
     def __init__(self, host):
-        self.__host = host
+        self.__host = host if host.startswith('http://') else 'http://%s' % host
 
     def __repr__(self):
         return 'HostRestClient("%s")' % self.__host
 
     def __path(self, path):
-        return ('http://%s' % self.__host) + path
+        return self.__host + path
 
     def get(self, path):
         return requests.get(self.__path(path))
