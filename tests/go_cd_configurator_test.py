@@ -3,9 +3,9 @@
 import unittest
 
 from xml.dom.minidom import parseString
-from gomatic import GoCdConfigurator, BuildArtifact, FetchArtifactDir, RakeTask, ExecTask, FetchArtifactTask, \
+from gomatic import GoCdConfigurator, FetchArtifactDir, RakeTask, ExecTask, FetchArtifactTask, \
     FetchArtifactFile, Tab, GitMaterial, PipelineMaterial, Pipeline
-from gomatic.go_cd_configurator import DEFAULT_LABEL_TEMPLATE, prettify, TestArtifact
+from gomatic.go_cd_configurator import DEFAULT_LABEL_TEMPLATE, prettify, Artifact
 import xml.etree.ElementTree as ET
 
 
@@ -172,51 +172,51 @@ class TestJobs(unittest.TestCase):
         job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
         artifacts = job.artifacts()
         self.assertEquals({
-                              BuildArtifact("target/universal/myapp*.zip", "artifacts"),
-                              BuildArtifact("scripts/*", "files"),
-                              TestArtifact("from", "to")},
+                              Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts"),
+                              Artifact.get_build_artifact("scripts/*", "files"),
+                              Artifact.get_test_artifact("from", "to")},
                           artifacts)
 
     def test_artifacts_might_have_no_dest(self):
         job = more_options_pipeline().ensure_stage("s1").ensure_job("rake-job")
         artifacts = job.artifacts()
         self.assertEquals(1, len(artifacts))
-        self.assertEquals({BuildArtifact("things/*")}, artifacts)
+        self.assertEquals({Artifact.get_build_artifact("things/*")}, artifacts)
 
     def test_can_add_build_artifacts_to_job(self):
         job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
         job_with_artifacts = job.ensure_artifacts({
-            BuildArtifact("a1", "artifacts"),
-            BuildArtifact("a2", "others")})
+            Artifact.get_build_artifact("a1", "artifacts"),
+            Artifact.get_build_artifact("a2", "others")})
         self.assertEquals(job, job_with_artifacts)
         artifacts = job.artifacts()
         self.assertEquals(5, len(artifacts))
-        self.assertTrue({BuildArtifact("a1", "artifacts"), BuildArtifact("a2", "others")}.issubset(artifacts))
+        self.assertTrue({Artifact.get_build_artifact("a1", "artifacts"), Artifact.get_build_artifact("a2", "others")}.issubset(artifacts))
 
     def test_can_add_test_artifacts_to_job(self):
         job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
         job_with_artifacts = job.ensure_artifacts({
-            TestArtifact("a1"),
-            TestArtifact("a2")})
+            Artifact.get_test_artifact("a1"),
+            Artifact.get_test_artifact("a2")})
         self.assertEquals(job, job_with_artifacts)
         artifacts = job.artifacts()
         self.assertEquals(5, len(artifacts))
-        self.assertTrue({TestArtifact("a1"), TestArtifact("a2")}.issubset(artifacts))
+        self.assertTrue({Artifact.get_test_artifact("a1"), Artifact.get_test_artifact("a2")}.issubset(artifacts))
 
     def test_can_ensure_artifacts(self):
         job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
 
         job.ensure_artifacts({
-            TestArtifact("from", "to"),
-            BuildArtifact("target/universal/myapp*.zip", "somewhereElse"),
-            TestArtifact("another", "with dest"),
-            BuildArtifact("target/universal/myapp*.zip", "artifacts")})
+            Artifact.get_test_artifact("from", "to"),
+            Artifact.get_build_artifact("target/universal/myapp*.zip", "somewhereElse"),
+            Artifact.get_test_artifact("another", "with dest"),
+            Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts")})
         self.assertEquals({
-                              BuildArtifact("target/universal/myapp*.zip", "artifacts"),
-                              BuildArtifact("scripts/*", "files"),
-                              TestArtifact("from", "to"),
-                              BuildArtifact("target/universal/myapp*.zip", "somewhereElse"),
-                              TestArtifact("another", "with dest")
+                              Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts"),
+                              Artifact.get_build_artifact("scripts/*", "files"),
+                              Artifact.get_test_artifact("from", "to"),
+                              Artifact.get_build_artifact("target/universal/myapp*.zip", "somewhereElse"),
+                              Artifact.get_test_artifact("another", "with dest")
                           },
                           job.artifacts())
 
@@ -1208,7 +1208,7 @@ class TestGoCdConfigurator(unittest.TestCase):
         job.ensure_task(ExecTask(['ls']))
         job.ensure_tab(Tab("n", "p"))
         job.ensure_resource("r")
-        job.ensure_artifacts({BuildArtifact('s', 'd')})
+        job.ensure_artifacts({Artifact.get_build_artifact('s', 'd')})
 
         xml = configurator.config()
         pipeline_root = ET.fromstring(xml).find('pipelines').find('pipeline')
@@ -1263,7 +1263,7 @@ class TestGoCdConfigurator(unittest.TestCase):
         job = stage.ensure_job("j")
         stage.ensure_environment_variables({'s': 's'})
         job.ensure_tab(Tab("n", "p"))
-        job.ensure_artifacts({BuildArtifact('s', 'd')})
+        job.ensure_artifacts({Artifact.get_build_artifact('s', 'd')})
         job.ensure_task(ExecTask(['ls']))
         job.ensure_resource("r")
         job.ensure_environment_variables({'j': 'j'})
@@ -1429,7 +1429,7 @@ class TestReverseEngineering(unittest.TestCase):
         configurator = GoCdConfigurator(empty_config())
         before = configurator.ensure_pipeline_group("group").ensure_pipeline("line")
         before.ensure_stage("stage").ensure_job("job") \
-            .ensure_artifacts({BuildArtifact("s", "d"), TestArtifact("sauce")}) \
+            .ensure_artifacts({Artifact.get_build_artifact("s", "d"), Artifact.get_test_artifact("sauce")}) \
             .ensure_environment_variables({"k": "v"}) \
             .ensure_resource("r") \
             .ensure_tab(Tab("n", "p")) \

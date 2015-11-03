@@ -8,7 +8,8 @@ import os
 import unittest
 import sys
 
-from gomatic import GoCdConfigurator, HostRestClient, GitMaterial, BuildArtifact, TestArtifact, ExecTask
+from gomatic import GoCdConfigurator, HostRestClient, GitMaterial, ExecTask
+from gomatic.go_cd_configurator import Artifact
 
 
 def start_go_server(gocd_version):
@@ -44,9 +45,9 @@ class populated_go_server:
                 .ensure_parameters({'environment': 'qa'})
             stage = pipeline.ensure_stage("earlyStage")
             job = stage.ensure_job("earlyWorm").ensure_artifacts(
-                {BuildArtifact("scripts/*", "files"),
-                 BuildArtifact("target/universal/myapp*.zip", "artifacts"),
-                 TestArtifact("from", "to")}).set_runs_on_all_agents()
+                {Artifact.get_build_artifact("scripts/*", "files"),
+                 Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts"),
+                 Artifact.get_test_artifact("from", "to")}).set_runs_on_all_agents()
             job.add_task(ExecTask(['ls']))
 
             configurator.save_updated_config(save_config_locally=True)
@@ -120,7 +121,7 @@ class IntegrationTest(unittest.TestCase):
                 self.assertEquals(['earlyStage'], [s.name() for s in pipeline.stages()])
                 self.assertEquals(['earlyWorm'], [j.name() for j in pipeline.stages()[0].jobs()])
                 job = pipeline.stages()[0].jobs()[0]
-                self.assertEquals({BuildArtifact("scripts/*", "files"), BuildArtifact("target/universal/myapp*.zip", "artifacts"), TestArtifact("from", "to")},
+                self.assertEquals({Artifact.get_build_artifact("scripts/*", "files"), Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts"), Artifact.get_test_artifact("from", "to")},
                                   job.artifacts())
                 self.assertEquals(True, job.runs_on_all_agents())
                 self.assertEquals([ExecTask(['ls'])], job.tasks())

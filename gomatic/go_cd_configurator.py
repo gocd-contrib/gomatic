@@ -402,19 +402,6 @@ class RakeTask(AbstractTask):
         return Task(new_element)
 
 
-def ArtifactFor(element):
-    dest = element.attrib.get('dest', None)
-    return Artifact(element.tag, element.attrib['src'], dest)
-
-
-def BuildArtifact(src, dest=None):
-    return Artifact("artifact", src, dest)
-
-
-def TestArtifact(src, dest=None):
-    return Artifact("test", src, dest)
-
-
 class Artifact(CommonEqualityMixin):
     def __init__(self, tag, src, dest=None):
         self.__tag = tag
@@ -439,6 +426,19 @@ class Artifact(CommonEqualityMixin):
         if self.__tag == "test":
             return "TestArtifact"
         raise RuntimeError("Unknown artifact tag %s" % self.__tag)
+
+    @classmethod
+    def get_artifact_for(cls, element):
+        dest = element.attrib.get('dest', None)
+        return cls(element.tag, element['src'], dest)
+
+    @classmethod
+    def get_build_artifact(cls, src, dest=None):
+        return cls('artifact', src, dest)
+
+    @classmethod
+    def get_test_artifact(cls, src, dest=None):
+        return cls('test', src, dest)
 
 
 class Tab(CommonEqualityMixin):
@@ -492,7 +492,7 @@ class Job(CommonEqualityMixin):
 
     def artifacts(self):
         artifact_elements = PossiblyMissingElement(self.__element).possibly_missing_child("artifacts").iterator()
-        return set([ArtifactFor(e) for e in artifact_elements])
+        return set([Artifact.get_artifact_for(e) for e in artifact_elements])
 
     def ensure_artifacts(self, artifacts):
         artifacts_ensurance = Ensurance(self.__element).ensure_child("artifacts")
