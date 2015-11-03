@@ -2,7 +2,12 @@
 
 import unittest
 
-from go_cd_configurator import *
+from xml.dom.minidom import parseString
+from gomatic import GoCdConfigurator, BuildArtifact, FetchArtifactDir, RakeTask, ExecTask, FetchArtifactTask, \
+    FetchArtifactFile, Tab, GitMaterial, PipelineMaterial, Pipeline
+from gomatic.go_cd_configurator import DEFAULT_LABEL_TEMPLATE, prettify, TestArtifact
+import xml.etree.ElementTree as ET
+
 
 empty_config_xml = """<?xml version="1.0" encoding="utf-8"?>
 <cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">

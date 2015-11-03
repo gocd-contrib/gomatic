@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='gomatic',
       version='0.3.35',
@@ -7,7 +7,7 @@ setup(name='gomatic',
       author='Springer Science+Business Media',
       author_email='tools-engineering@groups.springer.com',
       license='MIT',
-      packages=['gomatic'],
+      packages=find_packages(exclude=("tests",)),
       install_requires=[
           'requests'
       ],
