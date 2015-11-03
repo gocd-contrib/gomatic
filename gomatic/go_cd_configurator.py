@@ -36,36 +36,36 @@ class CommonEqualityMixin(object):
 
 class Ensurance:
     def __init__(self, element):
-        self._element = element
+        self.element = element
 
     def ensure_child(self, name):
-        child = self._element.find(name)
+        child = self.element.find(name)
         if child is None:
             result = ET.fromstring('<%s></%s>' % (name, name))
-            self._element.append(result)
+            self.element.append(result)
             return Ensurance(result)
         else:
             return Ensurance(child)
 
     def ensure_child_with_attribute(self, name, attribute_name, attribute_value):
-        matching_elements = [e for e in self._element.findall(name) if e.attrib[attribute_name] == attribute_value]
+        matching_elements = [e for e in self.element.findall(name) if e.attrib[attribute_name] == attribute_value]
         if len(matching_elements) == 0:
             new_element = ET.fromstring('<%s %s="%s"></%s>' % (name, attribute_name, attribute_value, name))
-            self._element.append(new_element)
+            self.element.append(new_element)
             return Ensurance(new_element)
         else:
             return Ensurance(matching_elements[0])
 
     def set(self, attribute_name, value):
-        self._element.set(attribute_name, value)
+        self.element.set(attribute_name, value)
         return self
 
     def append(self, element):
-        self._element.append(element)
+        self.element.append(element)
         return element
 
     def set_text(self, value):
-        self._element.text = value
+        self.element.text = value
 
 
 class PossiblyMissingElement:
@@ -84,6 +84,7 @@ class PossiblyMissingElement:
         else:
             return self.__element.findall(name)
 
+    @property
     def iterator(self):
         if self.__element is None:
             return []
@@ -120,12 +121,15 @@ class ThingWithResources(CommonEqualityMixin):
     def __init__(self, element):
         self.element = element
 
+    @property
     def resources(self):
-        return set([e.text for e in PossiblyMissingElement(self.element).possibly_missing_child('resources').findall('resource')])
+        guarded_element = PossiblyMissingElement(self.element)
+        return set([e.text for e in guarded_element.possibly_missing_child('resources').findall('resource')])
 
     def ensure_resource(self, resource):
-        if resource not in self.resources():
-            Ensurance(self.element).ensure_child('resources').append(ET.fromstring('<resource>%s</resource>' % resource))
+        if resource not in self.resources:
+            Ensurance(self.element).ensure_child('resources')\
+                .append(ET.fromstring('<resource>%s</resource>' % resource))
 
 
 class ThingWithEnvironmentVariables:
@@ -141,7 +145,8 @@ class ThingWithEnvironmentVariables:
         return variable_element.find('encryptedValue') is not None
 
     def __environment_variables(self, secure, encrypted=False):
-        variable_elements = PossiblyMissingElement(self.element).possibly_missing_child("environmentvariables").findall("variable")
+        guarded_element = PossiblyMissingElement(self.element)
+        variable_elements = guarded_element.possibly_missing_child("environmentvariables").findall("variable")
         result = {}
         for variable_element in variable_elements:
             if secure == self.__is_secure(variable_element):
@@ -154,22 +159,25 @@ class ThingWithEnvironmentVariables:
                     result[variable_element.attrib['name']] = variable_element.find(value_attribute).text
         return result
 
+    @property
     def environment_variables(self):
-        return self.__environment_variables(False)
+        return self.__environment_variables(secure=False)
 
+    @property
     def encrypted_environment_variables(self):
-        return self.__environment_variables(True, True)
+        return self.__environment_variables(secure=True, encrypted=True)
 
+    @property
     def unencrypted_secure_environment_variables(self):
-        return self.__environment_variables(True, False)
+        return self.__environment_variables(secure=True, encrypted=False)
 
     def __ensure_environment_variables(self, environment_variables, secure, encrypted=None):
         if encrypted is None:
             encrypted = secure
 
-        environment_variables_ensurance = Ensurance(self.element).ensure_child("environmentvariables")
-        for environment_variable_name in sorted(environment_variables.keys()):
-            variable_element = environment_variables_ensurance.ensure_child_with_attribute("variable", "name", environment_variable_name)
+        ensured_env_variables = Ensurance(self.element).ensure_child("environmentvariables")
+        for env_variable in sorted(environment_variables.keys()):
+            variable_element = ensured_env_variables.ensure_child_with_attribute("variable", "name", env_variable)
             if secure:
                 variable_element.set("secure", "true")
             else:
@@ -178,36 +186,37 @@ class ThingWithEnvironmentVariables:
                 value_element = variable_element.ensure_child("encryptedValue")
             else:
                 value_element = variable_element.ensure_child("value")
-            value_element.set_text(environment_variables[environment_variable_name])
+            value_element.set_text(environment_variables[env_variable])
 
     def ensure_environment_variables(self, environment_variables):
-        self.__ensure_environment_variables(environment_variables, False)
+        self.__ensure_environment_variables(environment_variables, secure=False)
 
     def ensure_encrypted_environment_variables(self, environment_variables):
-        self.__ensure_environment_variables(environment_variables, True)
+        self.__ensure_environment_variables(environment_variables, secure=True)
 
     def ensure_unencrypted_secure_environment_variables(self, environment_variables):
-        self.__ensure_environment_variables(environment_variables, True, False)
+        self.__ensure_environment_variables(environment_variables, secure=True, encrypted=False)
 
     def remove_all(self):
         PossiblyMissingElement(self.element).possibly_missing_child("environmentvariables").remove_all_children()
 
     def as_python(self):
         result = ""
-        environment_variables = self.environment_variables()
-        if environment_variables:
-            result += '.ensure_environment_variables(%s)' % environment_variables
-        encrypted_environment_variables = self.encrypted_environment_variables()
-        if encrypted_environment_variables:
-            result += '.ensure_encrypted_environment_variables(%s)' % encrypted_environment_variables
-        unencrypted_secure_environment_variables = self.unencrypted_secure_environment_variables()
-        if unencrypted_secure_environment_variables:
-            result += '.ensure_unencrypted_secure_environment_variables(%s)' % unencrypted_secure_environment_variables
+
+        if self.environment_variables:
+            result += '.ensure_environment_variables(%s)' % self.environment_variables
+
+        if self.encrypted_environment_variables:
+            result += '.ensure_encrypted_environment_variables(%s)' % self.encrypted_environment_variables
+
+        if self.unencrypted_secure_environment_variables:
+            result += '.ensure_unencrypted_secure_environment_variables(%s)' % self.unencrypted_secure_environment_variables
+
         return result
 
     def remove(self, name):
-        env_vars = self.environment_variables()
-        encrypted_env_vars = self.encrypted_environment_variables()
+        env_vars = self.environment_variables
+        encrypted_env_vars = self.encrypted_environment_variables
         self.remove_all()
         if name in env_vars:
             del env_vars[name]
@@ -241,7 +250,10 @@ def Task(element):
         return ExecTask(command_and_args, working_dir, runif)
     if element.tag == "fetchartifact":
         dest = element.attrib.get('dest', None)
-        return FetchArtifactTask(element.attrib['pipeline'], element.attrib['stage'], element.attrib['job'], fetch_artifact_src_from(element), dest, runif)
+        return FetchArtifactTask(
+            element.attrib['pipeline'], element.attrib['stage'],
+            element.attrib['job'], fetch_artifact_src_from(element),
+            dest, runif)
     if element.tag == "rake":
         return RakeTask(element.attrib['target'])
     raise RuntimeError("Don't know task type %s" % element.tag)
@@ -254,6 +266,7 @@ class AbstractTask(CommonEqualityMixin):
         if runif not in valid_values:
             raise RuntimeError('Cannot create task with runif="%s" - it must be one of %s' % (runif, valid_values))
 
+    @property
     def runif(self):
         return self._runif
 
@@ -273,6 +286,7 @@ class FetchArtifactFile(CommonEqualityMixin):
     def __repr__(self):
         return 'FetchArtifactFile("%s")' % self.__src_value
 
+    @property
     def as_xml_type_and_value(self):
         return "srcfile", self.__src_value
 
@@ -284,6 +298,7 @@ class FetchArtifactDir(CommonEqualityMixin):
     def __repr__(self):
         return 'FetchArtifactDir("%s")' % self.__src_value
 
+    @property
     def as_xml_type_and_value(self):
         return "srcdir", self.__src_value
 
@@ -308,26 +323,30 @@ class FetchArtifactTask(AbstractTask):
 
         return ('FetchArtifactTask("%s", "%s", "%s", %s' % (self.__pipeline, self.__stage, self.__job, self.__src)) + dest_parameter + runif_parameter + ')'
 
-    def type(self):
-        return "fetchartifact"
+    type = 'fetchartifact'
 
+    @property
     def pipeline(self):
         return self.__pipeline
 
+    @property
     def stage(self):
         return self.__stage
 
+    @property
     def job(self):
         return self.__job
 
+    @property
     def src(self):
         return self.__src
 
+    @property
     def dest(self):
         return self.__dest
 
     def append_to(self, element):
-        src_type, src_value = self.src().as_xml_type_and_value()
+        src_type, src_value = self.src.as_xml_type_and_value
         if self.__dest is None:
             new_element = ET.fromstring(
                 '<fetchartifact pipeline="%s" stage="%s" job="%s" %s="%s" />' % (self.__pipeline, self.__stage, self.__job, src_type, src_value))
@@ -335,7 +354,7 @@ class FetchArtifactTask(AbstractTask):
             new_element = ET.fromstring(
                 '<fetchartifact pipeline="%s" stage="%s" job="%s" %s="%s" dest="%s"/>' % (
                     self.__pipeline, self.__stage, self.__job, src_type, src_value, self.__dest))
-        new_element.append(ET.fromstring('<runif status="%s" />' % self.runif()))
+        new_element.append(ET.fromstring('<runif status="%s" />' % self.runif))
 
         Ensurance(element).ensure_child("tasks").append(new_element)
         return Task(new_element)
@@ -356,14 +375,15 @@ class ExecTask(AbstractTask):
         if self._runif != "passed":
             runif_parameter = ', runif="%s"' % self._runif
 
-        return ('ExecTask(%s' % self.command_and_args()) + working_dir_parameter + runif_parameter + ')'
+        return ('ExecTask(%s' % self.command_and_args) + working_dir_parameter + runif_parameter + ')'
 
-    def type(self):
-        return "exec"
+    type = 'exec'
 
+    @property
     def command_and_args(self):
         return self.__command_and_args
 
+    @property
     def working_dir(self):
         return self.__working_dir
 
@@ -376,7 +396,7 @@ class ExecTask(AbstractTask):
         for arg in self.__command_and_args[1:]:
             new_element.append(ET.fromstring('<arg>%s</arg>' % escape(arg)))
 
-        new_element.append(ET.fromstring('<runif status="%s" />' % self.runif()))
+        new_element.append(ET.fromstring('<runif status="%s" />' % self.runif))
 
         Ensurance(element).ensure_child("tasks").append(new_element)
         return Task(new_element)
@@ -390,9 +410,9 @@ class RakeTask(AbstractTask):
     def __repr__(self):
         return 'RakeTask("%s", "%s")' % (self.__target, self._runif)
 
-    def type(self):
-        return "rake"
+    type = 'rake'
 
+    @property
     def target(self):
         return self.__target
 
@@ -410,9 +430,9 @@ class Artifact(CommonEqualityMixin):
 
     def __repr__(self):
         if self.__dest is None:
-            return '%s("%s")' % (self.constructor(), self.__src)
+            return '%s("%s")' % (self.constructor, self.__src)
         else:
-            return '%s("%s", "%s")' % (self.constructor(), self.__src, self.__dest)
+            return '%s("%s", "%s")' % (self.constructor, self.__src, self.__dest)
 
     def append_to(self, element):
         if self.__dest is None:
@@ -420,6 +440,7 @@ class Artifact(CommonEqualityMixin):
         else:
             element.append(ET.fromstring('<%s src="%s" dest="%s" />' % (self.__tag, self.__src, self.__dest)))
 
+    @property
     def constructor(self):
         if self.__tag == "artifact":
             return "BuildArtifact"
@@ -453,14 +474,18 @@ class Tab(CommonEqualityMixin):
         element.append(ET.fromstring('<tab name="%s" path="%s" />' % (self.__name, self.__path)))
 
 
+# I have refactored properties into actual properties up to here
+
+
 class Job(CommonEqualityMixin):
     def __init__(self, element):
         self.__element = element
         self.__thing_with_resources = ThingWithResources(element)
 
     def __repr__(self):
-        return "Job('%s', %s)" % (self.name(), self.tasks())
+        return "Job('%s', %s)" % (self.name, self.tasks())
 
+    @property
     def name(self):
         return self.__element.attrib['name']
 
@@ -484,7 +509,7 @@ class Job(CommonEqualityMixin):
         return self
 
     def resources(self):
-        return self.__thing_with_resources.resources()
+        return self.__thing_with_resources.resources
 
     def ensure_resource(self, resource):
         self.__thing_with_resources.ensure_resource(resource)
@@ -527,10 +552,10 @@ class Job(CommonEqualityMixin):
         return self
 
     def environment_variables(self):
-        return self.__thing_with_environment_variables().environment_variables()
+        return self.__thing_with_environment_variables().environment_variables
 
     def encrypted_environment_variables(self):
-        return self.__thing_with_environment_variables().encrypted_environment_variables()
+        return self.__thing_with_environment_variables().encrypted_environment_variables
 
     def ensure_environment_variables(self, environment_variables):
         self.__thing_with_environment_variables().ensure_environment_variables(environment_variables)
@@ -556,7 +581,7 @@ class Job(CommonEqualityMixin):
         move_all_to_end(self.__element, "artifacts")
 
     def as_python_commands_applied_to_stage(self):
-        result = 'job = stage.ensure_job("%s")' % self.name()
+        result = 'job = stage.ensure_job("%s")' % self.name
 
         if self.artifacts():
             if len(self.artifacts()) > 1:
@@ -602,26 +627,27 @@ class Stage(CommonEqualityMixin):
 
     def ensure_job(self, name):
         job_element = Ensurance(self.element).ensure_child("jobs").ensure_child_with_attribute("job", "name", name)
-        return Job(job_element._element)
+        return Job(job_element.element)
 
     def environment_variables(self):
-        return self.__thing_with_environment_variables().environment_variables()
+        return self.__thing_with_environment_variables.environment_variables
 
     def encrypted_environment_variables(self):
-        return self.__thing_with_environment_variables().encrypted_environment_variables()
+        return self.__thing_with_environment_variables.encrypted_environment_variables
 
     def ensure_environment_variables(self, environment_variables):
-        self.__thing_with_environment_variables().ensure_environment_variables(environment_variables)
+        self.__thing_with_environment_variables.ensure_environment_variables(environment_variables)
         return self
 
     def ensure_encrypted_environment_variables(self, environment_variables):
-        self.__thing_with_environment_variables().ensure_encrypted_environment_variables(environment_variables)
+        self.__thing_with_environment_variables.ensure_encrypted_environment_variables(environment_variables)
         return self
 
     def without_any_environment_variables(self):
-        self.__thing_with_environment_variables().remove_all()
+        self.__thing_with_environment_variables.remove_all()
         return self
 
+    @property
     def __thing_with_environment_variables(self):
         return ThingWithEnvironmentVariables(self.element)
 
@@ -659,7 +685,7 @@ class Stage(CommonEqualityMixin):
     def as_python_commands_applied_to(self, receiver):
         result = 'stage = %s.ensure_stage("%s")' % (receiver, self.name())
 
-        result += self.__thing_with_environment_variables().as_python()
+        result += self.__thing_with_environment_variables.as_python()
 
         if self.clean_working_dir():
             result += '.set_clean_working_dir()'
@@ -865,7 +891,7 @@ class Pipeline(CommonEqualityMixin):
             if not (self.has_single_git_material() and material.is_git()):
                 result += then('ensure_material(%s)' % material)
 
-        result += self.__thing_with_environment_variables().as_python()
+        result += self.__thing_with_environment_variables.as_python()
 
         if len(self.parameters()) != 0:
             result += then('ensure_parameters(%s)' % self.parameters())
@@ -968,34 +994,35 @@ class Pipeline(CommonEqualityMixin):
         return next(template for template in self.parent.templates() if template.name() == self.__template_name())
 
     def environment_variables(self):
-        return self.__thing_with_environment_variables().environment_variables()
+        return self.__thing_with_environment_variables.environment_variables
 
     def encrypted_environment_variables(self):
-        return self.__thing_with_environment_variables().encrypted_environment_variables()
+        return self.__thing_with_environment_variables.encrypted_environment_variables
 
     def unencrypted_secure_environment_variables(self):
-        return self.__thing_with_environment_variables().unencrypted_secure_environment_variables()
+        return self.__thing_with_environment_variables.unencrypted_secure_environment_variables
 
     def ensure_environment_variables(self, environment_variables):
-        self.__thing_with_environment_variables().ensure_environment_variables(environment_variables)
+        self.__thing_with_environment_variables.ensure_environment_variables(environment_variables)
         return self
 
     def ensure_encrypted_environment_variables(self, environment_variables):
-        self.__thing_with_environment_variables().ensure_encrypted_environment_variables(environment_variables)
+        self.__thing_with_environment_variables.ensure_encrypted_environment_variables(environment_variables)
         return self
 
     def ensure_unencrypted_secure_environment_variables(self, environment_variables):
-        self.__thing_with_environment_variables().ensure_unencrypted_secure_environment_variables(environment_variables)
+        self.__thing_with_environment_variables.ensure_unencrypted_secure_environment_variables(environment_variables)
         return self
 
     def without_any_environment_variables(self):
-        self.__thing_with_environment_variables().remove_all()
+        self.__thing_with_environment_variables.remove_all()
         return self
 
     def remove_environment_variable(self, name):
-        self.__thing_with_environment_variables().remove(name)
+        self.__thing_with_environment_variables.remove(name)
         return self
 
+    @property
     def __thing_with_environment_variables(self):
         return ThingWithEnvironmentVariables(self.element)
 
@@ -1021,7 +1048,7 @@ class Pipeline(CommonEqualityMixin):
 
     def ensure_stage(self, name):
         stage_element = Ensurance(self.element).ensure_child_with_attribute("stage", "name", name)
-        return Stage(stage_element._element)
+        return Stage(stage_element.element)
 
     def ensure_removal_of_stage(self, name):
         matching_stages = [s for s in self.stages() if s.name() == name]
@@ -1131,7 +1158,7 @@ class PipelineGroup(CommonEqualityMixin):
             raise RuntimeError('Cannot find pipeline with name "%s" in %s' % (name, self.pipelines()))
 
     def ensure_pipeline(self, name):
-        pipeline_element = Ensurance(self.element).ensure_child_with_attribute('pipeline', 'name', name)._element
+        pipeline_element = Ensurance(self.element).ensure_child_with_attribute('pipeline', 'name', name).element
         return Pipeline(pipeline_element, self)
 
     def ensure_removal_of_pipeline(self, name):
@@ -1154,7 +1181,7 @@ class Agent:
         return self.__element.attrib['hostname']
 
     def resources(self):
-        return self.__thing_with_resources.resources()
+        return self.__thing_with_resources.resources
 
     def ensure_resource(self, resource):
         self.__thing_with_resources.ensure_resource(resource)
@@ -1233,7 +1260,7 @@ class GoCdConfigurator:
 
     def ensure_pipeline_group(self, group_name):
         pipeline_group_element = Ensurance(self.__xml_root).ensure_child_with_attribute("pipelines", "group", group_name)
-        return PipelineGroup(pipeline_group_element._element, self)
+        return PipelineGroup(pipeline_group_element.element, self)
 
     def ensure_removal_of_pipeline_group(self, group_name):
         matching = [g for g in self.pipeline_groups() if g.name() == group_name]
@@ -1260,7 +1287,7 @@ class GoCdConfigurator:
         return [Pipeline(e, 'templates') for e in PossiblyMissingElement(self.__xml_root).possibly_missing_child('templates').findall('pipeline')]
 
     def ensure_template(self, template_name):
-        pipeline_element = Ensurance(self.__xml_root).ensure_child('templates').ensure_child_with_attribute('pipeline', 'name', template_name)._element
+        pipeline_element = Ensurance(self.__xml_root).ensure_child('templates').ensure_child_with_attribute('pipeline', 'name', template_name).element
         return Pipeline(pipeline_element, 'templates')
 
     def ensure_replacement_of_template(self, template_name):

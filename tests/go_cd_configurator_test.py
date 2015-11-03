@@ -224,29 +224,29 @@ class TestJobs(unittest.TestCase):
         job = more_options_pipeline().ensure_stage("s1").jobs()[2]
         tasks = job.tasks()
         self.assertEquals(4, len(tasks))
-        self.assertEquals('rake', tasks[0].type())
-        self.assertEquals('sometarget', tasks[0].target())
-        self.assertEquals('passed', tasks[0].runif())
+        self.assertEquals('rake', tasks[0].type)
+        self.assertEquals('sometarget', tasks[0].target)
+        self.assertEquals('passed', tasks[0].runif)
 
-        self.assertEquals('fetchartifact', tasks[1].type())
-        self.assertEquals('more-options', tasks[1].pipeline())
-        self.assertEquals('earlyStage', tasks[1].stage())
-        self.assertEquals('earlyWorm', tasks[1].job())
-        self.assertEquals(FetchArtifactDir('sourceDir'), tasks[1].src())
-        self.assertEquals('destDir', tasks[1].dest())
-        self.assertEquals('passed', tasks[1].runif())
+        self.assertEquals('fetchartifact', tasks[1].type)
+        self.assertEquals('more-options', tasks[1].pipeline)
+        self.assertEquals('earlyStage', tasks[1].stage)
+        self.assertEquals('earlyWorm', tasks[1].job)
+        self.assertEquals(FetchArtifactDir('sourceDir'), tasks[1].src)
+        self.assertEquals('destDir', tasks[1].dest)
+        self.assertEquals('passed', tasks[1].runif)
 
     def test_runif_defaults_to_passed(self):
         pipeline = typical_pipeline()
         tasks = pipeline.ensure_stage("build").ensure_job("compile").tasks()
-        self.assertEquals("passed", tasks[0].runif())
+        self.assertEquals("passed", tasks[0].runif)
 
     def test_jobs_can_have_rake_tasks(self):
         job = more_options_pipeline().ensure_stage("s1").jobs()[0]
         tasks = job.tasks()
         self.assertEquals(1, len(tasks))
-        self.assertEquals('rake', tasks[0].type())
-        self.assertEquals("boo", tasks[0].target())
+        self.assertEquals('rake', tasks[0].type)
+        self.assertEquals("boo", tasks[0].target)
 
     def test_can_ensure_rake_task(self):
         job = more_options_pipeline().ensure_stage("s1").jobs()[0]
@@ -257,7 +257,7 @@ class TestJobs(unittest.TestCase):
         job = more_options_pipeline().ensure_stage("s1").jobs()[0]
         job.ensure_task(RakeTask("another"))
         self.assertEquals(2, len(job.tasks()))
-        self.assertEquals("another", job.tasks()[1].target())
+        self.assertEquals("another", job.tasks()[1].target)
 
     def test_can_add_exec_task_with_runif(self):
         stages = typical_pipeline().stages()
@@ -266,9 +266,9 @@ class TestJobs(unittest.TestCase):
         self.assertEquals(2, len(job.tasks()))
         task = job.tasks()[1]
         self.assertEquals(task, added_task)
-        self.assertEquals(['ls', '-la'], task.command_and_args())
-        self.assertEquals('some/dir', task.working_dir())
-        self.assertEquals('failed', task.runif())
+        self.assertEquals(['ls', '-la'], task.command_and_args)
+        self.assertEquals('some/dir', task.working_dir)
+        self.assertEquals('failed', task.runif)
 
     def test_can_add_exec_task(self):
         stages = typical_pipeline().stages()
@@ -277,8 +277,8 @@ class TestJobs(unittest.TestCase):
         self.assertEquals(2, len(job.tasks()))
         task = job.tasks()[1]
         self.assertEquals(task, added_task)
-        self.assertEquals(['ls', '-la'], task.command_and_args())
-        self.assertEquals('some/dir', task.working_dir())
+        self.assertEquals(['ls', '-la'], task.command_and_args)
+        self.assertEquals('some/dir', task.working_dir)
 
     def test_can_ensure_exec_task(self):
         stages = typical_pipeline().stages()
@@ -290,21 +290,21 @@ class TestJobs(unittest.TestCase):
         self.assertEquals(3, len(job.tasks()))
 
         self.assertEquals(t2, job.tasks()[0])
-        self.assertEquals(['make', 'options', 'source code'], (job.tasks()[0]).command_and_args())
+        self.assertEquals(['make', 'options', 'source code'], (job.tasks()[0]).command_and_args)
 
         self.assertEquals(t1, job.tasks()[1])
-        self.assertEquals(['ls', '-la'], (job.tasks()[1]).command_and_args())
-        self.assertEquals('some/dir', (job.tasks()[1]).working_dir())
+        self.assertEquals(['ls', '-la'], (job.tasks()[1]).command_and_args)
+        self.assertEquals('some/dir', (job.tasks()[1]).working_dir)
 
-        self.assertEquals(['ls', '-la'], (job.tasks()[2]).command_and_args())
-        self.assertEquals('some/otherdir', (job.tasks()[2]).working_dir())
+        self.assertEquals(['ls', '-la'], (job.tasks()[2]).command_and_args)
+        self.assertEquals('some/otherdir', (job.tasks()[2]).working_dir)
 
     def test_exec_task_args_are_unescaped_as_appropriate(self):
         job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
         task = job.tasks()[1]
         self.assertEquals(["bash", "-c",
                            'curl "http://domain.com/service/check?target=one+two+three&key=2714_beta%40domain.com"'],
-                          task.command_and_args())
+                          task.command_and_args)
 
     def test_exec_task_args_are_escaped_as_appropriate(self):
         job = empty_stage().ensure_job("j")
@@ -312,7 +312,7 @@ class TestJobs(unittest.TestCase):
                                       'curl "http://domain.com/service/check?target=one+two+three&key=2714_beta%40domain.com"']))
         self.assertEquals(["bash", "-c",
                            'curl "http://domain.com/service/check?target=one+two+three&key=2714_beta%40domain.com"'],
-                          task.command_and_args())
+                          task.command_and_args)
 
     def test_can_have_no_tasks(self):
         self.assertEquals(0, len(empty_stage().ensure_job("empty_job").tasks()))
@@ -324,23 +324,23 @@ class TestJobs(unittest.TestCase):
         self.assertEquals(2, len(job.tasks()))
         task = job.tasks()[1]
         self.assertEquals(added_task, task)
-        self.assertEquals('p', task.pipeline())
-        self.assertEquals('s', task.stage())
-        self.assertEquals('j', task.job())
-        self.assertEquals(FetchArtifactDir('d'), task.src())
-        self.assertEquals('any', task.runif())
+        self.assertEquals('p', task.pipeline)
+        self.assertEquals('s', task.stage)
+        self.assertEquals('j', task.job)
+        self.assertEquals(FetchArtifactDir('d'), task.src)
+        self.assertEquals('any', task.runif)
 
     def test_fetch_artifact_task_can_have_src_file_rather_than_src_dir(self):
         job = more_options_pipeline().ensure_stage("s1").ensure_job("variety-of-tasks")
         tasks = job.tasks()
 
         self.assertEquals(4, len(tasks))
-        self.assertEquals('more-options', tasks[1].pipeline())
-        self.assertEquals('earlyStage', tasks[1].stage())
-        self.assertEquals('earlyWorm', tasks[1].job())
-        self.assertEquals(FetchArtifactFile('someFile'), tasks[2].src())
-        self.assertEquals('passed', tasks[1].runif())
-        self.assertEquals(['true'], tasks[3].command_and_args())
+        self.assertEquals('more-options', tasks[1].pipeline)
+        self.assertEquals('earlyStage', tasks[1].stage)
+        self.assertEquals('earlyWorm', tasks[1].job)
+        self.assertEquals(FetchArtifactFile('someFile'), tasks[2].src)
+        self.assertEquals('passed', tasks[1].runif)
+        self.assertEquals(['true'], tasks[3].command_and_args)
 
     def test_fetch_artifact_task_can_have_dest(self):
         pipeline = more_options_pipeline()
@@ -361,47 +361,47 @@ class TestJobs(unittest.TestCase):
 
         self.assertEquals(first_added_task, job.tasks()[4])
 
-        self.assertEquals('p', (job.tasks()[4]).pipeline())
-        self.assertEquals('s', (job.tasks()[4]).stage())
-        self.assertEquals('j', (job.tasks()[4]).job())
-        self.assertEquals(FetchArtifactDir('dir'), (job.tasks()[4]).src())
-        self.assertEquals('passed', (job.tasks()[4]).runif())
+        self.assertEquals('p', (job.tasks()[4]).pipeline)
+        self.assertEquals('s', (job.tasks()[4]).stage)
+        self.assertEquals('j', (job.tasks()[4]).job)
+        self.assertEquals(FetchArtifactDir('dir'), (job.tasks()[4]).src)
+        self.assertEquals('passed', (job.tasks()[4]).runif)
 
         job.ensure_task(FetchArtifactTask('p', 's', 'j', FetchArtifactFile('f')))
-        self.assertEquals(FetchArtifactFile('f'), (job.tasks()[5]).src())
+        self.assertEquals(FetchArtifactFile('f'), (job.tasks()[5]).src)
 
         job.ensure_task(FetchArtifactTask('p', 's', 'j', FetchArtifactDir('dir'), dest="somedest"))
-        self.assertEquals("somedest", (job.tasks()[6]).dest())
+        self.assertEquals("somedest", (job.tasks()[6]).dest)
 
         job.ensure_task(FetchArtifactTask('p', 's', 'j', FetchArtifactDir('dir'), runif="failed"))
-        self.assertEquals('failed', (job.tasks()[7]).runif())
+        self.assertEquals('failed', (job.tasks()[7]).runif)
 
     def test_tasks_run_if_defaults_to_passed(self):
         job = empty_stage().ensure_job("j")
         job.add_task(ExecTask(['ls', '-la'], 'some/dir'))
         job.add_task(FetchArtifactTask('p', 's', 'j', FetchArtifactDir('dir')))
         job.add_task(RakeTask('x'))
-        self.assertEquals('passed', (job.tasks()[0]).runif())
-        self.assertEquals('passed', (job.tasks()[1]).runif())
-        self.assertEquals('passed', (job.tasks()[2]).runif())
+        self.assertEquals('passed', (job.tasks()[0]).runif)
+        self.assertEquals('passed', (job.tasks()[1]).runif)
+        self.assertEquals('passed', (job.tasks()[2]).runif)
 
     def test_tasks_run_if_variants(self):
         job = more_options_pipeline().ensure_stage("s1").ensure_job("run-if-variants")
         tasks = job.tasks()
-        self.assertEquals('t-passed', tasks[0].command_and_args()[0])
-        self.assertEquals('passed', tasks[0].runif())
+        self.assertEquals('t-passed', tasks[0].command_and_args[0])
+        self.assertEquals('passed', tasks[0].runif)
 
-        self.assertEquals('t-none', tasks[1].command_and_args()[0])
-        self.assertEquals('passed', tasks[1].runif())
+        self.assertEquals('t-none', tasks[1].command_and_args[0])
+        self.assertEquals('passed', tasks[1].runif)
 
-        self.assertEquals('t-failed', tasks[2].command_and_args()[0])
-        self.assertEquals('failed', tasks[2].runif())
+        self.assertEquals('t-failed', tasks[2].command_and_args[0])
+        self.assertEquals('failed', tasks[2].runif)
 
-        self.assertEquals('t-any', tasks[3].command_and_args()[0])
-        self.assertEquals('any', tasks[3].runif())
+        self.assertEquals('t-any', tasks[3].command_and_args[0])
+        self.assertEquals('any', tasks[3].runif)
 
-        self.assertEquals('t-both', tasks[4].command_and_args()[0])
-        self.assertEquals('any', tasks[4].runif())
+        self.assertEquals('t-both', tasks[4].command_and_args[0])
+        self.assertEquals('any', tasks[4].runif)
 
     def test_cannot_set_runif_to_random_things(self):
         try:
@@ -411,14 +411,14 @@ class TestJobs(unittest.TestCase):
             self.assertTrue(e.message.count("whatever") > 0)
 
     def test_can_set_runif_to_particular_values(self):
-        self.assertEquals('passed', ExecTask(['x'], runif='passed').runif())
-        self.assertEquals('failed', ExecTask(['x'], runif='failed').runif())
-        self.assertEquals('any', ExecTask(['x'], runif='any').runif())
+        self.assertEquals('passed', ExecTask(['x'], runif='passed').runif)
+        self.assertEquals('failed', ExecTask(['x'], runif='failed').runif)
+        self.assertEquals('any', ExecTask(['x'], runif='any').runif)
 
     def test_tasks_dest_defaults_to_none(self):  # TODO: maybe None could be avoided
         job = empty_stage().ensure_job("j")
         job.add_task(FetchArtifactTask('p', 's', 'j', FetchArtifactDir('dir')))
-        self.assertEquals(None, (job.tasks()[0]).dest())
+        self.assertEquals(None, (job.tasks()[0]).dest)
 
     def test_can_add_exec_task_to_empty_job(self):
         job = empty_stage().ensure_job("j")
@@ -426,9 +426,9 @@ class TestJobs(unittest.TestCase):
         self.assertEquals(1, len(job.tasks()))
         task = job.tasks()[0]
         self.assertEquals(task, added_task)
-        self.assertEquals(['ls', '-la'], task.command_and_args())
-        self.assertEquals('some/dir', task.working_dir())
-        self.assertEquals('any', task.runif())
+        self.assertEquals(['ls', '-la'], task.command_and_args)
+        self.assertEquals('some/dir', task.working_dir)
+        self.assertEquals('any', task.runif)
 
     def test_can_remove_all_tasks(self):
         stages = typical_pipeline().stages()
