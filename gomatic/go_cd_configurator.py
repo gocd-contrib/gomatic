@@ -170,7 +170,7 @@ class ThingWithEnvironmentVariables:
             if secure:
                 variable_element.set("secure", "true")
             else:
-                variable_element.set("secure", "false")
+                PossiblyMissingElement(variable_element._element).remove_attribute("secure")
             if encrypted:
                 value_element = variable_element.ensure_child("encryptedValue")
             else:
