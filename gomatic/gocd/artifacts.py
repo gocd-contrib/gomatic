@@ -67,22 +67,13 @@ class Artifact(CommonEqualityMixin):
 
     @classmethod
     def get_build_artifact(cls, src, dest=None):
-        return BuildArtifact(src, dest)
+        return cls('artifact', src, dest)
 
     @classmethod
     def get_test_artifact(cls, src, dest=None):
-        return TestArtifact(src, dest)
+        return cls('test', src, dest)
 
 
-def ArtifactFor(element):
-    return Artifact.get_artifact_for(element)
-
-
-class BuildArtifact(Artifact):
-    def __init__(self, src, dest=None):
-        super(BuildArtifact, self).__init__("artifact", src, dest)
-
-
-class TestArtifact(Artifact):
-    def __init__(self, src, dest=None):
-        super(TestArtifact, self).__init__("test", src, dest)
+ArtifactFor = Artifact.get_artifact_for
+BuildArtifact = Artifact.get_build_artifact
+TestArtifact = Artifact.get_test_artifact

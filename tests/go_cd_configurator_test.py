@@ -518,7 +518,7 @@ class TestStages(unittest.TestCase):
 
     def test_can_set_manual_approval(self):
         stage = typical_pipeline().stages[0]
-        s = stage.set_has_manual_approval
+        s = stage.set_has_manual_approval()
         self.assertEquals(s, stage)
         self.assertEquals(True, stage.has_manual_approval)
 
@@ -863,7 +863,7 @@ class TestPipeline(unittest.TestCase):
 
     def test_can_remove_all_environment_variables(self):
         pipeline = typical_pipeline()
-        p = pipeline.without_any_environment_variables
+        p = pipeline.without_any_environment_variables()
         self.assertEquals(p, pipeline)
         self.assertEquals({}, pipeline.environment_variables)
 
@@ -933,7 +933,7 @@ class TestPipeline(unittest.TestCase):
         pipeline = GoCdConfigurator(empty_config()).ensure_pipeline_group('Group').ensure_pipeline('Pipeline')
         self.assertEquals(False, pipeline.has_timer)
         try:
-            pipeline.timer
+            timer = pipeline.timer
             self.fail('should have thrown an exception')
         except RuntimeError:
             pass
