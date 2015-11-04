@@ -157,14 +157,14 @@ class Job(CommonEqualityMixin):
 
         result += self.__thing_with_environment_variables.as_python()
 
-        for resource in self.resources():
+        for resource in self.resources:
             result += '.ensure_resource("%s")' % resource
 
         for tab in self.tabs:
             result += '.ensure_tab(%s)' % tab
 
         if self.has_timeout:
-            result += '.set_timeout("%s")' % self.timeout()
+            result += '.set_timeout("%s")' % self.timeout
 
         if self.runs_on_all_agents:
             result += '.set_runs_on_all_agents()'
@@ -263,10 +263,10 @@ class Stage(CommonEqualityMixin):
 
         result += self.__thing_with_environment_variables.as_python()
 
-        if self.clean_working_dir():
+        if self.clean_working_dir:
             result += '.set_clean_working_dir()'
 
-        if self.has_manual_approval():
+        if self.has_manual_approval:
             result += '.set_has_manual_approval()'
 
         if not self.fetch_materials:
@@ -299,29 +299,29 @@ class Pipeline(CommonEqualityMixin):
         return self.__appended_python_commands_to_create_pipeline_or_template_applied_to_configurator(result, 'template')
 
     def __appended_python_commands_to_create_pipeline_or_template_applied_to_configurator(self, result, receiver):
-        if self.is_based_on_template():
-            result += then('set_template_name("%s")' % self.__template_name())
+        if self.is_based_on_template:
+            result += then('set_template_name("%s")' % self.__template_name)
 
-        if self.has_timer():
+        if self.has_timer:
             if self.timer_triggers_only_on_changes:
-                result += then('set_timer("%s", only_on_changes=True)' % self.timer())
+                result += then('set_timer("%s", only_on_changes=True)' % self.timer)
             else:
-                result += then('set_timer("%s")' % self.timer())
+                result += then('set_timer("%s")' % self.timer)
 
         if self.has_label_template:
-            if self.label_template() == DEFAULT_LABEL_TEMPLATE:
+            if self.label_template == DEFAULT_LABEL_TEMPLATE:
                 result += then('set_default_label_template()')
             else:
-                result += then('set_label_template("%s")' % self.label_template())
+                result += then('set_label_template("%s")' % self.label_template)
 
         if self.has_automatic_pipeline_locking:
             result += then('set_automatic_pipeline_locking()')
 
         if self.has_single_git_material:
-            result += then(self.git_material().as_python_applied_to_pipeline())
+            result += then(self.git_material.as_python_applied_to_pipeline())
 
         for material in self.materials:
-            if not (self.has_single_git_material and material.is_git()):
+            if not (self.has_single_git_material and material.is_git):
                 result += then('ensure_material(%s)' % material)
 
         result += self.__thing_with_environment_variables.as_python()
@@ -329,8 +329,8 @@ class Pipeline(CommonEqualityMixin):
         if len(self.parameters) != 0:
             result += then('ensure_parameters(%s)' % self.parameters)
 
-        if self.is_based_on_template():
-            result += "\n" + self.template().__as_python_commands_to_create_template_applied_to_configurator()
+        if self.is_based_on_template:
+            result += "\n" + self.template.__as_python_commands_to_create_template_applied_to_configurator()
 
         for stage in self.stages:
             result += "\n" + stage.as_python_commands_applied_to(receiver)
@@ -376,7 +376,7 @@ class Pipeline(CommonEqualityMixin):
 
     def set_default_label_template(self):
         self.label_template = DEFAULT_LABEL_TEMPLATE
-        return self.label_template
+        return self
 
     @property
     def __template_name(self):
@@ -447,7 +447,7 @@ class Pipeline(CommonEqualityMixin):
 
     @property
     def template(self):
-        return next(template for template in self.parent.templates() if template.name == self.__template_name())
+        return next(template for template in self.parent.templates if template.name == self.__template_name)
 
     @property
     def environment_variables(self):
@@ -576,13 +576,13 @@ class Pipeline(CommonEqualityMixin):
     @staticmethod
     def __reordered_materials_to_reduce_thrash(materials):
         def cmp_materials(m1, m2):
-            if m1.is_git():
-                if m2.is_git():
-                    return cmp(m1.url(), m2.url())
+            if m1.is_git:
+                if m2.is_git:
+                    return cmp(m1.url, m2.url)
                 else:
                     return -1
             else:
-                if m2.is_git():
+                if m2.is_git:
                     return 1
                 else:
                     return cmp(str(m1), str(m2))

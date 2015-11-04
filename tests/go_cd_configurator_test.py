@@ -513,29 +513,29 @@ class TestStages(unittest.TestCase):
         self.assertEquals('deploy', stages[1].name)
 
     def test_stages_can_have_manual_approval(self):
-        self.assertEquals(False, typical_pipeline().stages[0].has_manual_approval())
-        self.assertEquals(True, typical_pipeline().stages[1].has_manual_approval())
+        self.assertEquals(False, typical_pipeline().stages[0].has_manual_approval)
+        self.assertEquals(True, typical_pipeline().stages[1].has_manual_approval)
 
     def test_can_set_manual_approval(self):
         stage = typical_pipeline().stages[0]
-        s = stage.set_has_manual_approval()
+        s = stage.set_has_manual_approval
         self.assertEquals(s, stage)
-        self.assertEquals(True, stage.has_manual_approval())
+        self.assertEquals(True, stage.has_manual_approval)
 
     def test_stages_have_fetch_materials_flag(self):
         stage = typical_pipeline().ensure_stage("build")
-        self.assertEquals(True, stage.fetch_materials())
+        self.assertEquals(True, stage.fetch_materials)
         stage = more_options_pipeline().ensure_stage("s1")
-        self.assertEquals(False, stage.fetch_materials())
+        self.assertEquals(False, stage.fetch_materials)
 
     def test_can_set_fetch_materials_flag(self):
         stage = typical_pipeline().ensure_stage("build")
         s = stage.set_fetch_materials(False)
         self.assertEquals(s, stage)
-        self.assertEquals(False, stage.fetch_materials())
+        self.assertEquals(False, stage.fetch_materials)
         stage = more_options_pipeline().ensure_stage("s1")
         stage.set_fetch_materials(True)
-        self.assertEquals(True, stage.fetch_materials())
+        self.assertEquals(True, stage.fetch_materials)
 
     def test_stages_have_jobs(self):
         stages = typical_pipeline().stages
@@ -569,12 +569,12 @@ class TestStages(unittest.TestCase):
     def test_can_have_encrypted_environment_variables(self):
         pipeline = GoCdConfigurator(config('config-with-encrypted-variable')).ensure_pipeline_group("defaultGroup").find_pipeline("example")
         stage = pipeline.ensure_stage('defaultStage')
-        self.assertEquals({"MY_STAGE_PASSWORD": "yq5qqPrrD9/s=="}, stage.encrypted_environment_variables())
+        self.assertEquals({"MY_STAGE_PASSWORD": "yq5qqPrrD9/s=="}, stage.encrypted_environment_variables)
 
     def test_can_set_encrypted_environment_variables(self):
         stage = typical_pipeline().ensure_stage("deploy")
         stage.ensure_encrypted_environment_variables({'one': 'blah=='})
-        self.assertEquals({"one": "blah=="}, stage.encrypted_environment_variables())
+        self.assertEquals({"one": "blah=="}, stage.encrypted_environment_variables)
 
     def test_can_set_environment_variables(self):
         stage = typical_pipeline().ensure_stage("deploy")
@@ -646,10 +646,10 @@ class TestPipeline(unittest.TestCase):
         pipeline = empty_pipeline()
         stage1 = pipeline.ensure_stage("some_stage1").set_clean_working_dir()
         stage2 = pipeline.ensure_stage("some_stage2")
-        self.assertEquals(True, pipeline.stages[0].clean_working_dir())
-        self.assertEquals(True, stage1.clean_working_dir())
-        self.assertEquals(False, pipeline.stages[1].clean_working_dir())
-        self.assertEquals(False, stage2.clean_working_dir())
+        self.assertEquals(True, pipeline.stages[0].clean_working_dir)
+        self.assertEquals(True, stage1.clean_working_dir)
+        self.assertEquals(False, pipeline.stages[1].clean_working_dir)
+        self.assertEquals(False, stage2.clean_working_dir)
 
     def test_pipelines_can_have_git_urls(self):
         pipeline = typical_pipeline()
@@ -658,23 +658,23 @@ class TestPipeline(unittest.TestCase):
     def test_git_is_polled_by_default(self):
         pipeline = GoCdConfigurator(empty_config()).ensure_pipeline_group("g").ensure_pipeline("p")
         pipeline.set_git_url("some git url")
-        self.assertEquals(True, pipeline.git_material().polling())
+        self.assertEquals(True, pipeline.git_material.polling)
 
     def test_pipelines_can_have_git_material_with_material_name(self):
         pipeline = more_options_pipeline()
         self.assertEquals("git@bitbucket.org:springersbm/gomatic.git", pipeline.git_url)
-        self.assertEquals("some-material-name", pipeline.git_material().material_name())
+        self.assertEquals("some-material-name", pipeline.git_material.material_name)
 
     def test_git_material_can_ignore_sources(self):
         pipeline = GoCdConfigurator(config('config-with-source-exclusions')).ensure_pipeline_group("P.Group").find_pipeline("with-exclusions")
-        self.assertEquals({"excluded-folder", "another-excluded-folder"}, pipeline.git_material().ignore_patterns())
+        self.assertEquals({"excluded-folder", "another-excluded-folder"}, pipeline.git_material.ignore_patterns)
 
     def test_can_set_pipeline_git_url(self):
         pipeline = typical_pipeline()
         p = pipeline.set_git_url("git@bitbucket.org:springersbm/changed.git")
         self.assertEquals(p, pipeline)
         self.assertEquals("git@bitbucket.org:springersbm/changed.git", pipeline.git_url)
-        self.assertEquals('master', pipeline.git_branch())
+        self.assertEquals('master', pipeline.git_branch)
 
     def test_can_set_pipeline_git_url_with_options(self):
         pipeline = typical_pipeline()
@@ -686,17 +686,17 @@ class TestPipeline(unittest.TestCase):
             ignore_patterns={"ignoreMe", "ignoreThisToo"},
             polling=False))
         self.assertEquals(p, pipeline)
-        self.assertEquals("branch", pipeline.git_branch())
-        self.assertEquals("foo", pipeline.git_material().destination_directory())
-        self.assertEquals("material-name", pipeline.git_material().material_name())
-        self.assertEquals({"ignoreMe", "ignoreThisToo"}, pipeline.git_material().ignore_patterns())
-        self.assertFalse(pipeline.git_material().polling(), "git polling")
+        self.assertEquals("branch", pipeline.git_branch)
+        self.assertEquals("foo", pipeline.git_material.destination_directory)
+        self.assertEquals("material-name", pipeline.git_material.material_name)
+        self.assertEquals({"ignoreMe", "ignoreThisToo"}, pipeline.git_material.ignore_patterns)
+        self.assertFalse(pipeline.git_material.polling, "git polling")
 
     def test_throws_exception_if_no_git_url(self):
         pipeline = GoCdConfigurator(empty_config()).ensure_pipeline_group("g").ensure_pipeline("p")
-        self.assertEquals(False, pipeline.has_single_git_material())
+        self.assertEquals(False, pipeline.has_single_git_material)
         try:
-            pipeline.git_url
+            url = pipeline.git_url
             self.fail("should have thrown exception")
         except RuntimeError:
             pass
@@ -705,9 +705,9 @@ class TestPipeline(unittest.TestCase):
         pipeline = GoCdConfigurator(empty_config()).ensure_pipeline_group("g").ensure_pipeline("p")
         pipeline.ensure_material(GitMaterial("git@bitbucket.org:springersbm/one.git"))
         pipeline.ensure_material(GitMaterial("git@bitbucket.org:springersbm/two.git"))
-        self.assertEquals(False, pipeline.has_single_git_material())
+        self.assertEquals(False, pipeline.has_single_git_material)
         try:
-            pipeline.git_url
+            url = pipeline.git_url
             self.fail("should have thrown exception")
         except RuntimeError:
             pass
@@ -749,7 +749,7 @@ class TestPipeline(unittest.TestCase):
     def test_pipelines_can_have_more_complicated_pipeline_materials(self):
         pipeline = more_options_pipeline()
         self.assertEquals(2, len(pipeline.materials))
-        self.assertEquals(True, pipeline.materials[0].is_git())
+        self.assertEquals(True, pipeline.materials[0].is_git)
         self.assertEquals(PipelineMaterial('pipeline2', 'build'), pipeline.materials[1])
 
     def test_pipelines_can_have_no_materials(self):
@@ -808,20 +808,20 @@ class TestPipeline(unittest.TestCase):
 
     def test_pipelines_do_not_have_to_be_based_on_template(self):
         pipeline = more_options_pipeline()
-        self.assertFalse(pipeline.is_based_on_template())
+        self.assertFalse(pipeline.is_based_on_template)
 
     def test_pipelines_can_be_based_on_template(self):
         pipeline = GoCdConfigurator(config('pipeline-based-on-template')).ensure_pipeline_group('defaultGroup').find_pipeline('siberian')
         assert isinstance(pipeline, Pipeline)
-        self.assertTrue(pipeline.is_based_on_template())
+        self.assertTrue(pipeline.is_based_on_template)
         template = GoCdConfigurator(config('pipeline-based-on-template')).templates()[0]
-        self.assertEquals(template, pipeline.template())
+        self.assertEquals(template, pipeline.template)
 
     def test_pipelines_can_be_created_based_on_template(self):
         configurator = GoCdConfigurator(empty_config())
         configurator.ensure_template('temple').ensure_stage('s').ensure_job('j')
         pipeline = configurator.ensure_pipeline_group("g").ensure_pipeline('p').set_template_name('temple')
-        self.assertEquals('temple', pipeline.template().name)
+        self.assertEquals('temple', pipeline.template.name)
 
     def test_pipelines_have_environment_variables(self):
         pipeline = typical_pipeline()
@@ -829,11 +829,11 @@ class TestPipeline(unittest.TestCase):
 
     def test_pipelines_have_encrypted_environment_variables(self):
         pipeline = GoCdConfigurator(config('config-with-encrypted-variable')).ensure_pipeline_group("defaultGroup").find_pipeline("example")
-        self.assertEquals({"MY_SECURE_PASSWORD": "yq5qqPrrD9/htfwTWMYqGQ=="}, pipeline.encrypted_environment_variables())
+        self.assertEquals({"MY_SECURE_PASSWORD": "yq5qqPrrD9/htfwTWMYqGQ=="}, pipeline.encrypted_environment_variables)
 
     def test_pipelines_have_unencrypted_secure_environment_variables(self):
         pipeline = GoCdConfigurator(config('config-with-unencrypted-secure-variable')).ensure_pipeline_group("defaultGroup").find_pipeline("example")
-        self.assertEquals({"MY_SECURE_PASSWORD": "hunter2"}, pipeline.unencrypted_secure_environment_variables())
+        self.assertEquals({"MY_SECURE_PASSWORD": "hunter2"}, pipeline.unencrypted_secure_environment_variables)
 
     def test_can_add_environment_variables_to_pipeline(self):
         pipeline = empty_pipeline()
@@ -876,7 +876,7 @@ class TestPipeline(unittest.TestCase):
         p = pipeline.remove_environment_variable('unknown')
 
         self.assertEquals(p, pipeline)
-        self.assertEquals({'a': 's'}, pipeline.encrypted_environment_variables())
+        self.assertEquals({'a': 's'}, pipeline.encrypted_environment_variables)
         self.assertEquals({'c': 'v'}, pipeline.environment_variables)
 
     def test_encrypted_environment_variables_get_added_in_sorted_order_to_reduce_config_thrash(self):
@@ -996,7 +996,7 @@ class TestPipeline(unittest.TestCase):
         pipeline = configurator.ensure_pipeline_group("new_group").ensure_pipeline("some_name")
         p = pipeline.set_automatic_pipeline_locking()
         self.assertEquals(p, pipeline)
-        self.assertEquals(True, pipeline.has_automatic_pipeline_locking())
+        self.assertEquals(True, pipeline.has_automatic_pipeline_locking)
 
 
 class TestPipelineGroup(unittest.TestCase):
@@ -1009,18 +1009,18 @@ class TestPipelineGroup(unittest.TestCase):
 
     def test_pipeline_groups_have_pipelines(self):
         pipeline_group = self._pipeline_group_from_config()
-        self.assertEquals(2, len(pipeline_group.pipelines()))
+        self.assertEquals(2, len(pipeline_group.pipelines))
 
     def test_can_add_pipeline(self):
         configurator = GoCdConfigurator(empty_config())
         pipeline_group = configurator.ensure_pipeline_group("new_group")
         new_pipeline = pipeline_group.ensure_pipeline("some_name")
-        self.assertEquals(1, len(pipeline_group.pipelines()))
-        self.assertEquals(new_pipeline, pipeline_group.pipelines()[0])
+        self.assertEquals(1, len(pipeline_group.pipelines))
+        self.assertEquals(new_pipeline, pipeline_group.pipelines[0])
         self.assertEquals("some_name", new_pipeline.name)
-        self.assertEquals(False, new_pipeline.has_single_git_material())
+        self.assertEquals(False, new_pipeline.has_single_git_material)
         self.assertEquals(False, new_pipeline.has_label_template)
-        self.assertEquals(False, new_pipeline.has_automatic_pipeline_locking())
+        self.assertEquals(False, new_pipeline.has_automatic_pipeline_locking)
 
     def test_can_find_pipeline(self):
         found_pipeline = self._pipeline_group_from_config().find_pipeline("pipeline2")
@@ -1038,7 +1038,7 @@ class TestPipelineGroup(unittest.TestCase):
     def test_can_remove_pipeline(self):
         pipeline_group = self._pipeline_group_from_config()
         pipeline_group.ensure_removal_of_pipeline("pipeline1")
-        self.assertEquals(1, len(pipeline_group.pipelines()))
+        self.assertEquals(1, len(pipeline_group.pipelines))
         try:
             pipeline_group.find_pipeline("pipeline1")
             self.fail("should have thrown exception")
@@ -1047,13 +1047,13 @@ class TestPipelineGroup(unittest.TestCase):
 
     def test_ensuring_replacement_of_pipeline_leaves_it_empty_but_in_same_place(self):
         pipeline_group = self._pipeline_group_from_config()
-        self.assertEquals("pipeline1", pipeline_group.pipelines()[0].name)
+        self.assertEquals("pipeline1", pipeline_group.pipelines[0].name)
         pipeline = pipeline_group.find_pipeline("pipeline1")
         pipeline.set_label_template("something")
         self.assertEquals(True, pipeline.has_label_template)
 
         p = pipeline_group.ensure_replacement_of_pipeline("pipeline1")
-        self.assertEquals(p, pipeline_group.pipelines()[0])
+        self.assertEquals(p, pipeline_group.pipelines[0])
         self.assertEquals("pipeline1", p.name)
         self.assertEquals(False, p.has_label_template)
 
@@ -1061,7 +1061,7 @@ class TestPipelineGroup(unittest.TestCase):
         pipeline_group = self._pipeline_group_from_config()
         pg = pipeline_group.ensure_removal_of_pipeline("already-removed-pipeline")
         self.assertEquals(pg, pipeline_group)
-        self.assertEquals(2, len(pipeline_group.pipelines()))
+        self.assertEquals(2, len(pipeline_group.pipelines))
         try:
             pipeline_group.find_pipeline("already-removed-pipeline")
             self.fail("should have thrown exception")
@@ -1276,7 +1276,7 @@ def simplified(s):
 
 
 def sneakily_converted_to_xml(pipeline):
-    if pipeline.is_template():
+    if pipeline.is_template:
         return ET.tostring(pipeline.element)
     else:
         return ET.tostring(pipeline.parent.element)
@@ -1290,7 +1290,8 @@ class TestReverseEngineering(unittest.TestCase):
             print(reverse_engineered_python)
         pipeline = "evaluation failed"
         template = "evaluation failed"
-        exec reverse_engineered_python.replace("from gomatic import *", "from go_cd_configurator import *")
+        exec reverse_engineered_python
+        # exec reverse_engineered_python.replace("from gomatic import *", "from gomatic.go_cd_configurator import *")
         xml_before = sneakily_converted_to_xml(before)
         # noinspection PyTypeChecker
         xml_after = sneakily_converted_to_xml(pipeline)
@@ -1301,9 +1302,9 @@ class TestReverseEngineering(unittest.TestCase):
             print(prettify(xml_after))
         self.assertEquals(xml_before, xml_after)
 
-        if before.is_based_on_template():
+        if before.is_based_on_template:
             # noinspection PyTypeChecker
-            self.assertEquals(sneakily_converted_to_xml(before.template()), sneakily_converted_to_xml(template))
+            self.assertEquals(sneakily_converted_to_xml(before.template), sneakily_converted_to_xml(template))
 
     def test_can_round_trip_simplest_pipeline(self):
         configurator = GoCdConfigurator(empty_config())

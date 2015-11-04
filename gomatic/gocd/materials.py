@@ -32,7 +32,7 @@ class GitMaterial(CommonEqualityMixin):
 
     def __repr__(self):
         branch_part = ""
-        if not self.is_on_master():
+        if not self.is_on_master:
             branch_part = ', branch="%s"' % self.__branch
         material_name_part = ""
         if self.__material_name is not None:
@@ -44,8 +44,8 @@ class GitMaterial(CommonEqualityMixin):
         if self.ignore_patterns:
             ignore_patterns_part = ', ignore_patterns=%s' % self.ignore_patterns
         destination_directory_part = ''
-        if self.destination_directory():
-            destination_directory_part = ', destination_directory="%s"' % self.destination_directory()
+        if self.destination_directory:
+            destination_directory_part = ', destination_directory="%s"' % self.destination_directory
         return ('GitMaterial("%s"' % self.__url) + branch_part + material_name_part + polling_part + ignore_patterns_part + destination_directory_part + ')'
 
     @property
@@ -57,7 +57,7 @@ class GitMaterial(CommonEqualityMixin):
         return self.__branch is None or self.__branch == 'master'
 
     def as_python_applied_to_pipeline(self):
-        if self.__has_options():
+        if self.__has_options:
             return 'set_git_material(%s)' % str(self)
         else:
             return 'set_git_url("%s")' % self.__url
