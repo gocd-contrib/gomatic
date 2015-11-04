@@ -4,12 +4,11 @@ import xml.etree.ElementTree as ET
 import argparse
 import sys
 import subprocess
+
 import requests
 
 from gomatic import Pipeline, PipelineGroup, Agent
 from gomatic.xml_operations import Ensurance, PossiblyMissingElement, move_all_to_end, prettify
-
-DEFAULT_LABEL_TEMPLATE = "0.${COUNT}"  # TODO confirm what default really is. I am pretty sure this is mistaken!
 
 
 class GoCdConfigurator:
