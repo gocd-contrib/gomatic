@@ -5,7 +5,9 @@ import unittest
 from xml.dom.minidom import parseString
 from gomatic import GoCdConfigurator, FetchArtifactDir, RakeTask, ExecTask, FetchArtifactTask, \
     FetchArtifactFile, Tab, GitMaterial, PipelineMaterial, Pipeline
-from gomatic.go_cd_configurator import DEFAULT_LABEL_TEMPLATE, prettify, Artifact
+from gomatic.go_cd_configurator import DEFAULT_LABEL_TEMPLATE
+from gomatic.gocd.artifacts import Artifact
+from gomatic.utils import prettify
 import xml.etree.ElementTree as ET
 
 

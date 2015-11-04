@@ -9,7 +9,7 @@ import unittest
 import sys
 
 from gomatic import GoCdConfigurator, HostRestClient, GitMaterial, ExecTask
-from gomatic.go_cd_configurator import Artifact
+from gomatic.gocd.artifacts import Artifact
 
 
 def start_go_server(gocd_version):
