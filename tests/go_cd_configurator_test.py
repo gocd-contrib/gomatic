@@ -892,6 +892,44 @@ class TestPipeline(unittest.TestCase):
         names = [e.getAttribute('name') for e in xml.getElementsByTagName('variable')]
         self.assertEquals([u'ant', u'badger', u'zebra'], names)
 
+    def test_unencrypted_environment_variables_do_not_have_secure_attribute_in_order_to_reduce_config_thrash(self):
+        go_cd_configurator = GoCdConfigurator(empty_config())
+
+        pipeline = go_cd_configurator \
+            .ensure_pipeline_group('P.Group') \
+            .ensure_pipeline('P.Name')
+
+        pipeline.ensure_environment_variables({"ant": "a"})
+
+        xml = parseString(go_cd_configurator.config())
+        secure_attributes = [e.getAttribute('secure') for e in xml.getElementsByTagName('variable')]
+        # attributes that are missing are returned as empty
+        self.assertEquals([''], secure_attributes, "should not have any 'secure' attributes")
+
+    def test_cannot_have_environment_variable_which_is_both_secure_and_insecure(self):
+        go_cd_configurator = GoCdConfigurator(empty_config())
+
+        pipeline = go_cd_configurator \
+            .ensure_pipeline_group('P.Group') \
+            .ensure_pipeline('P.Name')
+
+        pipeline.ensure_unencrypted_secure_environment_variables({"ant": "a"})
+        pipeline.ensure_environment_variables({"ant": "b"})  # not secure
+        self.assertEquals({"ant": "b"}, pipeline.environment_variables)
+        self.assertEquals({}, pipeline.unencrypted_secure_environment_variables)
+
+    def test_can_change_environment_variable_from_secure_to_insecure(self):
+        go_cd_configurator = GoCdConfigurator(empty_config())
+
+        pipeline = go_cd_configurator \
+            .ensure_pipeline_group('P.Group') \
+            .ensure_pipeline('P.Name')
+
+        pipeline.ensure_unencrypted_secure_environment_variables({"ant": "a", "badger": "b"})
+        pipeline.ensure_environment_variables({"ant": "b"})
+        self.assertEquals({"ant": "b"}, pipeline.environment_variables)
+        self.assertEquals({"badger": "b"}, pipeline.unencrypted_secure_environment_variables)
+
     def test_pipelines_have_parameters(self):
         pipeline = more_options_pipeline()
         self.assertEquals({"environment": "qa"}, pipeline.parameters)
