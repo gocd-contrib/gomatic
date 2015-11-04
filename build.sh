@@ -1,3 +1,3 @@
 #!/bin/bash
-python tests/go_cd_configurator_test.py
+python -m unittest tests.go_cd_configurator_test.py
 

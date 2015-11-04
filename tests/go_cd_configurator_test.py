@@ -43,7 +43,7 @@ class FakeHostRestClient:
 
 
 def config(config_name):
-    return FakeHostRestClient(open('tests/test-data/' + config_name + '.xml').read())
+    return FakeHostRestClient(open('test-data/' + config_name + '.xml').read())
 
 
 def empty_config():
@@ -1565,14 +1565,10 @@ class TestXmlFormatting(unittest.TestCase):
         self.assertEquals(expected, formatted)
 
     def test_can_format_actual_config(self):
-        formatted = prettify(open("tests/test-data/config-unformatted.xml").read())
-        expected = open("tests/test-data/config-formatted.xml").read()
+        formatted = prettify(open("test-data/config-unformatted.xml").read())
+        expected = open("test-data/config-formatted.xml").read()
 
         def head(s):
             return "\n".join(s.split('\n')[:10])
 
         self.assertEquals(expected, formatted, "expected=\n%s\n%s\nactual=\n%s" % (head(expected), "=" * 88, head(formatted)))
-
-
-if __name__ == '__main__':
-    unittest.main()
