@@ -57,10 +57,7 @@ class ThingWithEnvironmentVariables:
     def unencrypted_secure_environment_variables(self):
         return self.__environment_variables(secure=True, encrypted=False)
 
-    def __ensure_environment_variables(self, environment_variables, secure, encrypted=None):
-        if encrypted is None:
-            encrypted = secure
-
+    def __ensure_environment_variables(self, environment_variables, secure, encrypted):
         ensured_env_variables = Ensurance(self.element).ensure_child("environmentvariables")
         for env_variable in sorted(environment_variables.keys()):
             variable_element = ensured_env_variables.ensure_child_with_attribute("variable", "name", env_variable)
@@ -75,10 +72,10 @@ class ThingWithEnvironmentVariables:
             value_element.set_text(environment_variables[env_variable])
 
     def ensure_environment_variables(self, environment_variables):
-        self.__ensure_environment_variables(environment_variables, secure=False)
+        self.__ensure_environment_variables(environment_variables, secure=False, encrypted=False)
 
     def ensure_encrypted_environment_variables(self, environment_variables):
-        self.__ensure_environment_variables(environment_variables, secure=True)
+        self.__ensure_environment_variables(environment_variables, secure=True, encrypted=True)
 
     def ensure_unencrypted_secure_environment_variables(self, environment_variables):
         self.__ensure_environment_variables(environment_variables, secure=True, encrypted=False)
