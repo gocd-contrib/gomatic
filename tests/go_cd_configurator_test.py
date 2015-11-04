@@ -7,7 +7,7 @@ from gomatic import GoCdConfigurator, FetchArtifactDir, RakeTask, ExecTask, Fetc
     FetchArtifactFile, Tab, GitMaterial, PipelineMaterial, Pipeline
 from gomatic.go_cd_configurator import DEFAULT_LABEL_TEMPLATE
 from gomatic.gocd.artifacts import Artifact
-from gomatic.utils import prettify
+from gomatic.xml_operations import prettify
 import xml.etree.ElementTree as ET
 
 

@@ -1,9 +1,8 @@
 from xml.etree import ElementTree as ET
 from xml.sax.saxutils import escape
 from gomatic.gocd.artifacts import fetch_artifact_src_from
-from gomatic.gocd.xml import runif_from
 from gomatic.mixins import CommonEqualityMixin
-from gomatic.xml import Ensurance
+from gomatic.xml_operations import Ensurance
 
 
 def Task(element):
@@ -152,3 +151,14 @@ class RakeTask(AbstractTask):
         new_element = ET.fromstring('<rake target="%s"></rake>' % self.__target)
         Ensurance(element).ensure_child("tasks").append(new_element)
         return Task(new_element)
+
+
+def runif_from(element):
+    runifs = [e.attrib['status'] for e in element.findall("runif")]
+    if len(runifs) == 0:
+        return 'passed'
+    if len(runifs) == 1:
+        return runifs[0]
+    if len(runifs) == 2 and 'passed' in runifs and 'failed' in runifs:
+        return 'any'
+    raise RuntimeError("Don't know what multiple runif values (%s) means" % runifs)

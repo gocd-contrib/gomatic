@@ -1,6 +1,6 @@
 from xml.etree import ElementTree as ET
 from gomatic.mixins import CommonEqualityMixin
-from gomatic.xml import ignore_patterns_in
+from gomatic.xml_operations import ignore_patterns_in
 
 
 def Materials(element):

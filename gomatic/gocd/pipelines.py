@@ -6,8 +6,7 @@ from gomatic.gocd.generic import ThingWithResources, ThingWithEnvironmentVariabl
 from gomatic.gocd.materials import Materials
 from gomatic.gocd.tasks import Task
 from gomatic.mixins import CommonEqualityMixin
-from gomatic.utils import then
-from gomatic.xml import PossiblyMissingElement, Ensurance, move_all_to_end
+from gomatic.xml_operations import PossiblyMissingElement, Ensurance, move_all_to_end
 
 
 class Tab(CommonEqualityMixin):
@@ -568,3 +567,7 @@ class PipelineGroup(CommonEqualityMixin):
         pipeline = self.ensure_pipeline(name)
         pipeline.make_empty()
         return pipeline
+
+
+def then(s):
+    return '\\\n\t.' + s

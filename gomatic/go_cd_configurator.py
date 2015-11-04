@@ -1,12 +1,13 @@
 #!/usr/bin/env python
+import json
 import xml.etree.ElementTree as ET
 import argparse
 import sys
 import subprocess
+import requests
 
-from gomatic import Pipeline, PipelineGroup, Agent, HostRestClient
-from gomatic.utils import prettify
-from gomatic.xml import Ensurance, PossiblyMissingElement, move_all_to_end
+from gomatic import Pipeline, PipelineGroup, Agent
+from gomatic.xml_operations import Ensurance, PossiblyMissingElement, move_all_to_end, prettify
 
 DEFAULT_LABEL_TEMPLATE = "0.${COUNT}"  # TODO confirm what default really is. I am pretty sure this is mistaken!
 
@@ -124,6 +125,31 @@ class GoCdConfigurator:
         if not dry_run and config_before != config_after:
             self.__host_rest_client.post('/go/admin/restful/configuration/file/POST/xml', data)
             self.__set_initial_config_xml()
+
+
+class HostRestClient:
+    def __init__(self, host):
+        self.__host = host
+
+    def __repr__(self):
+        return 'HostRestClient("%s")' % self.__host
+
+    def __path(self, path):
+        return ('http://%s' % self.__host) + path
+
+    def get(self, path):
+        return requests.get(self.__path(path))
+
+    def post(self, path, data):
+        url = self.__path(path)
+        result = requests.post(url, data)
+        if result.status_code != 200:
+            try:
+                result_json = json.loads(result.text.replace("\\'", "'"))
+                message = result_json.get('result', result.text)
+                raise RuntimeError("Could not post config to Go server (%s) [status code=%s]:\n%s" % (url, result.status_code, message))
+            except ValueError:
+                raise RuntimeError("Could not post config to Go server (%s) [status code=%s] (and result was not json):\n%s" % (url, result.status_code, result))
 
 
 if __name__ == '__main__':
