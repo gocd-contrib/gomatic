@@ -63,7 +63,7 @@ class Artifact(CommonEqualityMixin):
     @classmethod
     def get_artifact_for(cls, element):
         dest = element.attrib.get('dest', None)
-        return cls(element.tag, element['src'], dest)
+        return cls(element.tag, element.attrib['src'], dest)
 
     @classmethod
     def get_build_artifact(cls, src, dest=None):

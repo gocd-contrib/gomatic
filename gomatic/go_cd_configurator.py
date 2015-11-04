@@ -7,7 +7,8 @@ import subprocess
 
 import requests
 
-from gomatic import Pipeline, PipelineGroup, Agent
+from gomatic.gocd.pipelines import Pipeline, PipelineGroup
+from gomatic.gocd.agents import Agent
 from gomatic.xml_operations import Ensurance, PossiblyMissingElement, move_all_to_end, prettify
 
 
@@ -62,7 +63,7 @@ class GoCdConfigurator:
         return PipelineGroup(pipeline_group_element.element, self)
 
     def ensure_removal_of_pipeline_group(self, group_name):
-        matching = [g for g in self.pipeline_groups() if g.name() == group_name]
+        matching = [g for g in self.pipeline_groups() if g.name == group_name]
         for group in matching:
             self.__xml_root.remove(group.element)
         return self
@@ -79,7 +80,7 @@ class GoCdConfigurator:
         result = []
         groups = self.pipeline_groups()
         for group in groups:
-            result.extend(group.pipelines())
+            result.extend(group.pipelines)
         return result
 
     def templates(self):
@@ -165,7 +166,7 @@ if __name__ == '__main__':
 
     go_server = GoCdConfigurator(HostRestClient(args.server))
 
-    matching_pipelines = [p for p in go_server.pipelines() if p.name() == args.pipeline]
+    matching_pipelines = [p for p in go_server.pipelines() if p.name == args.pipeline]
     if len(matching_pipelines) != 1:
         raise RuntimeError("Should have found one matching pipeline but found %s" % matching_pipelines)
     pipeline = matching_pipelines[0]

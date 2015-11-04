@@ -1,4 +1,4 @@
-from gomatic.go_cd_configurator import HostRestClient
+from gomatic.go_cd_configurator import HostRestClient, GoCdConfigurator
 from gomatic.gocd.agents import Agent
 from gomatic.gocd.materials import GitMaterial, PipelineMaterial
 from gomatic.gocd.pipelines import Tab, Job, Pipeline, PipelineGroup

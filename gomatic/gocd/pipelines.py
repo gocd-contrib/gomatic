@@ -1,8 +1,7 @@
 from xml.etree import ElementTree as ET
-from gomatic import GitMaterial
 from gomatic.gocd.artifacts import Artifact
 from gomatic.gocd.generic import ThingWithResources, ThingWithEnvironmentVariables
-from gomatic.gocd.materials import Materials
+from gomatic.gocd.materials import Materials, GitMaterial
 from gomatic.gocd.tasks import Task
 from gomatic.mixins import CommonEqualityMixin
 from gomatic.xml_operations import PossiblyMissingElement, Ensurance, move_all_to_end
@@ -75,7 +74,7 @@ class Job(CommonEqualityMixin):
 
     @property
     def artifacts(self):
-        artifact_elements = PossiblyMissingElement(self.__element).possibly_missing_child("artifacts").iterator()
+        artifact_elements = PossiblyMissingElement(self.__element).possibly_missing_child("artifacts").iterator
         return set([Artifact.get_artifact_for(e) for e in artifact_elements])
 
     def ensure_artifacts(self, artifacts):
@@ -97,7 +96,7 @@ class Job(CommonEqualityMixin):
 
     @property
     def tasks(self):
-        return [Task(e) for e in PossiblyMissingElement(self.__element).possibly_missing_child("tasks").iterator()]
+        return [Task(e) for e in PossiblyMissingElement(self.__element).possibly_missing_child("tasks").iterator]
 
     def add_task(self, task):
         return task.append_to(self.__element)
@@ -393,7 +392,8 @@ class Pipeline(CommonEqualityMixin):
 
     @property
     def materials(self):
-        return [Materials(element) for element in PossiblyMissingElement(self.element).possibly_missing_child('materials').iterator()]
+        elements = PossiblyMissingElement(self.element).possibly_missing_child('materials').iterator
+        return [Materials(element) for element in elements]
 
     def __add_material(self, material):
         material.append_to(Ensurance(self.element).ensure_child('materials'))
@@ -405,7 +405,7 @@ class Pipeline(CommonEqualityMixin):
 
     @property
     def git_materials(self):
-        return [m for m in self.materials if m.is_git()]
+        return [m for m in self.materials if m.is_git]
 
     @property
     def git_material(self):
@@ -425,11 +425,11 @@ class Pipeline(CommonEqualityMixin):
 
     @property
     def git_url(self):
-        return self.git_material.url()
+        return self.git_material.url
 
     @property
     def git_branch(self):
-        return self.git_material.branch()
+        return self.git_material.branch
 
     def set_git_url(self, git_url):
         return self.set_git_material(GitMaterial(git_url))
@@ -542,7 +542,7 @@ class Pipeline(CommonEqualityMixin):
 
     @property
     def timer(self):
-        if self.has_timer():
+        if self.has_timer:
             return self.element.find('timer').text
         else:
             raise RuntimeError("%s has no timer" % self)

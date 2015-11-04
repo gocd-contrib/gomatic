@@ -93,7 +93,7 @@ class GitMaterial(CommonEqualityMixin):
 
     def append_to(self, element):
         branch_part = ""
-        if not self.is_on_master():
+        if not self.is_on_master:
             branch_part = ' branch="%s"' % self.__branch
 
         material_name_part = ""
