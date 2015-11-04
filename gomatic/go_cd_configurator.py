@@ -140,7 +140,7 @@ class ThingWithEnvironmentVariables:
     def __is_encrypted(variable_element):
         return variable_element.find('encryptedValue') is not None
 
-    def __environment_variables(self, secure, encrypted=False):
+    def __environment_variables(self, secure, encrypted):
         variable_elements = PossiblyMissingElement(self.element).possibly_missing_child("environmentvariables").findall("variable")
         result = {}
         for variable_element in variable_elements:
@@ -155,13 +155,13 @@ class ThingWithEnvironmentVariables:
         return result
 
     def environment_variables(self):
-        return self.__environment_variables(False)
+        return self.__environment_variables(secure=False, encrypted=False)
 
     def encrypted_environment_variables(self):
-        return self.__environment_variables(True, True)
+        return self.__environment_variables(secure=True, encrypted=True)
 
     def unencrypted_secure_environment_variables(self):
-        return self.__environment_variables(True, False)
+        return self.__environment_variables(secure=True, encrypted=False)
 
     def __ensure_environment_variables(self, environment_variables, secure, encrypted):
         environment_variables_ensurance = Ensurance(self.element).ensure_child("environmentvariables")
