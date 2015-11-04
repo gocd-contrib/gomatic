@@ -85,34 +85,34 @@ class TestAgents(unittest.TestCase):
     def test_agents_have_resources(self):
         agents = self._agents_from_config()
         self.assertEquals(2, len(agents))
-        self.assertEquals({'a-resource', 'b-resource'}, agents[0].resources())
+        self.assertEquals({'a-resource', 'b-resource'}, agents[0].resources)
 
     def test_agents_have_names(self):
         agents = self._agents_from_config()
-        self.assertEquals('go-agent-1', agents[0].hostname())
-        self.assertEquals('go-agent-2', agents[1].hostname())
+        self.assertEquals('go-agent-1', agents[0].hostname)
+        self.assertEquals('go-agent-2', agents[1].hostname)
 
     def test_agent_could_have_no_resources(self):
         agents = self._agents_from_config()
-        self.assertEquals(0, len(agents[1].resources()))
+        self.assertEquals(0, len(agents[1].resources))
 
     def test_can_add_resource_to_agent_with_no_resources(self):
         agent = self._agents_from_config()[1]
         agent.ensure_resource('a-resource-that-it-does-not-already-have')
-        self.assertEquals(1, len(agent.resources()))
+        self.assertEquals(1, len(agent.resources))
 
     def test_can_add_resource_to_agent(self):
         agent = self._agents_from_config()[0]
-        self.assertEquals(2, len(agent.resources()))
+        self.assertEquals(2, len(agent.resources))
         agent.ensure_resource('a-resource-that-it-does-not-already-have')
-        self.assertEquals(3, len(agent.resources()))
+        self.assertEquals(3, len(agent.resources))
 
 
 class TestJobs(unittest.TestCase):
     def test_jobs_have_resources(self):
         stages = typical_pipeline().stages()
         job = stages[0].jobs()[0]
-        resources = job.resources()
+        resources = job.resources
         self.assertEquals(1, len(resources))
         self.assertEquals({'a-resource'}, resources)
 
@@ -167,8 +167,8 @@ class TestJobs(unittest.TestCase):
         job = stages[0].jobs()[0]
         j = job.ensure_resource('moo')
         self.assertEquals(j, job)
-        self.assertEquals(2, len(job.resources()))
-        self.assertEquals({'a-resource', 'moo'}, job.resources())
+        self.assertEquals(2, len(job.resources))
+        self.assertEquals({'a-resource', 'moo'}, job.resources)
 
     def test_jobs_have_artifacts(self):
         job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
@@ -1106,10 +1106,10 @@ class TestGoCdConfigurator(unittest.TestCase):
     def test_config_is_updated_as_result_of_updating_part_of_it(self):
         configurator = GoCdConfigurator(config('config-with-just-agents'))
         agent = configurator.agents()[0]
-        self.assertEquals(2, len(agent.resources()))
+        self.assertEquals(2, len(agent.resources))
         agent.ensure_resource('a-resource-that-it-does-not-already-have')
         configurator_based_on_new_config = GoCdConfigurator(FakeHostRestClient(configurator.config()))
-        self.assertEquals(3, len(configurator_based_on_new_config.agents()[0].resources()))
+        self.assertEquals(3, len(configurator_based_on_new_config.agents()[0].resources))
 
     def test_can_add_pipeline_group(self):
         configurator = GoCdConfigurator(empty_config())

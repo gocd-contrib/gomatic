@@ -6,9 +6,11 @@ class Agent:
         self.__element = element
         self.__thing_with_resources = ThingWithResources(element)
 
+    @property
     def hostname(self):
         return self.__element.attrib['hostname']
 
+    @property
     def resources(self):
         return self.__thing_with_resources.resources
 
