@@ -163,10 +163,7 @@ class ThingWithEnvironmentVariables:
     def unencrypted_secure_environment_variables(self):
         return self.__environment_variables(True, False)
 
-    def __ensure_environment_variables(self, environment_variables, secure, encrypted=None):
-        if encrypted is None:
-            encrypted = secure
-
+    def __ensure_environment_variables(self, environment_variables, secure, encrypted):
         environment_variables_ensurance = Ensurance(self.element).ensure_child("environmentvariables")
         for environment_variable_name in sorted(environment_variables.keys()):
             variable_element = environment_variables_ensurance.ensure_child_with_attribute("variable", "name", environment_variable_name)
@@ -181,13 +178,13 @@ class ThingWithEnvironmentVariables:
             value_element.set_text(environment_variables[environment_variable_name])
 
     def ensure_environment_variables(self, environment_variables):
-        self.__ensure_environment_variables(environment_variables, False)
+        self.__ensure_environment_variables(environment_variables, secure=False, encrypted=False)
 
     def ensure_encrypted_environment_variables(self, environment_variables):
-        self.__ensure_environment_variables(environment_variables, True)
+        self.__ensure_environment_variables(environment_variables, secure=True, encrypted=True)
 
     def ensure_unencrypted_secure_environment_variables(self, environment_variables):
-        self.__ensure_environment_variables(environment_variables, True, False)
+        self.__ensure_environment_variables(environment_variables, secure=True, encrypted=False)
 
     def remove_all(self):
         PossiblyMissingElement(self.element).possibly_missing_child("environmentvariables").remove_all_children()
