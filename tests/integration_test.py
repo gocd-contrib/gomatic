@@ -148,8 +148,8 @@ class IntegrationTest(unittest.TestCase):
 
             configurator.save_updated_config(save_config_locally=True, dry_run=False)
 
-            self.assertEquals(1, len(configurator.ensure_pipeline_group('Test').find_pipeline('new-one').stages()))
-            self.assertEquals(1, len(configurator.ensure_pipeline_group('Test').find_pipeline('new-two').stages()))
+            self.assertEquals(1, len(configurator.ensure_pipeline_group('Test').find_pipeline('new-one').stages))
+            self.assertEquals(1, len(configurator.ensure_pipeline_group('Test').find_pipeline('new-two').stages))
 
 
 if __name__ == '__main__':
