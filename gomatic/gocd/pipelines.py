@@ -604,7 +604,7 @@ class PipelineGroup(CommonEqualityMixin):
 
     @property
     def templates(self):
-        return self.__configurator.templates()
+        return self.__configurator.templates
 
     @property
     def pipelines(self):

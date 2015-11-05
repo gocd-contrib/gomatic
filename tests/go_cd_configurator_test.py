@@ -76,10 +76,10 @@ def empty_stage():
 
 class TestAgents(unittest.TestCase):
     def _agents_from_config(self):
-        return GoCdConfigurator(config('config-with-just-agents')).agents()
+        return GoCdConfigurator(config('config-with-just-agents')).agents
 
     def test_could_have_no_agents(self):
-        agents = GoCdConfigurator(empty_config()).agents()
+        agents = GoCdConfigurator(empty_config()).agents
         self.assertEquals(0, len(agents))
 
     def test_agents_have_resources(self):
@@ -469,7 +469,7 @@ class TestJobs(unittest.TestCase):
 
         job.ensure_environment_variables({"ant": "a", "badger": "a", "zebra": "a"})
 
-        xml = parseString(go_cd_configurator.config())
+        xml = parseString(go_cd_configurator.config)
         names = [e.getAttribute('name') for e in xml.getElementsByTagName('variable')]
         self.assertEquals([u'ant', u'badger', u'zebra'], names)
 
@@ -784,7 +784,7 @@ class TestPipeline(unittest.TestCase):
         pipeline.ensure_material(PipelineMaterial('theta', 'build'))
         pipeline.ensure_material(GitMaterial('git@bitbucket.org:springersbm/this.git'))
 
-        xml = parseString(go_cd_configurator.config())
+        xml = parseString(go_cd_configurator.config)
         materials = xml.getElementsByTagName('materials')[0].childNodes
         self.assertEquals('git', materials[0].tagName)
         self.assertEquals('git', materials[1].tagName)
@@ -814,7 +814,7 @@ class TestPipeline(unittest.TestCase):
         pipeline = GoCdConfigurator(config('pipeline-based-on-template')).ensure_pipeline_group('defaultGroup').find_pipeline('siberian')
         assert isinstance(pipeline, Pipeline)
         self.assertTrue(pipeline.is_based_on_template)
-        template = GoCdConfigurator(config('pipeline-based-on-template')).templates()[0]
+        template = GoCdConfigurator(config('pipeline-based-on-template')).templates[0]
         self.assertEquals(template, pipeline.template)
 
     def test_pipelines_can_be_created_based_on_template(self):
@@ -888,7 +888,7 @@ class TestPipeline(unittest.TestCase):
 
         pipeline.ensure_encrypted_environment_variables({"ant": "a", "badger": "a", "zebra": "a"})
 
-        xml = parseString(go_cd_configurator.config())
+        xml = parseString(go_cd_configurator.config)
         names = [e.getAttribute('name') for e in xml.getElementsByTagName('variable')]
         self.assertEquals([u'ant', u'badger', u'zebra'], names)
 
@@ -901,7 +901,7 @@ class TestPipeline(unittest.TestCase):
 
         pipeline.ensure_environment_variables({"ant": "a"})
 
-        xml = parseString(go_cd_configurator.config())
+        xml = parseString(go_cd_configurator.config)
         secure_attributes = [e.getAttribute('secure') for e in xml.getElementsByTagName('variable')]
         # attributes that are missing are returned as empty
         self.assertEquals([''], secure_attributes, "should not have any 'secure' attributes")
@@ -1115,7 +1115,7 @@ class TestGoCdConfigurator(unittest.TestCase):
         p.set_git_url('git@bitbucket.org:springersbm/gomatic.git')
         p.ensure_stage('build').ensure_job('compile').ensure_task(ExecTask(['make', 'source code']))
 
-        self.assertFalse(configurator.has_changes())
+        self.assertFalse(configurator.has_changes)
 
     def test_can_tell_if_there_is_a_change_to_save(self):
         configurator = GoCdConfigurator(config('config-with-two-pipeline-groups'))
@@ -1124,18 +1124,18 @@ class TestGoCdConfigurator(unittest.TestCase):
         p.set_git_url('git@bitbucket.org:springersbm/gomatic.git')
         p.ensure_stage('moo').ensure_job('bar')
 
-        self.assertTrue(configurator.has_changes())
+        self.assertTrue(configurator.has_changes)
 
     def test_keeps_schema_version(self):
         empty_config = FakeHostRestClient(empty_config_xml.replace('schemaVersion="72"', 'schemaVersion="73"'), "empty_config()")
         configurator = GoCdConfigurator(empty_config)
-        self.assertEquals(1, configurator.config().count('schemaVersion="73"'))
+        self.assertEquals(1, configurator.config.count('schemaVersion="73"'))
 
     def test_can_have_no_pipeline_groups(self):
-        self.assertEquals(0, len(GoCdConfigurator(empty_config()).pipeline_groups()))
+        self.assertEquals(0, len(GoCdConfigurator(empty_config()).pipeline_groups))
 
     def test_gets_all_pipeline_groups(self):
-        self.assertEquals(2, len(GoCdConfigurator(config('config-with-two-pipeline-groups')).pipeline_groups()))
+        self.assertEquals(2, len(GoCdConfigurator(config('config-with-two-pipeline-groups')).pipeline_groups))
 
     def test_can_get_initial_config_md5(self):
         configurator = GoCdConfigurator(empty_config())
@@ -1143,60 +1143,60 @@ class TestGoCdConfigurator(unittest.TestCase):
 
     def test_config_is_updated_as_result_of_updating_part_of_it(self):
         configurator = GoCdConfigurator(config('config-with-just-agents'))
-        agent = configurator.agents()[0]
+        agent = configurator.agents[0]
         self.assertEquals(2, len(agent.resources))
         agent.ensure_resource('a-resource-that-it-does-not-already-have')
-        configurator_based_on_new_config = GoCdConfigurator(FakeHostRestClient(configurator.config()))
-        self.assertEquals(3, len(configurator_based_on_new_config.agents()[0].resources))
+        configurator_based_on_new_config = GoCdConfigurator(FakeHostRestClient(configurator.config))
+        self.assertEquals(3, len(configurator_based_on_new_config.agents[0].resources))
 
     def test_can_add_pipeline_group(self):
         configurator = GoCdConfigurator(empty_config())
-        self.assertEquals(0, len(configurator.pipeline_groups()))
+        self.assertEquals(0, len(configurator.pipeline_groups))
         new_pipeline_group = configurator.ensure_pipeline_group("a_new_group")
-        self.assertEquals(1, len(configurator.pipeline_groups()))
-        self.assertEquals(new_pipeline_group, configurator.pipeline_groups()[-1])
+        self.assertEquals(1, len(configurator.pipeline_groups))
+        self.assertEquals(new_pipeline_group, configurator.pipeline_groups[-1])
         self.assertEquals("a_new_group", new_pipeline_group.name)
 
     def test_can_ensure_pipeline_group_exists(self):
         configurator = GoCdConfigurator(config('config-with-two-pipeline-groups'))
-        self.assertEquals(2, len(configurator.pipeline_groups()))
+        self.assertEquals(2, len(configurator.pipeline_groups))
         pre_existing_pipeline_group = configurator.ensure_pipeline_group('Second.Group')
-        self.assertEquals(2, len(configurator.pipeline_groups()))
+        self.assertEquals(2, len(configurator.pipeline_groups))
         self.assertEquals('Second.Group', pre_existing_pipeline_group.name)
 
     def test_can_remove_all_pipeline_groups(self):
         configurator = GoCdConfigurator(config('config-with-two-pipeline-groups'))
         s = configurator.remove_all_pipeline_groups()
         self.assertEquals(s, configurator)
-        self.assertEquals(0, len(configurator.pipeline_groups()))
+        self.assertEquals(0, len(configurator.pipeline_groups))
 
     def test_can_remove_pipeline_group(self):
         configurator = GoCdConfigurator(config('config-with-two-pipeline-groups'))
         s = configurator.ensure_removal_of_pipeline_group('P.Group')
         self.assertEquals(s, configurator)
-        self.assertEquals(1, len(configurator.pipeline_groups()))
+        self.assertEquals(1, len(configurator.pipeline_groups))
 
     def test_can_ensure_removal_of_pipeline_group(self):
         configurator = GoCdConfigurator(config('config-with-two-pipeline-groups'))
         configurator.ensure_removal_of_pipeline_group('pipeline-group-that-has-already-been-removed')
-        self.assertEquals(2, len(configurator.pipeline_groups()))
+        self.assertEquals(2, len(configurator.pipeline_groups))
 
     def test_can_have_templates(self):
-        templates = GoCdConfigurator(config('config-with-just-templates')).templates()
+        templates = GoCdConfigurator(config('config-with-just-templates')).templates
         self.assertEquals(2, len(templates))
         self.assertEquals('api-component', templates[0].name)
         self.assertEquals('deploy-stack', templates[1].name)
         self.assertEquals('deploy-components', templates[1].stages[0].name)
 
     def test_can_have_no_templates(self):
-        self.assertEquals(0, len(GoCdConfigurator(empty_config()).templates()))
+        self.assertEquals(0, len(GoCdConfigurator(empty_config()).templates))
 
     def test_can_add_template(self):
         configurator = GoCdConfigurator(empty_config())
         template = configurator.ensure_template('foo')
-        self.assertEquals(1, len(configurator.templates()))
-        self.assertEquals(template, configurator.templates()[0])
-        self.assertTrue(isinstance(configurator.templates()[0], Pipeline), "so all methods that use to configure pipeline don't need to be tested for template")
+        self.assertEquals(1, len(configurator.templates))
+        self.assertEquals(template, configurator.templates[0])
+        self.assertTrue(isinstance(configurator.templates[0], Pipeline), "so all methods that use to configure pipeline don't need to be tested for template")
 
     def test_can_ensure_template(self):
         configurator = GoCdConfigurator(config('config-with-just-templates'))
@@ -1211,7 +1211,7 @@ class TestGoCdConfigurator(unittest.TestCase):
     def test_top_level_elements_get_reordered_to_please_go(self):
         configurator = GoCdConfigurator(config('config-with-agents-and-templates-but-without-pipelines'))
         configurator.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")
-        xml = configurator.config()
+        xml = configurator.config
         root = ET.fromstring(xml)
         self.assertEquals("pipelines", root[0].tag)
         self.assertEquals("templates", root[1].tag)
@@ -1221,7 +1221,7 @@ class TestGoCdConfigurator(unittest.TestCase):
         configurator = GoCdConfigurator(config('config-with-pipelines-environments-and-agents'))
         configurator.ensure_pipeline_group("P.Group").ensure_pipeline("some_pipeline")
 
-        xml = configurator.config()
+        xml = configurator.config
         root = ET.fromstring(xml)
         self.assertEqual(['server', 'pipelines', 'environments', 'agents'], [element.tag for element in root])
 
@@ -1229,7 +1229,7 @@ class TestGoCdConfigurator(unittest.TestCase):
         configurator = GoCdConfigurator(config('config-with-many-of-the-top-level-elements-that-cannot-be-added'))
         configurator.ensure_pipeline_group("P.Group").ensure_pipeline("some_pipeline")
 
-        xml = configurator.config()
+        xml = configurator.config
         root = ET.fromstring(xml)
         self.assertEqual(['server', 'repositories', 'scms', 'pipelines', 'environments', 'agents'],
                          [element.tag for element in root])
@@ -1250,7 +1250,7 @@ class TestGoCdConfigurator(unittest.TestCase):
         job.ensure_resource("r")
         job.ensure_artifacts({Artifact.get_build_artifact('s', 'd')})
 
-        xml = configurator.config()
+        xml = configurator.config
         pipeline_root = ET.fromstring(xml).find('pipelines').find('pipeline')
         self.assertEquals("params", pipeline_root[0].tag)
         self.assertEquals("timer", pipeline_root[1].tag)
@@ -1271,7 +1271,7 @@ class TestGoCdConfigurator(unittest.TestCase):
         self.__configure_stage(pipeline)
         self.__configure_stage(configurator.ensure_template('templ'))
 
-        xml = configurator.config()
+        xml = configurator.config
 
         pipeline_root = ET.fromstring(xml).find('pipelines').find('pipeline')
         self.assertEquals("params", pipeline_root[0].tag)

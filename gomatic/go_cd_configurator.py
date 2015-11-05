@@ -33,6 +33,7 @@ class GoCdConfigurator:
             save_part = "\n\nconfigurator.save_updated_config(save_config_locally=True, dry_run=True)"
         return result + save_part
 
+    @property
     def current_config(self):
         return self.__current_config_response()[0]
 
@@ -46,15 +47,17 @@ class GoCdConfigurator:
         move_all_to_end(self.__xml_root, 'environments')
         move_all_to_end(self.__xml_root, 'agents')
 
-        for pipeline in self.pipelines():
+        for pipeline in self.pipelines:
             pipeline.reorder_elements_to_please_go()
-        for template in self.templates():
+        for template in self.templates:
             template.reorder_elements_to_please_go()
 
+    @property
     def config(self):
         self.reorder_elements_to_please_go()
         return ET.tostring(self.__xml_root, 'utf-8')
 
+    @property
     def pipeline_groups(self):
         return [PipelineGroup(e, self) for e in self.__xml_root.findall('pipelines')]
 
@@ -63,7 +66,7 @@ class GoCdConfigurator:
         return PipelineGroup(pipeline_group_element.element, self)
 
     def ensure_removal_of_pipeline_group(self, group_name):
-        matching = [g for g in self.pipeline_groups() if g.name == group_name]
+        matching = [g for g in self.pipeline_groups if g.name == group_name]
         for group in matching:
             self.__xml_root.remove(group.element)
         return self
@@ -73,16 +76,19 @@ class GoCdConfigurator:
             self.__xml_root.remove(e)
         return self
 
+    @property
     def agents(self):
         return [Agent(e) for e in PossiblyMissingElement(self.__xml_root).possibly_missing_child('agents').findall('agent')]
 
+    @property
     def pipelines(self):
         result = []
-        groups = self.pipeline_groups()
+        groups = self.pipeline_groups
         for group in groups:
             result.extend(group.pipelines)
         return result
 
+    @property
     def templates(self):
         return [Pipeline(e, 'templates') for e in PossiblyMissingElement(self.__xml_root).possibly_missing_child('templates').findall('pipeline')]
 
@@ -95,15 +101,17 @@ class GoCdConfigurator:
         template.make_empty()
         return template
 
+    @property
     def git_urls(self):
-        return [pipeline.git_url() for pipeline in self.pipelines() if pipeline.has_single_git_material()]
+        return [pipeline.git_url for pipeline in self.pipelines if pipeline.has_single_git_material]
 
+    @property
     def has_changes(self):
-        return prettify(self.__initial_config) != prettify(self.config())
+        return prettify(self.__initial_config) != prettify(self.config)
 
     def save_updated_config(self, save_config_locally=False, dry_run=False):
         config_before = prettify(self.__initial_config)
-        config_after = prettify(self.config())
+        config_after = prettify(self.config)
         if save_config_locally:
             open('config-before.xml', 'w').write(config_before.encode('utf-8'))
             open('config-after.xml', 'w').write(config_after.encode('utf-8'))
@@ -118,7 +126,7 @@ class GoCdConfigurator:
                 subprocess.call(["kdiff3", "config-before.xml", "config-after.xml"])
 
         data = {
-            'xmlFile': self.config(),
+            'xmlFile': self.config,
             'md5': self._initial_md5
         }
 
@@ -166,7 +174,7 @@ if __name__ == '__main__':
 
     go_server = GoCdConfigurator(HostRestClient(args.server))
 
-    matching_pipelines = [p for p in go_server.pipelines() if p.name == args.pipeline]
+    matching_pipelines = [p for p in go_server.pipelines if p.name == args.pipeline]
     if len(matching_pipelines) != 1:
         raise RuntimeError("Should have found one matching pipeline but found %s" % matching_pipelines)
     pipeline = matching_pipelines[0]
