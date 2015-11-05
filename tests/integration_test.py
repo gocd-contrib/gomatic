@@ -110,21 +110,21 @@ class IntegrationTest(unittest.TestCase):
         for gocd_version in self.gocd_versions:
             print "*" * 60, gocd_version
             with populated_go_server(gocd_version) as configurator:
-                self.assertEquals(["P.Group"], [p.name() for p in configurator.pipeline_groups()])
-                self.assertEquals(["more-options"], [p.name() for p in configurator.pipeline_groups()[0].pipelines()])
-                pipeline = configurator.pipeline_groups()[0].pipelines()[0]
-                self.assertEquals("0 15 22 * * ?", pipeline.timer())
+                self.assertEquals(["P.Group"], [p.name for p in configurator.pipeline_groups])
+                self.assertEquals(["more-options"], [p.name for p in configurator.pipeline_groups[0].pipelines])
+                pipeline = configurator.pipeline_groups[0].pipelines[0]
+                self.assertEquals("0 15 22 * * ?", pipeline.timer)
                 self.assertEquals(GitMaterial("https://github.com/SpringerSBM/gomatic.git", material_name="some-material-name", polling=False),
-                                  pipeline.git_material())
-                self.assertEquals({'JAVA_HOME': '/opt/java/jdk-1.7'}, pipeline.environment_variables())
-                self.assertEquals({'environment': 'qa'}, pipeline.parameters())
-                self.assertEquals(['earlyStage'], [s.name() for s in pipeline.stages()])
-                self.assertEquals(['earlyWorm'], [j.name() for j in pipeline.stages()[0].jobs()])
-                job = pipeline.stages()[0].jobs()[0]
+                                  pipeline.git_material)
+                self.assertEquals({'JAVA_HOME': '/opt/java/jdk-1.7'}, pipeline.environment_variables)
+                self.assertEquals({'environment': 'qa'}, pipeline.parameters)
+                self.assertEquals(['earlyStage'], [s.name for s in pipeline.stages])
+                self.assertEquals(['earlyWorm'], [j.name for j in pipeline.stages[0].jobs])
+                job = pipeline.stages[0].jobs[0]
                 self.assertEquals({Artifact.get_build_artifact("scripts/*", "files"), Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts"), Artifact.get_test_artifact("from", "to")},
-                                  job.artifacts())
-                self.assertEquals(True, job.runs_on_all_agents())
-                self.assertEquals([ExecTask(['ls'])], job.tasks())
+                                  job.artifacts)
+                self.assertEquals(True, job.runs_on_all_agents)
+                self.assertEquals([ExecTask(['ls'])], job.tasks)
 
     def test_can_save_multiple_times_using_same_configurator(self):
         gocd_version = self.gocd_versions[-1]
