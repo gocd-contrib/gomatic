@@ -107,7 +107,7 @@ Unit tests:
 
 Integration tests (takes a long time to download many versions of GoCD) (requires [docker](https://www.docker.com/) to be installed in order to run):
  
-1. `python integration_test.py`
+1. `python -m unittest tests.integration_test`
 
 ### Contributing to Gomatic via pull request
 
