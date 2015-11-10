@@ -11,8 +11,7 @@
 * Where there were functions masquerading as classes, alternate constructors are being provided. The old
   functions-that-look-like-classes are being preserved for now, but it is highly recommended the alternate constructors
   are used for new code where available.
-* Please expect class hierarchies to change in upcoming releases. This should not affect most users, but may mess with
-  code that inspects types of some items (such as tasks, materials or jobs).
+* Please expect class hierarchies to change in upcoming releases.
 
 ## 0.3.0
 
