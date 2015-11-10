@@ -4,7 +4,7 @@
 
 ## 0.4.0
 
-* Many functions have been converted into properties where appropriate.
+* Many functions have been converted into properties where appropriate. See `convert-from-0.3-to-0.4.sh` for help doing this conversion.
 * Code has been reorganised, if you have `from gomatic.go_cd_configurator import ...` statements in your code, please be
   aware that classes, functions and constants may have moved.
 * Tests are now in the special `tests` module. Please see the README for how to run them.
