@@ -78,10 +78,11 @@ class Job(CommonEqualityMixin):
         return set([Artifact.get_artifact_for(e) for e in artifact_elements])
 
     def ensure_artifacts(self, artifacts):
-        artifacts_ensurance = Ensurance(self.__element).ensure_child("artifacts")
-        artifacts_to_add = artifacts.difference(self.artifacts)
-        for artifact in artifacts_to_add:
-            artifact.append_to(artifacts_ensurance)
+        if artifacts:
+            artifacts_ensurance = Ensurance(self.__element).ensure_child("artifacts")
+            artifacts_to_add = artifacts.difference(self.artifacts)
+            for artifact in artifacts_to_add:
+                artifact.append_to(artifacts_ensurance)
         return self
 
     @property

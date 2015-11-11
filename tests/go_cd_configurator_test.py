@@ -141,6 +141,15 @@ class TestJobs(unittest.TestCase):
                               Artifact.get_test_artifact("from", "to")},
                           artifacts)
 
+    def test_job_that_has_no_artifacts_has_no_artifacts_element_to_reduce_thrash(self):
+        go_cd_configurator = GoCdConfigurator(empty_config())
+        job = go_cd_configurator.ensure_pipeline_group("g").ensure_pipeline("p").ensure_stage("s").ensure_job("j")
+        job.ensure_artifacts(set())
+        self.assertEquals(set(), job.artifacts)
+
+        xml = parseString(go_cd_configurator.config)
+        self.assertEquals(0, len(xml.getElementsByTagName('artifacts')))
+
     def test_artifacts_might_have_no_dest(self):
         job = more_options_pipeline().ensure_stage("s1").ensure_job("rake-job")
         artifacts = job.artifacts
