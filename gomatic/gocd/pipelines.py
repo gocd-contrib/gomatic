@@ -528,7 +528,7 @@ class Pipeline(CommonEqualityMixin):
 
     def reorder_elements_to_please_go(self):
         materials = self.materials
-        self.__remove_materials()
+        self.remove_materials()
         for material in self.__reordered_materials_to_reduce_thrash(materials):
             self.__add_material(material)
 
@@ -571,7 +571,7 @@ class Pipeline(CommonEqualityMixin):
         element = self.element.find('timer')
         return "true" == element.attrib.get('onlyOnChanges')
 
-    def __remove_materials(self):
+    def remove_materials(self):
         PossiblyMissingElement(self.element).remove_all_children('materials')
 
     @staticmethod

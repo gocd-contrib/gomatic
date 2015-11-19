@@ -745,6 +745,11 @@ class TestPipeline(unittest.TestCase):
         pipeline.ensure_material(PipelineMaterial('pipeline2', 'build'))
         self.assertEquals(2, len(pipeline.materials))
 
+    def test_can_remove_all_pipeline_materials(self):
+        pipeline = more_options_pipeline()
+        pipeline.remove_materials()
+        self.assertEquals(0, len(pipeline.materials))
+
     def test_materials_are_sorted(self):
         go_cd_configurator = GoCdConfigurator(empty_config())
         pipeline = go_cd_configurator.ensure_pipeline_group("g").ensure_pipeline("p")
