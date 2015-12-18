@@ -65,11 +65,16 @@ class ThingWithEnvironmentVariables:
                 variable_element.set("secure", "true")
             else:
                 PossiblyMissingElement(variable_element.element).remove_attribute("secure")
-            if encrypted:
-                value_element = variable_element.ensure_child("encryptedValue")
-            else:
-                value_element = variable_element.ensure_child("value")
+            value_element = variable_element.ensure_child("encryptedValue" if encrypted else "value")
             value_element.set_text(environment_variables[env_variable])
+
+        self.__sort_by_name_attribute(ensured_env_variables.element)
+
+    def __sort_by_name_attribute(self, env_variables_element):
+        environment_variable_elements = env_variables_element.findall('variable')
+        PossiblyMissingElement(env_variables_element).remove_all_children("variable")
+        for environment_variable_element in sorted(environment_variable_elements, key=lambda e: e.attrib['name']):
+            env_variables_element.append(environment_variable_element)
 
     def ensure_environment_variables(self, environment_variables):
         self.__ensure_environment_variables(environment_variables, secure=False, encrypted=False)

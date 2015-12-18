@@ -855,6 +855,20 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals({'a': 's'}, pipeline.encrypted_environment_variables)
         self.assertEquals({'c': 'v'}, pipeline.environment_variables)
 
+    def test_environment_variables_get_added_in_sorted_order_to_reduce_config_thrash(self):
+        go_cd_configurator = GoCdConfigurator(empty_config())
+
+        pipeline = go_cd_configurator \
+            .ensure_pipeline_group('P.Group') \
+            .ensure_pipeline('P.Name')
+
+        pipeline.ensure_environment_variables({"badger": "a", "xray": "a"})
+        pipeline.ensure_environment_variables({"ant": "a2", "zebra": "a"})
+
+        xml = parseString(go_cd_configurator.config)
+        names = [e.getAttribute('name') for e in xml.getElementsByTagName('variable')]
+        self.assertEquals([u'ant', u'badger', u'xray', u'zebra'], names)
+
     def test_encrypted_environment_variables_get_added_in_sorted_order_to_reduce_config_thrash(self):
         go_cd_configurator = GoCdConfigurator(empty_config())
 
@@ -862,11 +876,12 @@ class TestPipeline(unittest.TestCase):
             .ensure_pipeline_group('P.Group') \
             .ensure_pipeline('P.Name')
 
-        pipeline.ensure_encrypted_environment_variables({"ant": "a", "badger": "a", "zebra": "a"})
+        pipeline.ensure_encrypted_environment_variables({"badger": "a", "xray": "a"})
+        pipeline.ensure_encrypted_environment_variables({"ant": "a2", "zebra": "a"})
 
         xml = parseString(go_cd_configurator.config)
         names = [e.getAttribute('name') for e in xml.getElementsByTagName('variable')]
-        self.assertEquals([u'ant', u'badger', u'zebra'], names)
+        self.assertEquals([u'ant', u'badger', u'xray', u'zebra'], names)
 
     def test_unencrypted_environment_variables_do_not_have_secure_attribute_in_order_to_reduce_config_thrash(self):
         go_cd_configurator = GoCdConfigurator(empty_config())
