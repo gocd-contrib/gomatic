@@ -37,12 +37,9 @@ class ThingWithEnvironmentVariables:
         for variable_element in variable_elements:
             if secure == self.__is_secure(variable_element):
                 is_encrypted = self.__is_encrypted(variable_element)
-                if is_encrypted:
-                    value_attribute = "encryptedValue"
-                else:
-                    value_attribute = "value"
+                value_element_name = self.__value_element_name(is_encrypted)
                 if encrypted == is_encrypted:
-                    result[variable_element.attrib['name']] = variable_element.find(value_attribute).text
+                    result[variable_element.attrib['name']] = variable_element.find(value_element_name).text
         return result
 
     @property
@@ -65,10 +62,13 @@ class ThingWithEnvironmentVariables:
                 variable_element.set("secure", "true")
             else:
                 PossiblyMissingElement(variable_element.element).remove_attribute("secure")
-            value_element = variable_element.ensure_child("encryptedValue" if encrypted else "value")
+            value_element = variable_element.ensure_child(self.__value_element_name(encrypted))
             value_element.set_text(environment_variables[env_variable])
 
         self.__sort_by_name_attribute(ensured_env_variables.element)
+
+    def __value_element_name(self, encrypted):
+        return "encryptedValue" if encrypted else "value"
 
     def __sort_by_name_attribute(self, env_variables_element):
         environment_variable_elements = env_variables_element.findall('variable')
