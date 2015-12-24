@@ -105,6 +105,7 @@ class IntegrationTest(unittest.TestCase):
         '15.1.0-1863',
         '15.2.0-2248',
         '15.3.0-2771',
+        '15.3.1-2777'
     ]
 
     def test_all_versions(self):
