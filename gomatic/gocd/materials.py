@@ -85,6 +85,7 @@ class GitMaterial(CommonEqualityMixin):
 
     @property
     def ignore_patterns(self):
+        # Called "Blacklist" in the GoCD web UI
         return self.__ignore_patterns
 
     @property
