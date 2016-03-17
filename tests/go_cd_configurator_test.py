@@ -4,6 +4,8 @@ import unittest
 from xml.dom.minidom import parseString
 import xml.etree.ElementTree as ET
 
+from decimal import Decimal
+
 from gomatic import GoCdConfigurator, FetchArtifactDir, RakeTask, ExecTask, FetchArtifactTask, \
     FetchArtifactFile, Tab, GitMaterial, PipelineMaterial, Pipeline
 from gomatic.fake import FakeHostRestClient, empty_config_xml, config, empty_config
@@ -1127,21 +1129,29 @@ class TestGoCdConfigurator(unittest.TestCase):
         self.assertEquals("/some/dir", configurator.artifacts_dir)
         self.assertEquals("http://10.20.30.40/", configurator.site_url)
         self.assertEquals("my_ci_server", configurator.agent_auto_register_key)
+        self.assertEquals(Decimal("55.0"), configurator.purge_start)
+        self.assertEquals(Decimal("75.0"), configurator.purge_upto)
 
     def test_can_find_out_server_settings_when_not_set(self):
         configurator = GoCdConfigurator(config('config-with-no-server-settings'))
         self.assertEquals(None, configurator.artifacts_dir)
         self.assertEquals(None, configurator.site_url)
         self.assertEquals(None, configurator.agent_auto_register_key)
+        self.assertEquals(None, configurator.purge_start)
+        self.assertEquals(None, configurator.purge_upto)
 
     def test_can_set_server_settings(self):
         configurator = GoCdConfigurator(config('config-with-no-server-settings'))
         configurator.artifacts_dir = "/a/dir"
         configurator.site_url = "http://1.2.3.4/"
         configurator.agent_auto_register_key = "a_ci_server"
+        configurator.purge_start = Decimal("44.0")
+        configurator.purge_upto = Decimal("88.0")
         self.assertEquals("/a/dir", configurator.artifacts_dir)
         self.assertEquals("http://1.2.3.4/", configurator.site_url)
         self.assertEquals("a_ci_server", configurator.agent_auto_register_key)
+        self.assertEquals(Decimal("44.0"), configurator.purge_start)
+        self.assertEquals(Decimal("88.0"), configurator.purge_upto)
 
     def test_can_have_no_pipeline_groups(self):
         self.assertEquals(0, len(GoCdConfigurator(empty_config()).pipeline_groups))

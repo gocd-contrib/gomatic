@@ -6,6 +6,7 @@ import sys
 import subprocess
 
 import requests
+from decimal import Decimal
 
 from gomatic.gocd.pipelines import Pipeline, PipelineGroup
 from gomatic.gocd.agents import Agent
@@ -80,6 +81,28 @@ class GoCdConfigurator(object):
     @agent_auto_register_key.setter
     def agent_auto_register_key(self, agent_auto_register_key):
         self.__server_element_ensurance().set('agentAutoRegisterKey', agent_auto_register_key)
+
+    @property
+    def purge_start(self):
+        return self.__server_decimal_attribute('purgeStart')
+
+    @purge_start.setter
+    def purge_start(self, purge_start_decimal):
+        assert isinstance(purge_start_decimal, Decimal)
+        self.__server_element_ensurance().set('purgeStart', str(purge_start_decimal))
+
+    @property
+    def purge_upto(self):
+        return self.__server_decimal_attribute('purgeUpto')
+
+    @purge_upto.setter
+    def purge_upto(self, purge_upto_decimal):
+        assert isinstance(purge_upto_decimal, Decimal)
+        self.__server_element_ensurance().set('purgeUpto', str(purge_upto_decimal))
+
+    def __server_decimal_attribute(self, attribute_name):
+        attribute = self.__possibly_missing_server_element().attribute(attribute_name)
+        return Decimal(attribute) if attribute else None
 
     def __possibly_missing_server_element(self):
         return PossiblyMissingElement(self.__xml_root).possibly_missing_child('server')
