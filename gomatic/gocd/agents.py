@@ -1,7 +1,7 @@
 from gomatic.gocd.generic import ThingWithResources
 
 
-class Agent:
+class Agent(object):
     def __init__(self, element):
         self.__element = element
         self.__thing_with_resources = ThingWithResources(element)

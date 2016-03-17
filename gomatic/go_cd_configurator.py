@@ -12,7 +12,7 @@ from gomatic.gocd.agents import Agent
 from gomatic.xml_operations import Ensurance, PossiblyMissingElement, move_all_to_end, prettify
 
 
-class GoCdConfigurator:
+class GoCdConfigurator(object):
     def __init__(self, host_rest_client):
         self.__host_rest_client = host_rest_client
         self.__set_initial_config_xml()
@@ -150,7 +150,7 @@ class GoCdConfigurator:
             self.__set_initial_config_xml()
 
 
-class HostRestClient:
+class HostRestClient(object):
     def __init__(self, host):
         self.__host = host
 

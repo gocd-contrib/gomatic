@@ -18,7 +18,7 @@ class ThingWithResources(CommonEqualityMixin):
                 .append(ET.fromstring('<resource>%s</resource>' % resource))
 
 
-class ThingWithEnvironmentVariables:
+class ThingWithEnvironmentVariables(object):
     def __init__(self, element):
         self.element = element
 

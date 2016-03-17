@@ -27,7 +27,7 @@ def start_go_server(gocd_version):
             print "Waiting for Docker-based Go server to start..."
 
 
-class populated_go_server:
+class populated_go_server(object):
     def __init__(self, gocd_version):
         self.gocd_version = gocd_version
 

@@ -2,7 +2,7 @@ from xml.dom.minidom import parseString
 from xml.etree import ElementTree as ET
 
 
-class Ensurance:
+class Ensurance(object):
     def __init__(self, element):
         self.element = element
 
@@ -36,7 +36,7 @@ class Ensurance:
         self.element.text = value
 
 
-class PossiblyMissingElement:
+class PossiblyMissingElement(object):
     def __init__(self, element):
         self.__element = element
 

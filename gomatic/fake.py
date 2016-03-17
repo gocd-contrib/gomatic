@@ -10,7 +10,7 @@ class FakeResponse(object):
         self.headers = {'x-cruise-config-md5': '42'}
 
 
-class FakeHostRestClient:
+class FakeHostRestClient(object):
     def __init__(self, config_string, thing_to_recreate_itself=None):
         self.config_string = config_string
         self.thing_to_recreate_itself = thing_to_recreate_itself
