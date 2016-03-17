@@ -4,6 +4,7 @@ from xml.etree import ElementTree as ET
 
 class Ensurance(object):
     def __init__(self, element):
+        assert element is not None
         self.element = element
 
     def ensure_child(self, name):
