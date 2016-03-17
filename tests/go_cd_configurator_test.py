@@ -1134,6 +1134,15 @@ class TestGoCdConfigurator(unittest.TestCase):
         self.assertEquals(None, configurator.site_url)
         self.assertEquals(None, configurator.agent_auto_register_key)
 
+    def test_can_set_server_settings(self):
+        configurator = GoCdConfigurator(config('config-with-no-server-settings'))
+        configurator.artifacts_dir = "/a/dir"
+        configurator.site_url = "http://1.2.3.4/"
+        configurator.agent_auto_register_key = "a_ci_server"
+        self.assertEquals("/a/dir", configurator.artifacts_dir)
+        self.assertEquals("http://1.2.3.4/", configurator.site_url)
+        self.assertEquals("a_ci_server", configurator.agent_auto_register_key)
+
     def test_can_have_no_pipeline_groups(self):
         self.assertEquals(0, len(GoCdConfigurator(empty_config()).pipeline_groups))
 

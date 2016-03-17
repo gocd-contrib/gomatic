@@ -61,16 +61,31 @@ class GoCdConfigurator(object):
     def artifacts_dir(self):
         return self.__possibly_missing_server_element().attribute('artifactsdir')
 
+    @artifacts_dir.setter
+    def artifacts_dir(self, artifacts_dir):
+        self.__server_element_ensurance().set('artifactsdir', artifacts_dir)
+
     @property
     def site_url(self):
         return self.__possibly_missing_server_element().attribute('siteUrl')
+
+    @site_url.setter
+    def site_url(self, site_url):
+        self.__server_element_ensurance().set('siteUrl', site_url)
 
     @property
     def agent_auto_register_key(self):
         return self.__possibly_missing_server_element().attribute('agentAutoRegisterKey')
 
+    @agent_auto_register_key.setter
+    def agent_auto_register_key(self, agent_auto_register_key):
+        self.__server_element_ensurance().set('agentAutoRegisterKey', agent_auto_register_key)
+
     def __possibly_missing_server_element(self):
         return PossiblyMissingElement(self.__xml_root).possibly_missing_child('server')
+
+    def __server_element_ensurance(self):
+        return Ensurance(self.__xml_root).ensure_child('server')
 
     @property
     def pipeline_groups(self):
