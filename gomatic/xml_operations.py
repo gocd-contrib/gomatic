@@ -59,6 +59,9 @@ class PossiblyMissingElement:
         else:
             return self.__element
 
+    def attribute(self, name):
+        return self.__element.attrib[name] if self.__element is not None and name in self.__element.attrib else None
+
     def has_attribute(self, name, value):
         if self.__element is None:
             return False

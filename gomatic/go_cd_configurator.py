@@ -58,6 +58,21 @@ class GoCdConfigurator:
         return ET.tostring(self.__xml_root, 'utf-8')
 
     @property
+    def artifacts_dir(self):
+        return self.__possibly_missing_server_element().attribute('artifactsdir')
+
+    @property
+    def site_url(self):
+        return self.__possibly_missing_server_element().attribute('siteUrl')
+
+    @property
+    def agent_auto_register_key(self):
+        return self.__possibly_missing_server_element().attribute('agentAutoRegisterKey')
+
+    def __possibly_missing_server_element(self):
+        return PossiblyMissingElement(self.__xml_root).possibly_missing_child('server')
+
+    @property
     def pipeline_groups(self):
         return [PipelineGroup(e, self) for e in self.__xml_root.findall('pipelines')]
 
