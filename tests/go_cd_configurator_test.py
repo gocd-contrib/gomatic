@@ -1230,6 +1230,12 @@ class TestGoCdConfigurator(unittest.TestCase):
         template = configurator.ensure_replacement_of_template('deploy-stack')
         self.assertEquals(0, len(template.stages))
 
+    def test_can_remove_template(self):
+        configurator = GoCdConfigurator(config('config-with-just-templates'))
+        self.assertEquals(2, len(configurator.templates))
+        configurator.ensure_removal_of_template('deploy-stack')
+        self.assertEquals(1, len(configurator.templates))
+
     def test_top_level_elements_get_reordered_to_please_go(self):
         configurator = GoCdConfigurator(config('config-with-agents-and-templates-but-without-pipelines'))
         configurator.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")

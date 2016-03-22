@@ -154,6 +154,12 @@ class GoCdConfigurator(object):
         template.make_empty()
         return template
 
+    def ensure_removal_of_template(self, template_name):
+        matching = [template for template in self.templates if template.name == template_name]
+        for template in matching:
+            Ensurance(self.__xml_root).ensure_child('templates').element.remove(template.element)
+        return self
+
     @property
     def git_urls(self):
         return [pipeline.git_url for pipeline in self.pipelines if pipeline.has_single_git_material]
