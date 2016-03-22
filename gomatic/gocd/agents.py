@@ -3,12 +3,12 @@ from gomatic.gocd.generic import ThingWithResources
 
 class Agent(object):
     def __init__(self, element):
-        self.__element = element
+        self._element = element
         self.__thing_with_resources = ThingWithResources(element)
 
     @property
     def hostname(self):
-        return self.__element.attrib['hostname']
+        return self._element.attrib['hostname']
 
     @property
     def resources(self):

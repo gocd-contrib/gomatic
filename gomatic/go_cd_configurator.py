@@ -133,6 +133,12 @@ class GoCdConfigurator(object):
     def agents(self):
         return [Agent(e) for e in PossiblyMissingElement(self.__xml_root).possibly_missing_child('agents').findall('agent')]
 
+    def ensure_removal_of_agent(self, hostname):
+        matching = [agent for agent in self.agents if agent.hostname == hostname]
+        for agent in matching:
+            Ensurance(self.__xml_root).ensure_child('agents').element.remove(agent._element)
+        return self
+
     @property
     def pipelines(self):
         result = []

@@ -1171,6 +1171,13 @@ class TestGoCdConfigurator(unittest.TestCase):
         configurator_based_on_new_config = GoCdConfigurator(FakeHostRestClient(configurator.config))
         self.assertEquals(3, len(configurator_based_on_new_config.agents[0].resources))
 
+    def test_can_remove_agent(self):
+        configurator = GoCdConfigurator(config('config-with-just-agents'))
+        self.assertEquals(2, len(configurator.agents))
+        configurator.ensure_removal_of_agent('go-agent-1')
+        self.assertEquals(1, len(configurator.agents))
+        self.assertEquals('go-agent-2', configurator.agents[0].hostname)
+
     def test_can_add_pipeline_group(self):
         configurator = GoCdConfigurator(empty_config())
         self.assertEquals(0, len(configurator.pipeline_groups))
