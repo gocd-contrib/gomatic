@@ -1243,6 +1243,16 @@ class TestGoCdConfigurator(unittest.TestCase):
         configurator.ensure_removal_of_template('deploy-stack')
         self.assertEquals(1, len(configurator.templates))
 
+    def test_if_remove_all_templates_also_remove_templates_element(self):
+        configurator = GoCdConfigurator(config('config-with-just-templates'))
+        self.assertEquals(2, len(configurator.templates))
+        configurator.ensure_removal_of_template('api-component')
+        configurator.ensure_removal_of_template('deploy-stack')
+        self.assertEquals(0, len(configurator.templates))
+        xml = configurator.config
+        root = ET.fromstring(xml)
+        self.assertEqual(['server'], [element.tag for element in root])
+
     def test_top_level_elements_get_reordered_to_please_go(self):
         configurator = GoCdConfigurator(config('config-with-agents-and-templates-but-without-pipelines'))
         configurator.ensure_pipeline_group("some_group").ensure_pipeline("some_pipeline")

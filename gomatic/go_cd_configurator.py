@@ -162,8 +162,12 @@ class GoCdConfigurator(object):
 
     def ensure_removal_of_template(self, template_name):
         matching = [template for template in self.templates if template.name == template_name]
+        root = Ensurance(self.__xml_root)
+        templates_element = root.ensure_child('templates').element
         for template in matching:
-            Ensurance(self.__xml_root).ensure_child('templates').element.remove(template.element)
+            templates_element.remove(template.element)
+        if len(self.templates) == 0:
+            root.element.remove(templates_element)
         return self
 
     @property
