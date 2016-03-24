@@ -112,7 +112,7 @@ class IntegrationTest(unittest.TestCase):
 
     def test_all_versions(self):
         for gocd_version in self.gocd_versions:
-            print "*" * 60, gocd_version
+            print 'test_all_versions', "*" * 60, gocd_version
             with populated_go_server(gocd_version) as configurator:
                 self.assertEquals(["P.Group"], [p.name for p in configurator.pipeline_groups])
                 self.assertEquals(["more-options"], [p.name for p in configurator.pipeline_groups[0].pipelines])
@@ -132,7 +132,7 @@ class IntegrationTest(unittest.TestCase):
 
     def test_can_save_multiple_times_using_same_configurator(self):
         gocd_version = self.gocd_versions[-1]
-        print "*" * 60, gocd_version
+        print 'test_can_save_multiple_times_using_same_configurator', "*" * 60, gocd_version
         with populated_go_server(gocd_version) as configurator:
             pipeline = configurator \
                 .ensure_pipeline_group("Test") \
