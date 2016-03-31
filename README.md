@@ -48,6 +48,7 @@ We believe it works for the following versions (as indicated by `integration_tes
 * 15.2.0-2248
 * 16.1.0-2855
 * 16.2.1-3027
+* 16.3.0-3183
 
 ## Install
 
