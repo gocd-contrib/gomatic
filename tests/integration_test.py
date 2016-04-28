@@ -108,7 +108,8 @@ class IntegrationTest(unittest.TestCase):
         # '15.3.1-2777', no longer on download page
         '16.1.0-2855',
         '16.2.1-3027',
-        '16.3.0-3183'
+        '16.3.0-3183',
+        '16.4.0-3223'
     ]
 
     def test_all_versions(self):
