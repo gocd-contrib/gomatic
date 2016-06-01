@@ -4,18 +4,19 @@ import xml.etree.ElementTree as ET
 import argparse
 import sys
 import subprocess
+
 from xml.dom.minidom import parseString
 from xml.sax.saxutils import escape
 from collections import OrderedDict
 
 import requests
+from decimal import Decimal
+
+from gomatic.gocd.pipelines import Pipeline, PipelineGroup
+from gomatic.gocd.agents import Agent
+from gomatic.xml_operations import Ensurance, PossiblyMissingElement, move_all_to_end, prettify
 
 
-def prettify(xml_string):
-    xml = parseString(xml_string)
-    formatted_but_with_blank_lines = xml.toprettyxml()
-    non_blank_lines = [l for l in formatted_but_with_blank_lines.split('\n') if len(l.strip()) != 0]
-    return '\n'.join(non_blank_lines)
 
 
 class CommonEqualityMixin(object):
@@ -69,52 +70,6 @@ class Ensurance:
         self._element.text = value
 
 
-class PossiblyMissingElement:
-    def __init__(self, element):
-        self.__element = element
-
-    def possibly_missing_child(self, name):
-        if self.__element is None:
-            return PossiblyMissingElement(None)
-        else:
-            return PossiblyMissingElement(self.__element.find(name))
-
-    def findall(self, name):
-        if self.__element is None:
-            return []
-        else:
-            return self.__element.findall(name)
-
-    def iterator(self):
-        if self.__element is None:
-            return []
-        else:
-            return self.__element
-
-    def has_attribute(self, name, value):
-        if self.__element is None:
-            return False
-        else:
-            return name in self.__element.attrib and self.__element.attrib[name] == value
-
-    def remove_all_children(self, tag_name_to_remove=None):
-        children = []
-        if self.__element is not None:
-            for child in self.__element:
-                if tag_name_to_remove is None or child.tag == tag_name_to_remove:
-                    children.append(child)
-
-        for child in children:
-            self.__element.remove(child)
-
-        return self
-
-    def remove_attribute(self, attribute_name):
-        if self.__element is not None:
-            if attribute_name in self.__element.attrib:
-                del self.__element.attrib[attribute_name]
-
-        return self
 
 
 class ThingWithResources(CommonEqualityMixin):
@@ -234,41 +189,7 @@ def runif_from(element):
     raise RuntimeError("Don't know what multiple runif values (%s) means" % runifs)
 
 
-def Task(element):
-    runif = runif_from(element)
-    if element.tag == "exec":
-        command_and_args = [element.attrib["command"]] + [e.text for e in element.findall('arg')]
-        working_dir = element.attrib.get("workingdir", None)  # TODO not ideal to return "None" for working_dir
-        return ExecTask(command_and_args, working_dir, runif)
-    elif element.tag == "fetchartifact":
-        dest = element.attrib.get('dest', None)
-        return FetchArtifactTask(element.attrib['pipeline'], element.attrib['stage'], element.attrib['job'], fetch_artifact_src_from(element), dest, runif)
-    elif element.tag == "rake":
-        return RakeTask(element.attrib['target'])
-    elif element.tag == "task":
-        plugin_config = element.findall('pluginConfiguration')
-        if len(plugin_config):
-            if plugin_config[0].attrib['id'] == 'script-executor':
-                script = element.findall('configuration/property/value')
-                if len(script):
-                    return ScriptExecutorTask(script[0].text, runif)
-            elif plugin_config[0].attrib['id'] == 'maven':
-                args = {'runif': runif}
-                args['arguments'] = element.findall(
-                    'configuration/property[key="Arguments"]/value')[0].text
-                args['profiles'] = element.findall(
-                    'configuration/property[key="Profiles"]/value')[0].text
-                args['offline'] = element.findall(
-                    'configuration/property[key="Offline"]/value')[0].text
-                args['quiet'] = element.findall(
-                    'configuration/property[key="Quiet"]/value')[0].text
-                args['debug'] = element.findall(
-                    'configuration/property[key="Debug"]/value')[0].text
-                args['batch'] = element.findall(
-                    'configuration/property[key="Batch"]/value')[0].text
-                # properties = element.findall('configuration/property')
-                return MavenTask(**args)
-    raise RuntimeError("Don't know task type %s" % element.tag)
+
 
 
 class AbstractTask(CommonEqualityMixin):
@@ -434,96 +355,7 @@ class ScriptExecutorTask(AbstractTask):
         return Task(new_element)
 
 
-class MavenTask(AbstractTask):
-    def __init__(self, arguments, profiles='', offline='false', quiet='false',
-                 debug='false', batch='false', runif="passed"):
-        super(self.__class__, self).__init__(runif)
-        self._arguments = arguments
-        self._profiles = profiles
-        self._offline = offline
-        self._quiet = quiet
-        self._debug = debug
-        self._batch = batch
 
-    def __repr__(self):
-        return '''
-            MavenTask(runif="%s", arguments="%s", profiles="%s", offline="%s",
-                      quiet="%s", debug="%s", batch="%s")
-        ''' % (self._runif, self._arguments, self._profiles, self._offline,
-               self._quiet, self._debug, self._batch)
-
-    def to_dict(self, ordered=False):
-        if ordered:
-            result = OrderedDict()
-        else:
-            result = {}
-        result['type'] = self.type()
-        result['runif'] = self.runif()
-        result['arguments'] = self._arguments
-        result['profiles'] = self._profiles
-        result['offline'] = self._offline
-        result['quiet'] = self._quiet
-        result['debug'] = self._debug
-        result['batch'] = self._batch
-        return result
-
-    def type(self):
-        return "maven"
-
-    def append_to(self, element):
-        new_element = ET.fromstring('<task></task>')
-        plugin_config = ET.fromstring(
-            '<pluginConfiguration id="maven" version="1" />')
-        config = ET.fromstring('<configuration></configuration>')
-        config.append(ET.fromstring(
-            '''<property>
-                <key>Arguments</key>
-                <value>%s</value>
-               </property>
-            ''' % self._arguments)
-        )
-        config.append(ET.fromstring(
-            '''<property>
-                <key>Profiles</key>
-                <value>%s</value>
-               </property>
-            ''' % self._profiles)
-        )
-        config.append(ET.fromstring(
-            '''<property>
-                <key>Offline</key>
-                <value>%s</value>
-               </property>
-            ''' % self._offline)
-        )
-        config.append(ET.fromstring(
-            '''<property>
-                <key>Quiet</key>
-                <value>%s</value>
-               </property>
-            ''' % self._quiet)
-        )
-        config.append(ET.fromstring(
-            '''<property>
-                <key>Debug</key>
-                <value>%s</value>
-               </property>
-            ''' % self._debug)
-        )
-        config.append(ET.fromstring(
-            '''<property>
-                <key>Batch</key>
-                <value>%s</value>
-               </property>
-            ''' % self._batch)
-        )
-
-        new_element.append(plugin_config)
-        new_element.append(config)
-        new_element.append(ET.fromstring('<runif status="%s" />' % self.runif()))
-
-        Ensurance(element).ensure_child("tasks").append(new_element)
-        return Task(new_element)
 
 
 class ExecTask(AbstractTask):
@@ -578,34 +410,7 @@ class ExecTask(AbstractTask):
         return Task(new_element)
 
 
-class RakeTask(AbstractTask):
-    def __init__(self, target, runif="passed"):
-        super(self.__class__, self).__init__(runif)
-        self.__target = target
 
-    def __repr__(self):
-        return 'RakeTask("%s", "%s")' % (self.__target, self._runif)
-
-    def to_dict(self, ordered=False):
-        if ordered:
-            result = OrderedDict()
-        else:
-            result = {}
-        result['type'] = self.type()
-        result['runif'] = self.runif
-        result['target'] = self.target()
-        return result
-
-    def type(self):
-        return "rake"
-
-    def target(self):
-        return self.__target
-
-    def append_to(self, element):
-        new_element = ET.fromstring('<rake target="%s"></rake>' % self.__target)
-        Ensurance(element).ensure_child("tasks").append(new_element)
-        return Task(new_element)
 
 
 def ArtifactFor(element):
@@ -678,266 +483,6 @@ class Tab(CommonEqualityMixin):
         element.append(ET.fromstring('<tab name="%s" path="%s" />' % (self.__name, self.__path)))
 
 
-class Job(CommonEqualityMixin):
-    def __init__(self, element):
-        self.__element = element
-        self.__thing_with_resources = ThingWithResources(element)
-
-    def __repr__(self):
-        return "Job('%s', %s)" % (self.name(), self.tasks())
-
-    def to_dict(self, ordered=False):
-        if ordered:
-            result = OrderedDict()
-        else:
-            result = {}
-        result['name'] = self.name()
-        result['resources'] = list(self.resources())
-        if self.has_timeout():
-            result['timeout'] = self.timeout()
-        if self.runs_on_all_agents():
-            result['runs_on_all_agents'] = True
-        result['tasks'] = [t.to_dict(ordered=ordered) for t in self.tasks()]
-        result['artifacts'] = [a.to_dict(ordered=ordered)
-                               for a in self.artifacts()]
-        result['environment_variables'] = self.environment_variables()
-        result['encrypted_environment_variables'] = \
-            self.encrypted_environment_variables()
-        result['tabs'] = [t.to_dict(ordered=ordered) for t in self.tabs()]
-        return result
-
-    def name(self):
-        return self.__element.attrib['name']
-
-    def has_timeout(self):
-        return 'timeout' in self.__element.attrib
-
-    def timeout(self):
-        if not self.has_timeout():
-            raise RuntimeError("Job (%s) does not have timeout" % self)
-        return self.__element.attrib['timeout']
-
-    def set_timeout(self, timeout):
-        self.__element.attrib['timeout'] = timeout
-        return self
-
-    def runs_on_all_agents(self):
-        return self.__element.attrib.get('runOnAllAgents', 'false') == 'true'
-
-    def set_runs_on_all_agents(self):
-        self.__element.attrib['runOnAllAgents'] = 'true'
-        return self
-
-    def resources(self):
-        return self.__thing_with_resources.resources()
-
-    def ensure_resource(self, resource):
-        self.__thing_with_resources.ensure_resource(resource)
-        return self
-
-    def artifacts(self):
-        artifact_elements = PossiblyMissingElement(self.__element).possibly_missing_child("artifacts").iterator()
-        return set([ArtifactFor(e) for e in artifact_elements])
-
-    def ensure_artifacts(self, artifacts):
-        artifacts_ensurance = Ensurance(self.__element).ensure_child("artifacts")
-        artifacts_to_add = artifacts.difference(self.artifacts())
-        for artifact in artifacts_to_add:
-            artifact.append_to(artifacts_ensurance)
-        return self
-
-    def tabs(self):
-        return [Tab(e.attrib['name'], e.attrib['path']) for e in PossiblyMissingElement(self.__element).possibly_missing_child('tabs').findall('tab')]
-
-    def ensure_tab(self, tab):
-        tab_ensurance = Ensurance(self.__element).ensure_child("tabs")
-        if self.tabs().count(tab) == 0:
-            tab.append_to(tab_ensurance)
-        return self
-
-    def tasks(self):
-        return [Task(e) for e in PossiblyMissingElement(self.__element).possibly_missing_child("tasks").iterator()]
-
-    def add_task(self, task):
-        return task.append_to(self.__element)
-
-    def ensure_task(self, task):
-        if self.tasks().count(task) == 0:
-            return task.append_to(self.__element)
-        else:
-            return task
-
-    def without_any_tasks(self):
-        PossiblyMissingElement(self.__element).possibly_missing_child("tasks").remove_all_children()
-        return self
-
-    def environment_variables(self):
-        return ThingWithEnvironmentVariables(self.__element).environment_variables()
-
-    def encrypted_environment_variables(self):
-        return ThingWithEnvironmentVariables(self.__element).encrypted_environment_variables()
-
-    def ensure_environment_variables(self, environment_variables):
-        ThingWithEnvironmentVariables(self.__element).ensure_environment_variables(environment_variables)
-        return self
-
-    def ensure_encrypted_environment_variables(self, environment_variables):
-        ThingWithEnvironmentVariables(self.__element).ensure_encrypted_environment_variables(environment_variables)
-        return self
-
-    def without_any_environment_variables(self):
-        ThingWithEnvironmentVariables(self.__element).remove_all()
-        return self
-
-    def reorder_elements_to_please_go(self):
-        # see https://github.com/SpringerSBM/gomatic/issues/6
-        move_all_to_end(self.__element, "environment_variables")
-        move_all_to_end(self.__element, "tasks")
-        move_all_to_end(self.__element, "tabs")
-        move_all_to_end(self.__element, "resources")
-        move_all_to_end(self.__element, "artifacts")
-
-    def as_python_commands_applied_to_stage(self):
-        result = 'job = stage.ensure_job("%s")' % self.name()
-
-        if self.artifacts():
-            if len(self.artifacts()) > 1:
-                artifacts_sorted = list(self.artifacts())
-                artifacts_sorted.sort(key=lambda artifact: str(artifact))
-                result += '.ensure_artifacts(set(%s))' % artifacts_sorted
-            else:
-                result += '.ensure_artifacts({%s})' % self.artifacts().pop()
-
-        result += ThingWithEnvironmentVariables(self.__element).as_python()
-
-        for resource in self.resources():
-            result += '.ensure_resource("%s")' % resource
-
-        for tab in self.tabs():
-            result += '.ensure_tab(%s)' % tab
-
-        if self.has_timeout():
-            result += '.set_timeout("%s")' % self.timeout()
-
-        if self.runs_on_all_agents():
-            result += '.set_runs_on_all_agents()'
-
-        for task in self.tasks():
-            # we add instead of ensure because we know it is starting off empty and need to handle duplicate tasks
-            result += "\njob.add_task(%s)" % task
-
-        return result
-
-
-class Stage(CommonEqualityMixin):
-    def __init__(self, element):
-        self.element = element
-
-    def __repr__(self):
-        return 'Stage(%s)' % self.name()
-
-    def to_dict(self, ordered=False):
-        if ordered:
-            result = OrderedDict()
-        else:
-            result = {}
-        result['name'] = self.name()
-        result['type'] = ('manual' if self.has_manual_approval()
-                          else 'on_success')
-        result['fetch_materials'] = self.fetch_materials()
-        result['clean_working_dir'] = self.clean_working_dir()
-        result['never_cleanup_artifacts'] = self.never_cleanup_artifacts()
-        result['jobs'] = [j.to_dict(ordered=ordered) for j in self.jobs()]
-        result['environment_variables'] = self.environment_variables()
-        result['encrypted_environment_variables'] = \
-            self.encrypted_environment_variables()
-        return result
-
-    def name(self):
-        return self.element.attrib['name']
-
-    def jobs(self):
-        return [Job(job_element) for job_element in PossiblyMissingElement(self.element).possibly_missing_child('jobs').findall('job')]
-
-    def ensure_job(self, name):
-        job_element = Ensurance(self.element).ensure_child("jobs").ensure_child_with_attribute("job", "name", name)
-        return Job(job_element._element)
-
-    def environment_variables(self):
-        return ThingWithEnvironmentVariables(self.element).environment_variables()
-
-    def encrypted_environment_variables(self):
-        return ThingWithEnvironmentVariables(self.element).encrypted_environment_variables()
-
-    def ensure_environment_variables(self, environment_variables):
-        ThingWithEnvironmentVariables(self.element).ensure_environment_variables(environment_variables)
-        return self
-
-    def ensure_encrypted_environment_variables(self, environment_variables):
-        ThingWithEnvironmentVariables(self.element).ensure_encrypted_environment_variables(environment_variables)
-        return self
-
-    def without_any_environment_variables(self):
-        ThingWithEnvironmentVariables(self.element).remove_all()
-        return self
-
-    def set_clean_working_dir(self):
-        self.element.attrib['cleanWorkingDir'] = "true"
-        return self
-
-    def clean_working_dir(self):
-        return PossiblyMissingElement(self.element).has_attribute('cleanWorkingDir', "true")
-
-    def set_never_cleanup_artifacts(self):
-        self.element.attrib['artifactCleanupProhibited'] = "true"
-        return self
-
-    def never_cleanup_artifacts(self):
-        return PossiblyMissingElement(self.element).has_attribute('artifactCleanupProhibited', "true")
-
-    def has_manual_approval(self):
-        return PossiblyMissingElement(self.element).possibly_missing_child("approval").has_attribute("type", "manual")
-
-    def fetch_materials(self):
-        return not PossiblyMissingElement(self.element).has_attribute("fetchMaterials", "false")
-
-    def set_fetch_materials(self, value):
-        if value:
-            PossiblyMissingElement(self.element).remove_attribute("fetchMaterials")
-        else:
-            Ensurance(self.element).set("fetchMaterials", "false")
-        return self
-
-    def set_has_manual_approval(self):
-        Ensurance(self.element).ensure_child_with_attribute("approval", "type", "manual")
-        return self
-
-    def reorder_elements_to_please_go(self):
-        move_all_to_end(self.element, "environmentvariables")
-        move_all_to_end(self.element, "jobs")
-
-        for job in self.jobs():
-            job.reorder_elements_to_please_go()
-
-    def as_python_commands_applied_to(self, receiver):
-        result = 'stage = %s.ensure_stage("%s")' % (receiver, self.name())
-
-        result += ThingWithEnvironmentVariables(self.element).as_python()
-
-        if self.clean_working_dir():
-            result += '.set_clean_working_dir()'
-
-        if self.has_manual_approval():
-            result += '.set_has_manual_approval()'
-
-        if not self.fetch_materials():
-            result += '.set_fetch_materials(False)'
-
-        for job in self.jobs():
-            result += '\n%s' % job.as_python_commands_applied_to_stage()
-
-        return result
-
 
 def ignore_patterns_in(element):
     return set([e.attrib['pattern'] for e in PossiblyMissingElement(element).possibly_missing_child("filter").findall("ignore")])
@@ -957,106 +502,6 @@ def Materials(element):
     raise RuntimeError("don't know of material matching " + ET.tostring(element, 'utf-8'))
 
 
-class GitMaterial(CommonEqualityMixin):
-    def __init__(self, url, branch=None, material_name=None, polling=True,
-                 ignore_patterns=set(), dest=None):
-        self.__url = url
-        self.__branch = branch
-        self.__material_name = material_name
-        self.__polling = polling
-        self.__ignore_patterns = ignore_patterns
-        self.__dest = dest
-
-    def to_dict(self, ordered=False):
-        if ordered:
-            result = OrderedDict()
-        else:
-            result = {}
-        result['type'] = 'git'
-        result['name'] = self.__material_name
-        result['url'] = self.url()
-        result['branch'] = self.branch()
-        result['dest'] = self.dest()
-        result['poll_new_changes'] = self.polling()
-        result['blacklist'] = list(self.ignore_patterns())
-        return result
-
-    def __repr__(self):
-        branch_part = ""
-        if not self.is_on_master():
-            branch_part = ', branch="%s"' % self.__branch
-        material_name_part = ""
-        if self.__material_name is not None:
-            material_name_part = ', material_name="%s"' % self.__material_name
-        polling_part = ''
-        if not self.__polling:
-            polling_part = ', polling=False'
-        ignore_patterns_part = ''
-        if self.ignore_patterns():
-            ignore_patterns_part = ', ignore_patterns=%s' % self.ignore_patterns()
-        destination = ' dest="%s"' % self.__dest if self.__dest else ''
-        return (('GitMaterial("%s"' % self.__url) +
-                branch_part + material_name_part + polling_part +
-                ignore_patterns_part + destination + ')')
-
-    def __has_options(self):
-        return (not self.is_on_master()) or (self.__material_name is not None) or (not self.__polling)
-
-    def is_on_master(self):
-        return self.__branch is None or self.__branch == 'master'
-
-    def as_python_applied_to_pipeline(self):
-        if self.__has_options():
-            return 'set_git_material(%s)' % str(self)
-        else:
-            return 'set_git_url("%s")' % self.__url
-
-    def dest(self):
-        return self.__dest
-
-    def is_git(self):
-        return True
-
-    def url(self):
-        return self.__url
-
-    def polling(self):
-        return self.__polling
-
-    def branch(self):
-        if self.is_on_master():
-            return 'master'
-        else:
-            return self.__branch
-
-    def material_name(self):
-        return self.__material_name
-
-    def ignore_patterns(self):
-        return self.__ignore_patterns
-
-    def append_to(self, element):
-        branch_part = ""
-        if not self.is_on_master():
-            branch_part = ' branch="%s"' % self.__branch
-        material_name_part = ""
-        if self.__material_name is not None:
-            material_name_part = ' materialName="%s"' % self.__material_name
-        polling_part = ''
-        if not self.__polling:
-            polling_part = ' autoUpdate="false"'
-        destination = ' dest="%s"' % self.__dest if self.__dest else ''
-
-        new_element = ET.fromstring(
-            ('<git url="%s"' % self.__url) + branch_part + destination + material_name_part + polling_part + ' />')
-        if self.ignore_patterns():
-            filter_element = ET.fromstring("<filter/>")
-            new_element.append(filter_element)
-            sorted_ignore_patterns = list(self.ignore_patterns())
-            sorted_ignore_patterns.sort()
-            for ignore_pattern in sorted_ignore_patterns:
-                filter_element.append(ET.fromstring('<ignore pattern="%s"/>' % ignore_pattern))
-        element.append(new_element)
 
 
 class PipelineMaterial(CommonEqualityMixin):
@@ -1417,48 +862,6 @@ class Pipeline(CommonEqualityMixin):
 DEFAULT_LABEL_TEMPLATE = "0.${COUNT}"  # TODO confirm what default really is. I am pretty sure this is mistaken!
 
 
-class PipelineGroup(CommonEqualityMixin):
-    def __init__(self, element, configurator):
-        self.element = element
-        self.__configurator = configurator
-
-    def __repr__(self):
-        return 'PipelineGroup("%s")' % self.name()
-
-    def name(self):
-        return self.element.attrib['group']
-
-    def templates(self):
-        return self.__configurator.templates()
-
-    def pipelines(self):
-        return [Pipeline(e, self) for e in self.element.findall('pipeline')]
-
-    def _matching_pipelines(self, name):
-        return [p for p in self.pipelines() if p.name() == name]
-
-    def has_pipeline(self, name):
-        return len(self._matching_pipelines(name)) > 0
-
-    def find_pipeline(self, name):
-        if self.has_pipeline(name):
-            return self._matching_pipelines(name)[0]
-        else:
-            raise RuntimeError('Cannot find pipeline with name "%s" in %s' % (name, self.pipelines()))
-
-    def ensure_pipeline(self, name):
-        pipeline_element = Ensurance(self.element).ensure_child_with_attribute('pipeline', 'name', name)._element
-        return Pipeline(pipeline_element, self)
-
-    def ensure_removal_of_pipeline(self, name):
-        for pipeline in self._matching_pipelines(name):
-            self.element.remove(pipeline.element)
-        return self
-
-    def ensure_replacement_of_pipeline(self, name):
-        pipeline = self.ensure_pipeline(name)
-        pipeline.make_empty()
-        return pipeline
 
 
 class Agent:
@@ -1501,9 +904,12 @@ class HostRestClient:
                 raise RuntimeError("Could not post config to Go server (%s) (and result was not json):\n%s" % (url, result))
 
 
-class GoCdConfigurator:
+class GoCdConfigurator(object):
     def __init__(self, host_rest_client):
         self.__host_rest_client = host_rest_client
+        self.__set_initial_config_xml()
+
+    def __set_initial_config_xml(self):
         self.__initial_config, self._initial_md5 = self.__current_config_response()
         self.__xml_root = ET.fromstring(self.__initial_config)
 
@@ -1519,6 +925,7 @@ class GoCdConfigurator:
             save_part = "\n\nconfigurator.save_updated_config(save_config_locally=True, dry_run=True)"
         return result + save_part
 
+    @property
     def current_config(self):
         return self.__current_config_response()[0]
 
@@ -1532,15 +939,69 @@ class GoCdConfigurator:
         move_all_to_end(self.__xml_root, 'environments')
         move_all_to_end(self.__xml_root, 'agents')
 
-        for pipeline in self.pipelines():
+        for pipeline in self.pipelines:
             pipeline.reorder_elements_to_please_go()
-        for template in self.templates():
+        for template in self.templates:
             template.reorder_elements_to_please_go()
 
+    @property
     def config(self):
         self.reorder_elements_to_please_go()
         return ET.tostring(self.__xml_root, 'utf-8')
 
+    @property
+    def artifacts_dir(self):
+        return self.__possibly_missing_server_element().attribute('artifactsdir')
+
+    @artifacts_dir.setter
+    def artifacts_dir(self, artifacts_dir):
+        self.__server_element_ensurance().set('artifactsdir', artifacts_dir)
+
+    @property
+    def site_url(self):
+        return self.__possibly_missing_server_element().attribute('siteUrl')
+
+    @site_url.setter
+    def site_url(self, site_url):
+        self.__server_element_ensurance().set('siteUrl', site_url)
+
+    @property
+    def agent_auto_register_key(self):
+        return self.__possibly_missing_server_element().attribute('agentAutoRegisterKey')
+
+    @agent_auto_register_key.setter
+    def agent_auto_register_key(self, agent_auto_register_key):
+        self.__server_element_ensurance().set('agentAutoRegisterKey', agent_auto_register_key)
+
+    @property
+    def purge_start(self):
+        return self.__server_decimal_attribute('purgeStart')
+
+    @purge_start.setter
+    def purge_start(self, purge_start_decimal):
+        assert isinstance(purge_start_decimal, Decimal)
+        self.__server_element_ensurance().set('purgeStart', str(purge_start_decimal))
+
+    @property
+    def purge_upto(self):
+        return self.__server_decimal_attribute('purgeUpto')
+
+    @purge_upto.setter
+    def purge_upto(self, purge_upto_decimal):
+        assert isinstance(purge_upto_decimal, Decimal)
+        self.__server_element_ensurance().set('purgeUpto', str(purge_upto_decimal))
+
+    def __server_decimal_attribute(self, attribute_name):
+        attribute = self.__possibly_missing_server_element().attribute(attribute_name)
+        return Decimal(attribute) if attribute else None
+
+    def __possibly_missing_server_element(self):
+        return PossiblyMissingElement(self.__xml_root).possibly_missing_child('server')
+
+    def __server_element_ensurance(self):
+        return Ensurance(self.__xml_root).ensure_child('server')
+
+    @property
     def pipeline_groups(self):
         return [PipelineGroup(e, self) for e in self.__xml_root.findall('pipelines')]
 
@@ -1549,7 +1010,7 @@ class GoCdConfigurator:
         return PipelineGroup(pipeline_group_element._element, self)
 
     def ensure_removal_of_pipeline_group(self, group_name):
-        matching = [g for g in self.pipeline_groups() if g.name() == group_name]
+        matching = [g for g in self.pipeline_groups if g.name == group_name]
         for group in matching:
             self.__xml_root.remove(group.element)
         return self
@@ -1559,16 +1020,25 @@ class GoCdConfigurator:
             self.__xml_root.remove(e)
         return self
 
+    @property
     def agents(self):
         return [Agent(e) for e in PossiblyMissingElement(self.__xml_root).possibly_missing_child('agents').findall('agent')]
 
+    def ensure_removal_of_agent(self, hostname):
+        matching = [agent for agent in self.agents if agent.hostname == hostname]
+        for agent in matching:
+            Ensurance(self.__xml_root).ensure_child('agents').element.remove(agent._element)
+        return self
+
+    @property
     def pipelines(self):
         result = []
-        groups = self.pipeline_groups()
+        groups = self.pipeline_groups
         for group in groups:
-            result.extend(group.pipelines())
+            result.extend(group.pipelines)
         return result
 
+    @property
     def templates(self):
         return [Pipeline(e, 'templates') for e in PossiblyMissingElement(self.__xml_root).possibly_missing_child('templates').findall('pipeline')]
 
@@ -1581,15 +1051,27 @@ class GoCdConfigurator:
         template.make_empty()
         return template
 
-    def git_urls(self):
-        return [pipeline.git_url() for pipeline in self.pipelines() if pipeline.has_single_git_material()]
+    def ensure_removal_of_template(self, template_name):
+        matching = [template for template in self.templates if template.name == template_name]
+        root = Ensurance(self.__xml_root)
+        templates_element = root.ensure_child('templates').element
+        for template in matching:
+            templates_element.remove(template.element)
+        if len(self.templates) == 0:
+            root.element.remove(templates_element)
+        return self
 
+    @property
+    def git_urls(self):
+        return [pipeline.git_url for pipeline in self.pipelines if pipeline.has_single_git_material]
+
+    @property
     def has_changes(self):
-        return prettify(self.__initial_config) != prettify(self.config())
+        return prettify(self.__initial_config) != prettify(self.config)
 
     def save_updated_config(self, save_config_locally=False, dry_run=False):
         config_before = prettify(self.__initial_config)
-        config_after = prettify(self.config())
+        config_after = prettify(self.config)
         if save_config_locally:
             open('config-before.xml', 'w').write(config_before.encode('utf-8'))
             open('config-after.xml', 'w').write(config_after.encode('utf-8'))
@@ -1604,12 +1086,38 @@ class GoCdConfigurator:
                 subprocess.call(["kdiff3", "config-before.xml", "config-after.xml"])
 
         data = {
-            'xmlFile': self.config(),
+            'xmlFile': self.config,
             'md5': self._initial_md5
         }
 
         if not dry_run and config_before != config_after:
             self.__host_rest_client.post('/go/admin/restful/configuration/file/POST/xml', data)
+            self.__set_initial_config_xml()
+
+
+class HostRestClient(object):
+    def __init__(self, host):
+        self.__host = host
+
+    def __repr__(self):
+        return 'HostRestClient("%s")' % self.__host
+
+    def __path(self, path):
+        return ('http://%s' % self.__host) + path
+
+    def get(self, path):
+        return requests.get(self.__path(path))
+
+    def post(self, path, data):
+        url = self.__path(path)
+        result = requests.post(url, data)
+        if result.status_code != 200:
+            try:
+                result_json = json.loads(result.text.replace("\\'", "'"))
+                message = result_json.get('result', result.text)
+                raise RuntimeError("Could not post config to Go server (%s) [status code=%s]:\n%s" % (url, result.status_code, message))
+            except ValueError:
+                raise RuntimeError("Could not post config to Go server (%s) [status code=%s] (and result was not json):\n%s" % (url, result.status_code, result))
 
 
 if __name__ == '__main__':
@@ -1626,9 +1134,9 @@ if __name__ == '__main__':
 
     go_server = GoCdConfigurator(HostRestClient(args.server))
 
-    matching_pipelines = [p for p in go_server.pipelines() if p.name() == args.pipeline]
+    matching_pipelines = [p for p in go_server.pipelines if p.name == args.pipeline]
     if len(matching_pipelines) != 1:
         raise RuntimeError("Should have found one matching pipeline but found %s" % matching_pipelines)
     pipeline = matching_pipelines[0]
 
-    print go_server.as_python(pipeline)
+    print(go_server.as_python(pipeline))

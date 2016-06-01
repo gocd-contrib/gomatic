@@ -8,7 +8,8 @@ import os
 import unittest
 import sys
 
-from gomatic import GoCdConfigurator, HostRestClient, GitMaterial, BuildArtifact, TestArtifact, ExecTask
+from gomatic import GoCdConfigurator, HostRestClient, GitMaterial, ExecTask
+from gomatic.gocd.artifacts import Artifact
 
 
 def start_go_server(gocd_version):
@@ -26,7 +27,7 @@ def start_go_server(gocd_version):
             print "Waiting for Docker-based Go server to start..."
 
 
-class populated_go_server:
+class populated_go_server(object):
     def __init__(self, gocd_version):
         self.gocd_version = gocd_version
 
@@ -39,16 +40,14 @@ class populated_go_server:
                 .ensure_pipeline_group("P.Group") \
                 .ensure_replacement_of_pipeline("more-options") \
                 .set_timer("0 15 22 * * ?") \
-                .set_git_material(
-                GitMaterial("git@bitbucket.org:springersbm/gomatic.git", material_name="some-material-name",
-                            polling=False)) \
-                .ensure_environment_variables(
-                {'JAVA_HOME': '/opt/java/jdk-1.7'}) \
+                .set_git_material(GitMaterial("https://github.com/SpringerSBM/gomatic.git", material_name="some-material-name", polling=False)) \
+                .ensure_environment_variables({'JAVA_HOME': '/opt/java/jdk-1.7'}) \
                 .ensure_parameters({'environment': 'qa'})
             stage = pipeline.ensure_stage("earlyStage")
             job = stage.ensure_job("earlyWorm").ensure_artifacts(
-                {BuildArtifact("scripts/*", "files"), BuildArtifact("target/universal/myapp*.zip", "artifacts"),
-                 TestArtifact("from", "to")}).set_runs_on_all_agents()
+                {Artifact.get_build_artifact("scripts/*", "files"),
+                 Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts"),
+                 Artifact.get_test_artifact("from", "to")}).set_runs_on_all_agents()
             job.add_task(ExecTask(['ls']))
 
             configurator.save_updated_config(save_config_locally=True)
@@ -105,29 +104,58 @@ class IntegrationTest(unittest.TestCase):
         '14.4.0-1356',
         '15.1.0-1863',
         '15.2.0-2248',
+        # '15.3.0-2771', no longer on download page
+        # '15.3.1-2777', no longer on download page
+        '16.1.0-2855',
+        '16.2.1-3027',
+        '16.3.0-3183',
+        '16.4.0-3223'
     ]
-    
+
     def test_all_versions(self):
         for gocd_version in self.gocd_versions:
-            print "*" * 60, gocd_version
+            print 'test_all_versions', "*" * 60, gocd_version
             with populated_go_server(gocd_version) as configurator:
-                self.assertEquals(["P.Group"], [p.name() for p in configurator.pipeline_groups()])
-                self.assertEquals(["more-options"], [p.name() for p in configurator.pipeline_groups()[0].pipelines()])
-                pipeline = configurator.pipeline_groups()[0].pipelines()[0]
-                self.assertEquals("0 15 22 * * ?", pipeline.timer())
-                self.assertEquals(
-                    GitMaterial("git@bitbucket.org:springersbm/gomatic.git", material_name="some-material-name",
-                                polling=False), pipeline.git_material())
-                self.assertEquals({'JAVA_HOME': '/opt/java/jdk-1.7'}, pipeline.environment_variables())
-                self.assertEquals({'environment': 'qa'}, pipeline.parameters())
-                self.assertEquals(['earlyStage'], [s.name() for s in pipeline.stages()])
-                self.assertEquals(['earlyWorm'], [j.name() for j in pipeline.stages()[0].jobs()])
-                job = pipeline.stages()[0].jobs()[0]
-                self.assertEquals(
-                    {BuildArtifact("scripts/*", "files"), BuildArtifact("target/universal/myapp*.zip", "artifacts"),
-                     TestArtifact("from", "to")}, job.artifacts())
-                self.assertEquals(True, job.runs_on_all_agents())
-                self.assertEquals([ExecTask(['ls'])], job.tasks())
+                self.assertEquals(["P.Group"], [p.name for p in configurator.pipeline_groups])
+                self.assertEquals(["more-options"], [p.name for p in configurator.pipeline_groups[0].pipelines])
+                pipeline = configurator.pipeline_groups[0].pipelines[0]
+                self.assertEquals("0 15 22 * * ?", pipeline.timer)
+                self.assertEquals(GitMaterial("https://github.com/SpringerSBM/gomatic.git", material_name="some-material-name", polling=False),
+                                  pipeline.git_material)
+                self.assertEquals({'JAVA_HOME': '/opt/java/jdk-1.7'}, pipeline.environment_variables)
+                self.assertEquals({'environment': 'qa'}, pipeline.parameters)
+                self.assertEquals(['earlyStage'], [s.name for s in pipeline.stages])
+                self.assertEquals(['earlyWorm'], [j.name for j in pipeline.stages[0].jobs])
+                job = pipeline.stages[0].jobs[0]
+                self.assertEquals({Artifact.get_build_artifact("scripts/*", "files"), Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts"), Artifact.get_test_artifact("from", "to")},
+                                  job.artifacts)
+                self.assertEquals(True, job.runs_on_all_agents)
+                self.assertEquals([ExecTask(['ls'])], job.tasks)
+
+    def test_can_save_multiple_times_using_same_configurator(self):
+        gocd_version = self.gocd_versions[-1]
+        print 'test_can_save_multiple_times_using_same_configurator', "*" * 60, gocd_version
+        with populated_go_server(gocd_version) as configurator:
+            pipeline = configurator \
+                .ensure_pipeline_group("Test") \
+                .ensure_replacement_of_pipeline("new-one")
+            pipeline.set_git_material(GitMaterial("https://github.com/SpringerSBM/gomatic.git", polling=False))
+            job = pipeline.ensure_stage("build").ensure_job("build")
+            job.ensure_task(ExecTask(["ls"]))
+
+            configurator.save_updated_config(save_config_locally=True, dry_run=False)
+
+            pipeline = configurator \
+                .ensure_pipeline_group("Test") \
+                .ensure_replacement_of_pipeline("new-two")
+            pipeline.set_git_material(GitMaterial("https://github.com/SpringerSBM/gomatic.git", polling=False))
+            job = pipeline.ensure_stage("build").ensure_job("build")
+            job.ensure_task(ExecTask(["ls"]))
+
+            configurator.save_updated_config(save_config_locally=True, dry_run=False)
+
+            self.assertEquals(1, len(configurator.ensure_pipeline_group('Test').find_pipeline('new-one').stages))
+            self.assertEquals(1, len(configurator.ensure_pipeline_group('Test').find_pipeline('new-two').stages))
 
 
 if __name__ == '__main__':
