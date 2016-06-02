@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 from decimal import Decimal
 
-from gomatic import GoCdConfigurator, FetchArtifactDir, RakeTask, ExecTask, FetchArtifactTask, \
+from gomatic import GoCdConfigurator, FetchArtifactDir, RakeTask, ExecTask, ScriptExecutorTask,  FetchArtifactTask, \
     FetchArtifactFile, Tab, GitMaterial, PipelineMaterial, Pipeline
 from gomatic.fake import FakeHostRestClient, empty_config_xml, config, empty_config
 from gomatic.gocd.pipelines import DEFAULT_LABEL_TEMPLATE
@@ -244,22 +244,22 @@ class TestJobs(unittest.TestCase):
         job = more_options_pipeline().ensure_stage("script-executor").\
             ensure_job('test-script-executor')
         job.ensure_task(ScriptExecutorTask(script, runif='any'))
-        self.assertEquals(1, len(job.tasks()))
-        self.assertEquals('script', job.tasks()[0].type())
-        self.assertEquals(script, job.tasks()[0].script())
-        self.assertEquals('any', job.tasks()[0].runif())
+        self.assertEquals(1, len(job.tasks))
+        self.assertEquals('script', job.tasks[0].type)
+        self.assertEquals(script, job.tasks[0].script)
+        self.assertEquals('any', job.tasks[0].runif)
 
         job.ensure_task(ScriptExecutorTask(script, runif='failed'))
-        self.assertEquals(2, len(job.tasks()))
-        self.assertEquals('script', job.tasks()[1].type())
-        self.assertEquals(script, job.tasks()[1].script())
-        self.assertEquals('failed', job.tasks()[1].runif())
+        self.assertEquals(2, len(job.tasks))
+        self.assertEquals('script', job.tasks[1].type)
+        self.assertEquals(script, job.tasks[1].script)
+        self.assertEquals('failed', job.tasks[1].runif)
 
         job.ensure_task(ScriptExecutorTask(script))
-        self.assertEquals(3, len(job.tasks()))
-        self.assertEquals('script', job.tasks()[2].type())
-        self.assertEquals(script, job.tasks()[2].script())
-        self.assertEquals('passed', job.tasks()[2].runif())
+        self.assertEquals(3, len(job.tasks))
+        self.assertEquals('script', job.tasks[2].type)
+        self.assertEquals(script, job.tasks[2].script)
+        self.assertEquals('passed', job.tasks[2].runif)
 
     def test_can_add_exec_task_with_runif(self):
         stages = typical_pipeline().stages
@@ -1058,7 +1058,7 @@ class TestPipeline(unittest.TestCase):
 
     def test_pipelines_to_dict(self):
         pipeline = typical_pipeline()
-        pp_dict = pipeline.to_dict()
+        pp_dict = pipeline.to_dict("P.Group")
         self.assertEquals('typical', pp_dict['name'])
         self.assertEquals({'JAVA_HOME': '/opt/java/jdk-1.8'},
                           pp_dict['environment_variables'])
@@ -1066,7 +1066,7 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals({}, pp_dict['parameters'])
         self.assertEquals(2, len(pp_dict['stages']))
         self.assertEquals(1, len(pp_dict['materials']))
-        self.assertTrue(pp_dict['template'] is None)
+        self.assertFalse(pp_dict.has_key('template'))
         self.assertTrue(pp_dict['cron_timer_spec'] is None)
         self.assertFalse(pp_dict['automatic_pipeline_locking'])
 

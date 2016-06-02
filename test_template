@@ -1,0 +1,46 @@
+name: template3
+group:
+automatic_pipeline_locking: false
+cron_timer_spec: null
+materials: []
+stages: [
+    {
+        name: defaultStage
+        type: on_success
+        fetch_materials: true
+        clean_working_dir: false
+        never_cleanup_artifacts: false
+        jobs: [
+            {
+                name: defaultJob
+                resources: []
+                tasks: [
+                    {
+                        type: rake
+                        runif: passed
+                        target: asdssss
+                    }
+                    {
+                        type: maven
+                        runif: passed
+                        arguments: dd
+                        profiles: dd
+                        offline: null
+                        quiet: null
+                        debug: null
+                        batch: true
+                    }
+                ]
+                artifacts: []
+                environment_variables: {}
+                encrypted_environment_variables: {}
+                tabs: []
+            }
+        ]
+        environment_variables: {}
+        encrypted_environment_variables: {}
+    }
+]
+environment_variables: {}
+encrypted_environment_variables: {}
+parameters: {}

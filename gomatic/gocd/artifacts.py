@@ -46,6 +46,17 @@ class Artifact(CommonEqualityMixin):
         else:
             return '%s("%s", "%s")' % (self.constructor, self.__src, self.__dest)
 
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = self.__tag
+        result['src'] = self.__src
+        result['dest'] = self.__dest
+        return result
+
+
     def append_to(self, element):
         if self.__dest is None:
             element.append(ET.fromstring('<%s src="%s" />' % (self.__tag, self.__src)))

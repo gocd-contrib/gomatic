@@ -148,6 +148,18 @@ class PipelineMaterial(CommonEqualityMixin):
         else:
             return 'PipelineMaterial("%s", "%s", "%s")' % (self.__pipeline_name, self.__stage_name, self.__material_name)
 
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = 'pipeline'
+        result['name'] = self.__material_name
+        result['pipeline_name'] = self.__pipeline_name
+        result['stage_name'] = self.__stage_name
+        return result
+
+
     is_git = False
 
     def append_to(self, element):

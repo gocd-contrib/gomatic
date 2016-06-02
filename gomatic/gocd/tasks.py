@@ -74,6 +74,21 @@ class FetchArtifactTask(AbstractTask):
 
         return ('FetchArtifactTask("%s", "%s", "%s", %s' % (self.__pipeline, self.__stage, self.__job, self.__src)) + dest_parameter + runif_parameter + ')'
 
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = self.type
+        result['runif'] = self.runif
+        result['pipeline'] = self.pipeline
+        result['stage'] = self.stage
+        result['job'] = self.job
+        result['src_type'] = self.src.as_xml_type_and_value[0]
+        result['src_value'] = self.src.as_xml_type_and_value[1]
+        result['dest'] = self.dest
+        return result
+
     type = 'fetchartifact'
 
     @property
@@ -127,6 +142,17 @@ class ExecTask(AbstractTask):
             runif_parameter = ', runif="%s"' % self._runif
 
         return ('ExecTask(%s' % self.command_and_args) + working_dir_parameter + runif_parameter + ')'
+
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = self.type
+        result['runif'] = self.runif
+        result['command'] = self.command_and_args
+        result['working_dir'] = self.working_dir
+        return result
 
     type = 'exec'
 
@@ -238,7 +264,7 @@ class MavenTask(AbstractTask):
 
         new_element.append(plugin_config)
         new_element.append(config)
-        new_element.append(ET.fromstring('<runif status="%s" />' % self.runif()))
+        new_element.append(ET.fromstring('<runif status="%s" />' % self.runif))
 
         Ensurance(element).ensure_child("tasks").append(new_element)
         return Task(new_element)
@@ -271,6 +297,63 @@ class RakeTask(AbstractTask):
         new_element = ET.fromstring('<rake target="%s"></rake>' % self.__target)
         Ensurance(element).ensure_child("tasks").append(new_element)
         return Task(new_element)
+
+
+class ScriptExecutorTask(AbstractTask):
+    def __init__(self, script, runif="passed"):
+        super(self.__class__, self).__init__(runif)
+        self._script = script
+
+    def __repr__(self):
+        return 'ScriptExecutorTask(runif="%s", script="%s")' % (self._runif, self._script)
+
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = self.type
+        result['runif'] = self.runif
+        result['script'] = self.script
+        return result
+
+    @property
+    def type(self):
+        return "script"
+
+    @property
+    def script(self):
+        return self._script
+
+    def append_to(self, element):
+        new_element = ET.fromstring('<task></task>')
+        plugin_config = ET.fromstring(
+            '<pluginConfiguration id="script-executor" version="1" />')
+        script_xml_str = \
+            ''' <configuration>
+                      <property>
+                        <key>script</key>
+                        <value>%s</value>
+                      </property>
+                    </configuration>''' % escape(self._script)
+
+        try:
+            script_config = ET.fromstring(script_xml_str)
+        except Exception as e:
+            msg = '''
+                Could not parse script as XML,
+                reason: {0}
+                script XML: {1}
+            '''.format(e, script_xml_str)
+            raise Exception(msg)
+
+        new_element.append(plugin_config)
+        new_element.append(script_config)
+        new_element.append(ET.fromstring('<runif status="%s" />' % self.runif))
+
+        Ensurance(element).ensure_child("tasks").append(new_element)
+        return Task(new_element)
+
 
 
 def runif_from(element):
