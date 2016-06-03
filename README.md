@@ -46,6 +46,10 @@ We believe it works for the following versions (as indicated by `integration_tes
 * 14.4.0-1356
 * 15.1.0-1863
 * 15.2.0-2248
+* 16.1.0-2855
+* 16.2.1-3027
+* 16.3.0-3183
+* 16.4.0-3223
 
 ## Install
 
@@ -77,7 +81,7 @@ Bear in mind that Gomatic does not currently support every configuration option 
 ### Gotchas
 
 * Gomatic does not prevent you from creating config XML that GoCD will not accept. For example, if you create a stage that has no jobs, Gomatic won't complain until you try to run `save_updated_config`, at which time the GoCD server will reject the config XML.
-* Gomatic currently only supports calling `save_updated_config` once per instance of `GoCdConfigurator`.
+* Gomatic does not check that the version of GoCD it is configuring supports all the features used. For example, versions of GoCD before 15.2 do not support encrypted environment variables on stages and jobs.
 
 ## Developing Gomatic
 
@@ -107,7 +111,7 @@ Unit tests:
 
 Integration tests (takes a long time to download many versions of GoCD) (requires [docker](https://www.docker.com/) to be installed in order to run):
  
-1. `python integration_test.py`
+1. `python -m unittest tests.integration_test`
 
 ### Contributing to Gomatic via pull request
 

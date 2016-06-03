@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">
+  <server artifactsdir="/some/dir" siteUrl="http://10.20.30.40/" purgeStart="55.0" purgeUpto="75.0" agentAutoRegisterKey="my_ci_server" commandRepositoryLocation="default" serverId="84178ba3-c2f9-4b2e-acfc-b1040882b105" />
+</cruise>
