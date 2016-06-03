@@ -1,6 +1,7 @@
 from xml.etree import ElementTree as ET
 from gomatic.mixins import CommonEqualityMixin
 
+from collections import OrderedDict
 
 def fetch_artifact_src_from(element):
     if 'srcfile' in element.attrib:
