@@ -211,7 +211,7 @@ class GoCdConfigurator(object):
 
 
 class HostRestClient(object):
-    def __init__(self, host, username=None, password=None, ssl=False):
+    def __init__(self, host, username=None, password=None, ssl=False, verify_ssl=True):
         self.__host = host
         self.__username = username
         self.__password = password
@@ -228,7 +228,7 @@ class HostRestClient(object):
         return (self.__username, self.__password) if self.__username or self.__password else None
 
     def get(self, path):
-	result = requests.get(self.__path(path), auth=self.__auth())
+	result = requests.get(self.__path(path), auth=self.__auth(), verify=verify_ssl) 
         count = 0
         while ((result.status_code == 503) or (result.status_code == 504)) and (count < 5):
             result = requests.get(self.__path(path))
@@ -238,7 +238,7 @@ class HostRestClient(object):
 
     def post(self, path, data):
         url = self.__path(path)
-        result = requests.post(url, data, auth=self.__auth())
+        result = requests.post(url, data, auth=self.__auth(), verify=verify_ssl)
         if result.status_code != 200:
             try:
                 result_json = json.loads(result.text.replace("\\'", "'"))
