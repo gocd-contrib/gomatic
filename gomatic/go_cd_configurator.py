@@ -248,16 +248,17 @@ class HostRestClient(object):
                 raise RuntimeError("Could not post config to Go server (%s) [status code=%s] (and result was not json):\n%s" % (url, result.status_code, result))
 
 
-if __name__ == '__main__':
+def main(args):
     parser = argparse.ArgumentParser(description='Gomatic is an API for configuring GoCD. '
                                                  'Run python -m gomatic.go_cd_configurator to reverse engineer code to configure an existing pipeline.')
     parser.add_argument('-s', '--server', help='the go server (e.g. "localhost:8153" or "my.gocd.com")')
     parser.add_argument('-p', '--pipeline', help='the name of the pipeline to reverse-engineer the config for')
     parser.add_argument('--username', help='the username for the gocd server', default=None)
     parser.add_argument('--password', help='the password for the gocd server', default=None)
-    parser.add_argument('--ssl', help='use HTTPS for the connection to the gocd server', dest='ssl', action='store_true', default=False)
+    parser.add_argument('--ssl', help='use HTTPS for the connection to the gocd server', dest='ssl', action='store_true',
+                        default=False)
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -271,3 +272,7 @@ if __name__ == '__main__':
     pipeline = matching_pipelines[0]
 
     print(go_server.as_python(pipeline))
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
