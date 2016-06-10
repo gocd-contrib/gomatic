@@ -216,6 +216,7 @@ class HostRestClient(object):
         self.__username = username
         self.__password = password
         self.__ssl = ssl
+        self.__verify_ssl = verify_ssl
 
     def __repr__(self):
         return 'HostRestClient("{0}", ssl={1})'.format(self.__host, self.__ssl)
@@ -228,7 +229,7 @@ class HostRestClient(object):
         return (self.__username, self.__password) if self.__username or self.__password else None
 
     def get(self, path):
-	result = requests.get(self.__path(path), auth=self.__auth(), verify=verify_ssl) 
+	result = requests.get(self.__path(path), auth=self.__auth(), verify=self.__verify_ssl) 
         count = 0
         while ((result.status_code == 503) or (result.status_code == 504)) and (count < 5):
             result = requests.get(self.__path(path))
@@ -238,7 +239,7 @@ class HostRestClient(object):
 
     def post(self, path, data):
         url = self.__path(path)
-        result = requests.post(url, data, auth=self.__auth(), verify=verify_ssl)
+        result = requests.post(url, data, auth=self.__auth(), verify=self.__verify_ssl)
         if result.status_code != 200:
             try:
                 result_json = json.loads(result.text.replace("\\'", "'"))
@@ -257,6 +258,9 @@ def main(args):
     parser.add_argument('--password', help='the password for the gocd server', default=None)
     parser.add_argument('--ssl', help='use HTTPS for the connection to the gocd server', dest='ssl', action='store_true',
                         default=False)
+    parser.add_argument('--verify_ssl', help='if set the identity of the ssl certificate will be verified.', dest='verify_ssl',
+                        action='store_true',
+                        default=False)
 
     args = parser.parse_args(args)
 
@@ -264,7 +268,7 @@ def main(args):
         parser.print_help()
         sys.exit(1)
 
-    go_server = GoCdConfigurator(HostRestClient(args.server, args.username, args.password, ssl=args.ssl))
+    go_server = GoCdConfigurator(HostRestClient(args.server, args.username, args.password, ssl=args.ssl, verify_ssl=args.verify_ssl))
 
     matching_pipelines = [p for p in go_server.pipelines if p.name == args.pipeline]
     if len(matching_pipelines) != 1:
