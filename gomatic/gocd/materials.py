@@ -1,7 +1,7 @@
 from xml.etree import ElementTree as ET
 from gomatic.mixins import CommonEqualityMixin
 from gomatic.xml_operations import ignore_patterns_in
-
+from collections import OrderedDict
 
 def Materials(element):
     if element.tag == "git":
@@ -29,6 +29,20 @@ class GitMaterial(CommonEqualityMixin):
         self.__polling = polling
         self.__ignore_patterns = ignore_patterns
         self.__destination_directory = destination_directory
+
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = 'git'
+        result['name'] = self.__material_name
+        result['url'] = self.__url
+        result['branch'] = self.__branch
+        result['dest'] = self.__destination_directory
+        result['poll_new_changes'] = self.__polling
+        result['blacklist'] = list(self.__ignore_patterns)
+        return result
 
     def __repr__(self):
         branch_part = ""
@@ -133,6 +147,18 @@ class PipelineMaterial(CommonEqualityMixin):
             return 'PipelineMaterial("%s", "%s")' % (self.__pipeline_name, self.__stage_name)
         else:
             return 'PipelineMaterial("%s", "%s", "%s")' % (self.__pipeline_name, self.__stage_name, self.__material_name)
+
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = 'pipeline'
+        result['name'] = self.__material_name
+        result['pipeline_name'] = self.__pipeline_name
+        result['stage_name'] = self.__stage_name
+        return result
+
 
     is_git = False
 

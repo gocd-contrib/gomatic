@@ -6,9 +6,9 @@ from gomatic.gocd.tasks import Task
 from gomatic.mixins import CommonEqualityMixin
 from gomatic.xml_operations import PossiblyMissingElement, Ensurance, move_all_to_end
 
+from collections import OrderedDict
 
 DEFAULT_LABEL_TEMPLATE = "0.${COUNT}"  # TODO confirm what default really is. I am pretty sure this is mistaken!
-
 
 class Tab(CommonEqualityMixin):
     def __init__(self, name, path):
@@ -18,9 +18,17 @@ class Tab(CommonEqualityMixin):
     def __repr__(self):
         return 'Tab("%s", "%s")' % (self.__name, self.__path)
 
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['name'] = self.__name
+        result['path'] = self.__path
+        return result
+
     def append_to(self, element):
         element.append(ET.fromstring('<tab name="%s" path="%s" />' % (self.__name, self.__path)))
-
 
 class Job(CommonEqualityMixin):
     def __init__(self, element):
@@ -29,6 +37,26 @@ class Job(CommonEqualityMixin):
 
     def __repr__(self):
         return "Job('%s', %s)" % (self.name, self.tasks)
+
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['name'] = self.name
+        result['resources'] = list(self.resources)
+        if self.has_timeout:
+            result['timeout'] = self.timeout
+        if self.runs_on_all_agents:
+            result['runs_on_all_agents'] = True
+        result['tasks'] = [t.to_dict(ordered=ordered) for t in self.tasks]
+        result['artifacts'] = [a.to_dict(ordered=ordered)
+                               for a in self.artifacts]
+        result['environment_variables'] = self.environment_variables
+        result['encrypted_environment_variables'] = \
+            self.encrypted_environment_variables
+        result['tabs'] = [t.to_dict(ordered=ordered) for t in self.tabs]
+        return result
 
     @property
     def name(self):
@@ -184,6 +212,23 @@ class Stage(CommonEqualityMixin):
     def __repr__(self):
         return 'Stage(%s)' % self.name()
 
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['name'] = self.name
+        result['type'] = ('manual' if self.has_manual_approval
+                          else 'on_success')
+        result['fetch_materials'] = self.fetch_materials
+        result['clean_working_dir'] = self.clean_working_dir
+        result['never_cleanup_artifacts'] = self.never_cleanup_artifacts()
+        result['jobs'] = [j.to_dict(ordered=ordered) for j in self.jobs]
+        result['environment_variables'] = self.environment_variables
+        result['encrypted_environment_variables'] = \
+            self.encrypted_environment_variables
+        return result
+
     @property
     def name(self):
         return self.element.attrib['name']
@@ -228,6 +273,15 @@ class Stage(CommonEqualityMixin):
     @property
     def clean_working_dir(self):
         return PossiblyMissingElement(self.element).has_attribute('cleanWorkingDir', "true")
+
+    def set_never_cleanup_artifacts(self):
+        self.element.attrib['artifactCleanupProhibited'] = "true"
+        return self
+
+    def never_cleanup_artifacts(self):
+        return PossiblyMissingElement(self.element).has_attribute('artifactCleanupProhibited', "true")
+
+
 
     @property
     def has_manual_approval(self):
@@ -283,6 +337,39 @@ class Pipeline(CommonEqualityMixin):
     def __init__(self, element, parent):
         self.element = element
         self.parent = parent
+
+    def to_dict(self, group_name, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['name'] = self.name
+
+        # template is pipeline with a bit different set of fields
+        if not self.is_template:
+
+            result['group'] = group_name
+            if self.has_label_template:
+                result['label_template'] = self.label_template
+            result['automatic_pipeline_locking'] = \
+                self.has_automatic_pipeline_locking
+            result['cron_timer_spec'] = self.timer if self.has_timer else None
+            if self.has_timer:
+                result['cron_timer_run_only_on_new_material'] = \
+                    self.timer_triggers_only_on_changes
+            result['materials'] = [m.to_dict(ordered=ordered)
+                                   for m in self.materials]
+            result['environment_variables'] = self.environment_variables
+            result['encrypted_environment_variables'] = \
+                self.encrypted_environment_variables
+            result['parameters'] = self.parameters
+            if self.__template_name:
+                result['template'] = self.__template_name
+
+        result['stages'] = [s.to_dict(ordered=ordered) for s in self.stages]
+
+        return result
+
 
     @property
     def name(self):
@@ -355,6 +442,12 @@ class Pipeline(CommonEqualityMixin):
     def set_automatic_pipeline_locking(self):
         self.element.attrib['isLocked'] = 'true'
         return self
+
+    def clear_automatic_pipeline_locking(self):
+        try:
+            del self.element.attrib['isLocked']
+        except Exception:
+            pass
 
     @property
     def has_automatic_pipeline_locking(self):

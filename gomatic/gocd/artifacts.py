@@ -1,6 +1,7 @@
 from xml.etree import ElementTree as ET
 from gomatic.mixins import CommonEqualityMixin
 
+from collections import OrderedDict
 
 def fetch_artifact_src_from(element):
     if 'srcfile' in element.attrib:
@@ -45,6 +46,17 @@ class Artifact(CommonEqualityMixin):
             return '%s("%s")' % (self.constructor, self.__src)
         else:
             return '%s("%s", "%s")' % (self.constructor, self.__src, self.__dest)
+
+    def to_dict(self, ordered=False):
+        if ordered:
+            result = OrderedDict()
+        else:
+            result = {}
+        result['type'] = self.__tag
+        result['src'] = self.__src
+        result['dest'] = self.__dest
+        return result
+
 
     def append_to(self, element):
         if self.__dest is None:

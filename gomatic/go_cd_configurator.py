@@ -4,13 +4,36 @@ import xml.etree.ElementTree as ET
 import argparse
 import sys
 import subprocess
-
 import requests
 from decimal import Decimal
 
 from gomatic.gocd.pipelines import Pipeline, PipelineGroup
 from gomatic.gocd.agents import Agent
 from gomatic.xml_operations import Ensurance, PossiblyMissingElement, move_all_to_end, prettify
+
+class HostRestClient:
+    def __init__(self, host):
+        self.__host = host if host.startswith('http://') else 'http://%s' % host
+
+    def __repr__(self):
+        return 'HostRestClient("%s")' % self.__host
+
+    def __path(self, path):
+        return self.__host + path
+
+    def get(self, path):
+        return requests.get(self.__path(path))
+
+    def post(self, path, data):
+        url = self.__path(path)
+        result = requests.post(url, data)
+        if result.status_code != 200:
+            try:
+                result_json = json.loads(result.text.replace("\\'", "'"))
+                message = result_json.get('result', result.text)
+                raise RuntimeError("Could not post config to Go server (%s):\n%s" % (url, message))
+            except ValueError:
+                raise RuntimeError("Could not post config to Go server (%s) (and result was not json):\n%s" % (url, result))
 
 
 class GoCdConfigurator(object):
@@ -202,32 +225,6 @@ class GoCdConfigurator(object):
         if not dry_run and config_before != config_after:
             self.__host_rest_client.post('/go/admin/restful/configuration/file/POST/xml', data)
             self.__set_initial_config_xml()
-
-
-class HostRestClient(object):
-    def __init__(self, host):
-        self.__host = host
-
-    def __repr__(self):
-        return 'HostRestClient("%s")' % self.__host
-
-    def __path(self, path):
-        return ('http://%s' % self.__host) + path
-
-    def get(self, path):
-        return requests.get(self.__path(path))
-
-    def post(self, path, data):
-        url = self.__path(path)
-        result = requests.post(url, data)
-        if result.status_code != 200:
-            try:
-                result_json = json.loads(result.text.replace("\\'", "'"))
-                message = result_json.get('result', result.text)
-                raise RuntimeError("Could not post config to Go server (%s) [status code=%s]:\n%s" % (url, result.status_code, message))
-            except ValueError:
-                raise RuntimeError("Could not post config to Go server (%s) [status code=%s] (and result was not json):\n%s" % (url, result.status_code, result))
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Gomatic is an API for configuring GoCD. '
