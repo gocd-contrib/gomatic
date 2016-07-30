@@ -12,11 +12,11 @@ from gomatic import GoCdConfigurator, HostRestClient, GitMaterial, ExecTask
 from gomatic.gocd.artifacts import Artifact
 
 
-def start_go_server(gocd_version):
+def start_go_server(gocd_version, gocd_download_version_string):
     with open('Dockerfile', 'w') as f:
         f.write(open("Dockerfile.tmpl").read().replace('GO-VERSION-REPLACE-ME', gocd_version))
 
-    os.system("./build-and-run-go-server-in-docker %s" % gocd_version)
+    os.system("./build-and-run-go-server-in-docker %s %s" % (gocd_version, gocd_download_version_string))
 
     for attempt in range(120):
         try:
@@ -28,12 +28,13 @@ def start_go_server(gocd_version):
 
 
 class populated_go_server(object):
-    def __init__(self, gocd_version):
+    def __init__(self, gocd_version, gocd_download_version_string):
         self.gocd_version = gocd_version
+        self.gocd_download_version_string = gocd_download_version_string
 
     def __enter__(self):
         try:
-            start_go_server(self.gocd_version)
+            start_go_server(self.gocd_version, self.gocd_download_version_string)
 
             configurator = GoCdConfigurator(HostRestClient('localhost:8153'))
             pipeline = configurator \
@@ -93,31 +94,32 @@ def check_docker():
 
 class IntegrationTest(unittest.TestCase):
     gocd_versions = [
-        '13.1.1-16714',
-        '13.2.2-17585',
-        '13.3.1-18130',
-        '13.4.0-18334',
-        '13.4.1-18342',
-        '14.1.0-18882',
-        '14.2.0-377',
-        '14.3.0-1186',
-        '14.4.0-1356',
-        '15.1.0-1863',
-        '15.2.0-2248',
+        ('13.1.1-16714','-13.1.1-16714'),
+        ('13.2.2-17585','-13.2.2-17585'),
+        ('13.3.1-18130','-13.3.1-18130'),
+        ('13.4.0-18334','-13.4.0-18334'),
+        ('13.4.1-18342','-13.4.1-18342'),
+        ('14.1.0-18882','-14.1.0-18882'),
+        ('14.2.0-377',  '-14.2.0-377'),
+        ('14.3.0-1186', '-14.3.0-1186'),
+        ('14.4.0-1356', '-14.4.0-1356'),
+        ('15.1.0-1863', '-15.1.0-1863'),
+        ('15.2.0-2248', '-15.2.0-2248'),
         # '15.3.0-2771', no longer on download page
         # '15.3.1-2777', no longer on download page
-        '16.1.0-2855',
-        '16.2.1-3027',
-        '16.3.0-3183',
-        '16.4.0-3223',
-        '16.5.0-3305',
-        '16.6.0-3590'
+        ('16.1.0-2855', '-16.1.0-2855'),
+        ('16.2.1-3027', '-16.2.1-3027'),
+        ('16.3.0-3183', '-16.3.0-3183'),
+        ('16.4.0-3223', '-16.4.0-3223'),
+        ('16.5.0-3305', '-16.5.0-3305'),
+        ('16.6.0-3590', '-16.6.0-3590'),
+        ('16.7.0-3819', '_16.7.0-3819_all') # arghhh!
     ]
 
     def test_all_versions(self):
-        for gocd_version in self.gocd_versions:
+        for gocd_version, gocd_download_version_string in self.gocd_versions:
             print 'test_all_versions', "*" * 60, gocd_version
-            with populated_go_server(gocd_version) as configurator:
+            with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
                 self.assertEquals(["P.Group"], [p.name for p in configurator.pipeline_groups])
                 self.assertEquals(["more-options"], [p.name for p in configurator.pipeline_groups[0].pipelines])
                 pipeline = configurator.pipeline_groups[0].pipelines[0]
@@ -135,9 +137,9 @@ class IntegrationTest(unittest.TestCase):
                 self.assertEquals([ExecTask(['ls'])], job.tasks)
 
     def test_can_save_multiple_times_using_same_configurator(self):
-        gocd_version = self.gocd_versions[-1]
+        gocd_version, gocd_download_version_string = self.gocd_versions[-1]
         print 'test_can_save_multiple_times_using_same_configurator', "*" * 60, gocd_version
-        with populated_go_server(gocd_version) as configurator:
+        with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
             pipeline = configurator \
                 .ensure_pipeline_group("Test") \
                 .ensure_replacement_of_pipeline("new-one")

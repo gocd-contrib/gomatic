@@ -3,13 +3,18 @@
 set -e
 
 GO_VERSION="$1"
+GO_DOWNLOAD_VERSION_STRING="$2"
 
 if [ -z "$GO_VERSION" ]; then
   echo >&2 "No Go server version was provided"
   exit 1
 fi
+if [ -z "$GO_DOWNLOAD_VERSION_STRING" ]; then
+  echo >&2 "No Go server version was provided"
+  exit 1
+fi
 
-GO_DOWNLOAD_URL=https://download.go.cd/binaries/${GO_VERSION}/deb/go-server-${GO_VERSION}.deb
+GO_DOWNLOAD_URL=https://download.go.cd/binaries/${GO_VERSION}/deb/go-server${GO_DOWNLOAD_VERSION_STRING}.deb
 
 if [ ! -f go-server-${GO_VERSION}.deb ]; then
   wget -O go-server-${GO_VERSION}.deb ${GO_DOWNLOAD_URL}
