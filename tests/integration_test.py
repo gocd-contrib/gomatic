@@ -114,7 +114,8 @@ class IntegrationTest(unittest.TestCase):
         ('16.5.0-3305', '-16.5.0-3305'),
         ('16.6.0-3590', '-16.6.0-3590'),
         ('16.7.0-3819', '_16.7.0-3819_all'), # arghhh! from now they have "_all" suffix
-        ('16.8.0-3929', '_16.8.0-3929_all')
+        ('16.8.0-3929', '_16.8.0-3929_all'),
+        ('16.9.0-4001', '_16.9.0-4001_all')
     ]
 
     def test_all_versions(self):
