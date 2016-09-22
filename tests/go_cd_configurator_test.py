@@ -1492,11 +1492,13 @@ class TestGoCdConfigurator(unittest.TestCase):
         configurator.agent_auto_register_key = "a_ci_server"
         configurator.purge_start = Decimal("44.0")
         configurator.purge_upto = Decimal("88.0")
+        configurator.default_job_timeout = 42
         self.assertEqual("/a/dir", configurator.artifacts_dir)
         self.assertEqual("http://1.2.3.4/", configurator.site_url)
         self.assertEqual("a_ci_server", configurator.agent_auto_register_key)
         self.assertEqual(Decimal("44.0"), configurator.purge_start)
         self.assertEqual(Decimal("88.0"), configurator.purge_upto)
+        self.assertEqual(Decimal("42"), configurator.default_job_timeout)
 
     def test_can_have_no_pipeline_groups(self):
         self.assertEqual(0, len(GoCdConfigurator(empty_config()).pipeline_groups))

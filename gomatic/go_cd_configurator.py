@@ -91,6 +91,14 @@ class GoCdConfigurator(object):
         self.__server_element_ensurance().set('siteUrl', site_url)
 
     @property
+    def default_job_timeout(self):
+        return self.__server_decimal_attribute('jobTimeout')
+
+    @default_job_timeout.setter
+    def default_job_timeout(self, timeout_in_minutes):
+        self.__server_element_ensurance().set('jobTimeout', str(timeout_in_minutes))
+
+    @property
     def agent_auto_register_key(self):
         return self.__possibly_missing_server_element().attribute('agentAutoRegisterKey')
 
