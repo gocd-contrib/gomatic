@@ -8,6 +8,7 @@ class FakeResponse(object):
     def __init__(self, text):
         self.text = text
         self.headers = {'x-cruise-config-md5': '42'}
+        self.status_code = 200
 
 
 class FakeHostRestClient(object):
