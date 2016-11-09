@@ -39,7 +39,10 @@ class GoCdConfigurator(object):
         return self.__current_config_response()[0]
 
     def __current_config_response(self):
-        response = self.__host_rest_client.get("/go/admin/restful/configuration/file/GET/xml")
+        config_url = "/go/admin/restful/configuration/file/GET/xml"
+        response = self.__host_rest_client.get(config_url)
+        if response.status_code != 200:
+            raise Exception("Failed to get {} status {}\n:{}".format(config_url, response.status_code, response.text))
         return response.text, response.headers['x-cruise-config-md5']
 
     def reorder_elements_to_please_go(self):
