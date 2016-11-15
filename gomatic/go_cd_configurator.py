@@ -117,17 +117,11 @@ class GoCdConfigurator(object):
 
     @property
     def generic_artifactory_repositories(self):
-        return [GenericArtifactoryRepository(e, self) for e in self.__xml_root.findall('repositories')[0].findall('repository')]
+        return [GenericArtifactoryRepository(e) for e in self.__xml_root.findall('repositories')[0].findall('repository')]
 
     def ensure_generic_artifactory_repository(self, repository_name):
         repository_element = Ensurance(self.__xml_root).ensure_child('repositories').ensure_child_with_attribute("repository", "name", repository_name)
-        repository = GenericArtifactoryRepository(repository_element.element, self)
-        repository.make_configuration_empty()
-        return repository
-
-    def ensure_replacement_generic_artifactory_repository(self, repository_name):
-        repository = self.ensure_generic_artifactory_repository(repository_name)
-        repository.make_empty()
+        repository = GenericArtifactoryRepository(repository_element.element)
         return repository
 
     def ensure_removal_generic_artifactory_repository(self, repository_name):
@@ -135,6 +129,11 @@ class GoCdConfigurator(object):
         for repository in matching:
             self.__xml_root.findall('repositories')[0].remove(repository.element)
         return self
+
+    def ensure_replacement_generic_artifactory_repository(self, repository_name):
+        repository = self.ensure_generic_artifactory_repository(repository_name)
+        repository.make_empty()
+        return repository
 
     @property
     def pipeline_groups(self):
