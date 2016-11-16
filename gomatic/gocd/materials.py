@@ -176,6 +176,6 @@ class PackageMaterial(CommonEqualityMixin):
 
         if package is None:
             raise RuntimeError(
-                'Package: "%s" not found in the repository: "%s"' % (self.__package_name, self.__repository_name))
+                'Package: "%s" not found in the repository: "%s"' % (package_name, repository_name))
 
         return PackageMaterial(package_id=package.attrib["id"])
