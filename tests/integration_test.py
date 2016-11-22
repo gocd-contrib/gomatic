@@ -18,13 +18,15 @@ def start_go_server(gocd_version, gocd_download_version_string):
 
     os.system("./build-and-run-go-server-in-docker %s %s" % (gocd_version, gocd_download_version_string))
 
-    for attempt in range(120):
+    for attempt in range(300):
         try:
-            urlopen("http://localhost:8153").read()
+            urlopen("http://localhost:8153/go").read()
             return
         except:
             time.sleep(1)
             print "Waiting for Docker-based Go server to start..."
+
+    raise Exception("Failed to connect to gocd. It didn't start up correctly in time")
 
 
 class populated_go_server(object):

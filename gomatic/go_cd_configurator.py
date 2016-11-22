@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import json
+import time
 import xml.etree.ElementTree as ET
 import argparse
 import sys
@@ -41,6 +42,7 @@ class GoCdConfigurator(object):
     def __current_config_response(self):
         config_url = "/go/admin/restful/configuration/file/GET/xml"
         response = self.__host_rest_client.get(config_url)
+
         if response.status_code != 200:
             raise Exception("Failed to get {} status {}\n:{}".format(config_url, response.status_code, response.text))
         return response.text, response.headers['x-cruise-config-md5']
@@ -218,7 +220,13 @@ class HostRestClient(object):
         return ('http://%s' % self.__host) + path
 
     def get(self, path):
-        return requests.get(self.__path(path))
+        result = requests.get(self.__path(path))
+        count = 0
+        while result.status_code in range(500, 600) and count < 5:
+            result = requests.get(self.__path(path))
+            count += 1
+            time.sleep(1)
+        return result
 
     def post(self, path, data):
         url = self.__path(path)
