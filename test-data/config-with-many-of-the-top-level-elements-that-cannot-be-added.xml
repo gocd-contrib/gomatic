@@ -1,25 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="76">
   <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="590fc344-be24-4a80-aa6e-c4e3f05e8f41" />
-  <repositories>
-      <repository id="24f19f1f-ab87-40a0-9561-099039a266ca" name="baboon">
-          <pluginConfiguration id="yum" version="2"/>
-          <configuration>
-              <property>
-                  <key>REPO_URL</key>
-                  <value>http://yum.com</value>
-              </property>
-              <property>
-                  <key>USERNAME</key>
-                  <value>u</value>
-              </property>
-              <property>
-                  <key>PASSWORD</key>
-                  <encryptedValue>95nDQKzOP44=</encryptedValue>
-              </property>
-          </configuration>
-      </repository>
-  </repositories>
   <scms>
       <scm id="3bfc282e-43a6-4795-ba9c-6c50665220dd" name="git-repo">
           <pluginConfiguration id="jgit" version="1.0" />

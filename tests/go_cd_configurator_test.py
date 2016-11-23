@@ -1290,7 +1290,7 @@ class TestGoCdConfigurator(unittest.TestCase):
 
         xml = configurator.config
         root = ET.fromstring(xml)
-        self.assertEqual(['server', 'repositories', 'scms', 'pipelines', 'environments', 'agents'],
+        self.assertEqual(['server', 'scms', 'pipelines', 'environments', 'agents'],
                          [element.tag for element in root])
 
     def test_elements_can_be_created_in_order_to_please_go(self):
