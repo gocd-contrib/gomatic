@@ -222,7 +222,7 @@ class HostRestClient(object):
     def get(self, path):
         result = requests.get(self.__path(path))
         count = 0
-        while (result.status_code > 500) and (result.status_code < 600) and (count < 5):
+        while ((result.status_code == 503) or (result.status_code == 504)) and (count < 5):
             result = requests.get(self.__path(path))
             time.sleep(1)
             count += 1
