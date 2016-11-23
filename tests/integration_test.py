@@ -18,13 +18,16 @@ def start_go_server(gocd_version, gocd_download_version_string):
 
     os.system("./build-and-run-go-server-in-docker %s %s" % (gocd_version, gocd_download_version_string))
 
+    count = 0
     for attempt in range(300):
         try:
             urlopen("http://localhost:8153/go").read()
             return
         except:
+            count += 1
             time.sleep(1)
-            print "Waiting for Docker-based Go server to start..."
+            if count % 10 == 0:
+                print "Waiting for Docker-based Go server to start..."
 
     raise Exception("Failed to connect to gocd. It didn't start up correctly in time")
 
@@ -107,8 +110,8 @@ class IntegrationTest(unittest.TestCase):
         ('14.4.0-1356', '-14.4.0-1356'),
         ('15.1.0-1863', '-15.1.0-1863'),
         ('15.2.0-2248', '-15.2.0-2248'),
-        # '15.3.0-2771', no longer on download page
-        # '15.3.1-2777', no longer on download page
+        ## '15.3.0-2771', no longer on download page
+        ## '15.3.1-2777', no longer on download page
         ('16.1.0-2855', '-16.1.0-2855'),
         ('16.2.1-3027', '-16.2.1-3027'),
         ('16.3.0-3183', '-16.3.0-3183'),
@@ -117,9 +120,9 @@ class IntegrationTest(unittest.TestCase):
         ('16.6.0-3590', '-16.6.0-3590'),
         ('16.7.0-3819', '_16.7.0-3819_all'), # arghhh! from now they have "_all" suffix
         ('16.8.0-3929', '_16.8.0-3929_all'),
-        ('16.9.0-4001', '_16.9.0-4001_all'),
-        ('16.10.0-4131', '_16.10.0-4131_all'),
-        ('16.11.0-4185', '_16.11.0-4185_all')
+        ('16.9.0-4001', '_16.9.0-4001_all')
+        #('16.10.0-4131', '_16.10.0-4131_all')
+        #('16.11.0-4185', '_16.11.0-4185_all')
     ]
 
     def test_all_versions(self):
