@@ -232,27 +232,30 @@ class GoCdConfigurator(object):
 
 
 class HostRestClient(object):
-    def __init__(self, host):
+    def __init__(self, host, ssl=False, ssl_verify=True):
         self.__host = host
+        self.__ssl = ssl
+        self.__ssl_verify = ssl_verify
 
     def __repr__(self):
-        return 'HostRestClient("%s")' % self.__host
+        return 'HostRestClient("{0}", ssl={1})'.format(self.__host, self.__ssl)
 
     def __path(self, path):
-        return ('http://%s' % self.__host) + path
+        http_prefix = 'https://' if self.__ssl else 'http://'
+        return '{0}{1}{2}'.format(http_prefix, self.__host, path)
 
     def get(self, path):
-        result = requests.get(self.__path(path))
+        result = requests.get(self.__path(path), verify=self.__ssl_verify)
         count = 0
         while ((result.status_code == 503) or (result.status_code == 504)) and (count < 5):
-            result = requests.get(self.__path(path))
+            result = requests.get(self.__path(path), verify=self.__ssl_verify)
             time.sleep(1)
             count += 1
         return result
 
     def post(self, path, data):
         url = self.__path(path)
-        result = requests.post(url, data)
+        result = requests.post(url, data, verify=self.__ssl_verify)
         if result.status_code != 200:
             try:
                 result_json = json.loads(result.text.replace("\\'", "'"))
@@ -267,6 +270,8 @@ if __name__ == '__main__':
                                                  'Run python -m gomatic.go_cd_configurator to reverse engineer code to configure an existing pipeline.')
     parser.add_argument('-s', '--server', help='the go server (e.g. "localhost:8153" or "my.gocd.com")')
     parser.add_argument('-p', '--pipeline', help='the name of the pipeline to reverse-engineer the config for')
+    parser.add_argument('--ssl', help='use HTTPS for the connection to the gocd server', dest='ssl', action='store_true', default=False)
+    parser.add_argument('--ssl-verify', help='if set the identity of the ssl certificate will be verified.', dest='verify_ssl', action='store_true', default=True)
 
     args = parser.parse_args()
 
@@ -274,7 +279,7 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(1)
 
-    go_server = GoCdConfigurator(HostRestClient(args.server))
+    go_server = GoCdConfigurator(HostRestClient(args.server, ssl=args.ssl, ssl_verify=args.ssl_verify))
 
     matching_pipelines = [p for p in go_server.pipelines if p.name == args.pipeline]
     if len(matching_pipelines) != 1:
