@@ -172,7 +172,7 @@ class IntegrationTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    if not os.path.exists("go-server-%s.deb" % IntegrationTest.gocd_versions[0]):
+    if not os.path.exists("go-server-%s.deb" % IntegrationTest.gocd_versions[0][0]):
         print "This takes a long time to run first time, because it downloads a Java docker image and GoCD .deb packages from the internet"
     check_docker()
 

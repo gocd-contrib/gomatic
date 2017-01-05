@@ -20,7 +20,8 @@ class GoCdConfigurator(object):
         self.__set_initial_config_xml()
 
     def __set_initial_config_xml(self):
-        self.__initial_config, self._initial_md5 = self.__current_config_response()
+        initial_config, self._initial_md5 = self.__current_config_response()
+        self.__initial_config = initial_config.encode('ascii', errors='xmlcharrefreplace')
         self.__xml_root = ET.fromstring(self.__initial_config)
 
     def __repr__(self):

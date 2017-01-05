@@ -1,3 +1,6 @@
+import codecs
+
+
 empty_config_xml = """<?xml version="1.0" encoding="utf-8"?>
 <cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">
   <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="96eca4bf-210e-499f-9dc9-0cefdae38d0c" />
@@ -30,8 +33,12 @@ class FakeHostRestClient(object):
         raise RuntimeError("not expecting to be asked for anything else")
 
 
+def load_file(config_name):
+    return codecs.open('test-data/' + config_name + '.xml', encoding='utf-8').read()
+
+
 def config(config_name):
-    return FakeHostRestClient(open('test-data/' + config_name + '.xml').read())
+    return FakeHostRestClient(load_file(config_name))
 
 
 def empty_config():

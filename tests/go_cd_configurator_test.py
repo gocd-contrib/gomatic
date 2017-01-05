@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import unittest
 from xml.dom.minidom import parseString
@@ -8,7 +9,7 @@ from decimal import Decimal
 
 from gomatic import GoCdConfigurator, FetchArtifactDir, RakeTask, ExecTask, FetchArtifactTask, \
     FetchArtifactFile, Tab, GitMaterial, PipelineMaterial, Pipeline
-from gomatic.fake import FakeHostRestClient, empty_config_xml, config, empty_config
+from gomatic.fake import FakeHostRestClient, empty_config_xml, config, empty_config, load_file
 from gomatic.gocd.pipelines import DEFAULT_LABEL_TEMPLATE
 from gomatic.gocd.artifacts import Artifact
 from gomatic.xml_operations import prettify
@@ -812,6 +813,10 @@ class TestPipeline(unittest.TestCase):
     def test_pipelines_have_unencrypted_secure_environment_variables(self):
         pipeline = GoCdConfigurator(config('config-with-unencrypted-secure-variable')).ensure_pipeline_group("defaultGroup").find_pipeline("example")
         self.assertEquals({"MY_SECURE_PASSWORD": "hunter2"}, pipeline.unencrypted_secure_environment_variables)
+
+    def test_pipelines_have_unencrypted_secure_environment_variable_unicode(self):
+        pipeline = GoCdConfigurator(config('config-with-unencrypted-secure-variable-unicode')).ensure_pipeline_group("defaultGroup").find_pipeline("example")
+        self.assertEquals({"MY_SECURE_PASSWORD": u"hunter2ª"}, pipeline.unencrypted_secure_environment_variables)
 
     def test_can_add_environment_variables_to_pipeline(self):
         pipeline = empty_pipeline()

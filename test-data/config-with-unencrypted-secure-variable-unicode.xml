@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">
+    <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="779d5885-3db5-4640-8901-f9333bc10046" />
+    <pipelines group="defaultGroup">
+        <pipeline name="example">
+            <environmentvariables>
+                <variable name="MY_SECURE_PASSWORD" secure="true">
+                    <value>hunter2ª</value>
+                </variable>
+            </environmentvariables>
+            <materials>
+                <git url="gitUrl" />
+            </materials>
+            <stage name="defaultStage">
+                <jobs>
+                    <job name="defaultJob">
+                        <tasks>
+                            <exec command="ls" />
+                        </tasks>
+                    </job>
+                </jobs>
+            </stage>
+        </pipeline>
+    </pipelines>
+</cruise>

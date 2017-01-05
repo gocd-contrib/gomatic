@@ -10,7 +10,7 @@ if [ -z "$GO_VERSION" ]; then
   exit 1
 fi
 if [ -z "$GO_DOWNLOAD_VERSION_STRING" ]; then
-  echo >&2 "No Go server version was provided"
+  echo >&2 "No Go server download version was provided"
   exit 1
 fi
 
