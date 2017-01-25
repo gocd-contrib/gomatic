@@ -22,6 +22,8 @@ fi
 
 IMAGE_NAME=springersbm/gocd:${GO_VERSION}
 
-docker build -t ${IMAGE_NAME} .
+if [[ "$(docker images -q ${IMAGE_NAME} 2> /dev/null)" == "" ]]; then
+    docker build -t ${IMAGE_NAME} .
+fi
 
 docker run -d --name gocd-test-server-${GO_VERSION} -it -p 8153:8153 ${IMAGE_NAME}

@@ -25,9 +25,30 @@ class Ensurance(object):
         else:
             return Ensurance(matching_elements[0])
 
+    def ensure_child_with_descendant(self, name, descendant_name, descendant_value):
+        matching_elements = [e for e in self.element.findall(name)]
+        if len(matching_elements) == 0:
+            new_element = ET.fromstring('<%s><%s>%s</%s></%s>' % (name, descendant_name, descendant_value, descendant_name,  name))
+            self.element.append(new_element)
+            return Ensurance(new_element)
+        else:
+            for e in matching_elements:
+                value = PossiblyMissingElement(e).possibly_missing_child(descendant_name).text
+                if value is not None and value == descendant_value:
+                    return Ensurance(e)
+            new_element = ET.fromstring('<%s><%s>%s</%s></%s>' % (name, descendant_name, descendant_value, descendant_name,  name))
+            self.element.append(new_element)
+            return Ensurance(new_element)
+
     def set(self, attribute_name, value):
         self.element.set(attribute_name, value)
         return self
+
+    def has_attribute(self, name):
+        if self.element is None:
+            return False
+        else:
+            return name in self.element.attrib
 
     def append(self, element):
         self.element.append(element)
@@ -62,6 +83,10 @@ class PossiblyMissingElement(object):
 
     def attribute(self, name):
         return self.__element.attrib[name] if self.__element is not None and name in self.__element.attrib else None
+
+    @property
+    def text(self):
+        return self.__element.text if self.__element is not None else None
 
     def has_attribute(self, name, value):
         if self.__element is None:

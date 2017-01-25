@@ -9,6 +9,7 @@ def Materials(element):
         material_name = element.attrib.get('materialName', None)
         polling = element.attrib.get('autoUpdate', 'true') == 'true'
         destination_directory = element.attrib.get('dest', None)
+        invert_filter = element.attrib.get('invertFilter', 'false') == 'true'
         shallow = element.attrib.get('shallowClone') == 'true'
         return GitMaterial(element.attrib['url'],
                            branch=branch,
@@ -16,21 +17,25 @@ def Materials(element):
                            polling=polling,
                            ignore_patterns=ignore_patterns_in(element),
                            destination_directory=destination_directory,
+                           invert_filter=invert_filter,
                            shallow=shallow)
     if element.tag == "pipeline":
         material_name = element.attrib.get('materialName', None)
         return PipelineMaterial(element.attrib['pipelineName'], element.attrib['stageName'], material_name)
+    if element.tag == "package":
+        return PackageMaterial(element.attrib.get('ref', None))
     raise RuntimeError("don't know of material matching " + ET.tostring(element, 'utf-8'))
 
 
 class GitMaterial(CommonEqualityMixin):
-    def __init__(self, url, branch=None, material_name=None, polling=True, ignore_patterns=set(), destination_directory=None, shallow=False):
+    def __init__(self, url, branch=None, material_name=None, polling=True, ignore_patterns=set(), destination_directory=None, invert_filter=False, shallow=False):
         self.__url = url
         self.__branch = branch
         self.__material_name = material_name
         self.__polling = polling
         self.__ignore_patterns = ignore_patterns
         self.__destination_directory = destination_directory
+        self.__invert_filter = invert_filter
         self.__shallow = shallow
 
     def __repr__(self):
@@ -49,10 +54,13 @@ class GitMaterial(CommonEqualityMixin):
         destination_directory_part = ''
         if self.destination_directory:
             destination_directory_part = ', destination_directory="%s"' % self.destination_directory
+        invert_filter_part = ''
+        if self.__invert_filter:
+            invert_filter_part = ', invert_filter="%s"' % self.__invert_filter
         shallow_part = ''
         if self.__shallow:
             shallow_part = ', shallow="%s"' % self.__shallow
-        return ('GitMaterial("%s"' % self.__url) + branch_part + material_name_part + polling_part + ignore_patterns_part + destination_directory_part + shallow_part + ')'
+        return ('GitMaterial("%s"' % self.__url) + branch_part + material_name_part + polling_part + ignore_patterns_part + destination_directory_part + invert_filter_part + shallow_part + ')'
 
     @property
     def __has_options(self):
@@ -69,10 +77,15 @@ class GitMaterial(CommonEqualityMixin):
             return 'set_git_url("%s")' % self.__url
 
     is_git = True
+    is_package = False
 
     @property
     def url(self):
         return self.__url
+
+    @property
+    def invert_filter(self):
+        return self.__invert_filter
 
     @property
     def polling(self):
@@ -119,11 +132,15 @@ class GitMaterial(CommonEqualityMixin):
         if self.__destination_directory:
             destination_directory_part = ' dest="%s"' % self.__destination_directory
 
+        invert_filter_part = ''
+        if self.__invert_filter:
+            invert_filter_part = ' invertFilter="true"'
+
         shallow_part = ''
         if self.__shallow:
             shallow_part = ' shallowClone="true"'
 
-        new_element = ET.fromstring(('<git url="%s"' % self.__url) + branch_part + material_name_part + polling_part + destination_directory_part + shallow_part + ' />')
+        new_element = ET.fromstring(('<git url="%s"' % self.__url) + branch_part + material_name_part + polling_part + destination_directory_part + invert_filter_part + shallow_part + ' />')
 
         if self.ignore_patterns:
             filter_element = ET.fromstring("<filter/>")
@@ -149,6 +166,7 @@ class PipelineMaterial(CommonEqualityMixin):
             return 'PipelineMaterial("%s", "%s", "%s")' % (self.__pipeline_name, self.__stage_name, self.__material_name)
 
     is_git = False
+    is_package = False
 
     def append_to(self, element):
         if self.__material_name is None:
@@ -157,4 +175,20 @@ class PipelineMaterial(CommonEqualityMixin):
             new_element = ET.fromstring(
                 '<pipeline pipelineName="%s" stageName="%s" materialName="%s"/>' % (self.__pipeline_name, self.__stage_name, self.__material_name))
 
+        element.append(new_element)
+
+
+class PackageMaterial(CommonEqualityMixin):
+    def __init__(self, ref):
+        self.__ref = ref
+
+    @property
+    def ref(self):
+        return self.__ref
+
+    is_package = True
+    is_git = False
+
+    def append_to(self, element):
+        new_element = ET.fromstring(('<package ref="%s"' % self.__ref) + ' />')
         element.append(new_element)

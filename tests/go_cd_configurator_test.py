@@ -1034,6 +1034,17 @@ class TestPipeline(unittest.TestCase):
         self.assertEquals(p, pipeline)
         self.assertEquals(True, pipeline.has_automatic_pipeline_locking)
 
+    def test_can_have_package_repo_material(self):
+        pipeline = GoCdConfigurator(config('config-with-pipeline-and-yum-repo')).ensure_pipeline_group('P.Group').find_pipeline('test')
+        self.assertTrue(pipeline.has_single_package_material)
+        self.assertEqual(pipeline.package_material.ref, "eca7f187-73c2-4f62-971a-d15233937256")
+
+    def test_can_set_pipeline_package_ref(self):
+        pipeline = typical_pipeline()
+        p = pipeline.set_package_ref("eca7f187-73c2-4f62-971a-d15233937256")
+        self.assertEquals(p, pipeline)
+        self.assertEquals("eca7f187-73c2-4f62-971a-d15233937256", pipeline.package_material.ref)
+
 
 class TestPipelineGroup(unittest.TestCase):
     def _pipeline_group_from_config(self):
@@ -1190,6 +1201,14 @@ class TestGoCdConfigurator(unittest.TestCase):
         self.assertEquals(1, len(configurator.pipeline_groups))
         self.assertEquals(new_pipeline_group, configurator.pipeline_groups[-1])
         self.assertEquals("a_new_group", new_pipeline_group.name)
+
+    def test_can_add_repository(self):
+        configurator = GoCdConfigurator(empty_config())
+        self.assertEquals(0, len(configurator.repositories))
+        new_repository = configurator.ensure_repository("repo-one")
+        self.assertEquals(1, len(configurator.repositories))
+        self.assertEquals(new_repository, configurator.repositories[-1])
+        self.assertEquals("repo-one", new_repository.name)
 
     def test_can_ensure_pipeline_group_exists(self):
         configurator = GoCdConfigurator(config('config-with-two-pipeline-groups'))
@@ -1357,6 +1376,76 @@ class TestGoCdConfigurator(unittest.TestCase):
         job.ensure_task(ExecTask(['ls']))
         job.ensure_resource("r")
         job.ensure_environment_variables({'j': 'j'})
+
+
+class TestRepository(unittest.TestCase):
+    def test_can_read_yum_repo_from_xml(self):
+        configurator = GoCdConfigurator(config('config-with-pipeline-and-yum-repo'))
+        self.assertEqual(len(configurator.repositories), 1)
+        yum_repository = configurator.repositories[-1]
+        self.assertEqual(yum_repository.name, 'ts-yum-repo')
+        self.assertEqual(yum_repository.repo_url, 'http://yum-server/releases/component-name/')
+        self.assertEqual(yum_repository.id, 'ee6a8a7b-96d0-452e-aa99-26e4af46d646')
+        self.assertEqual(len(yum_repository.properties), 1)
+
+        self.assertEqual(len(yum_repository.packages), 1)
+        package = yum_repository.packages[-1]
+        self.assertEqual(package.name ,"yum-component-name")
+        self.assertEqual(package.id ,"eca7f187-73c2-4f62-971a-d15233937256")
+        self.assertEqual(len(package.properties), 1)
+        self.assertEqual(package.package_spec, 'component-name.*')
+
+    def test_can_ensure_type_on_populated_repository(self):
+        configurator = GoCdConfigurator(config('config-with-pipeline-and-yum-repo'))
+        yum_repository = configurator.ensure_repository('ts-yum-repo')
+        self.assertEqual(yum_repository.type, 'yum')
+        p = yum_repository.ensure_type('yum', '1')
+        self.assertEqual(p.attrib['id'], 'yum')
+        self.assertEqual(p.attrib['version'], '1')
+        self.assertEqual(p.tag, 'pluginConfiguration')
+
+        prop = yum_repository.ensure_property('REPO_URL', 'http://yum-server/releases/component-name/')
+        self.assertEqual(prop.key, 'REPO_URL')
+        self.assertEqual(prop.value, 'http://yum-server/releases/component-name/')
+
+    def test_can_ensure_type_on_empty_config(self):
+        configurator = GoCdConfigurator(empty_config())
+        yum_repository = configurator.ensure_repository('ts-yum-repo')
+        self.assertIsNotNone(yum_repository.id, 'shoudl have random id')
+        p = yum_repository.ensure_type('yum', '1')
+        self.assertEqual(p.attrib['id'], 'yum')
+
+        self.assertEqual(p.tag, 'pluginConfiguration')
+        self.assertEqual(p.attrib['version'], '1')
+
+    def test_can_ensure_property_on_empty_config(self):
+        configurator = GoCdConfigurator(empty_config())
+        yum_repository = configurator.ensure_repository('ts-yum-repo')
+        prop = yum_repository.ensure_property('REPO_URL', 'http://yum-server/releases/component-name/')
+        self.assertEqual(prop.key, 'REPO_URL')
+        self.assertEqual(prop.value, 'http://yum-server/releases/component-name/')
+
+    def test_can_ensure_package_on_repo_from_config(self):
+        configurator = GoCdConfigurator(config('config-with-pipeline-and-yum-repo'))
+        yum_repository = configurator.ensure_repository('ts-yum-repo')
+        package = yum_repository.ensure_package('yum-component-name')
+
+        self.assertEqual(package.id, 'eca7f187-73c2-4f62-971a-d15233937256')
+
+        prop = package.ensure_property('PACKAGE_SPEC', 'component-name.*')
+        self.assertEqual(prop.key, 'PACKAGE_SPEC')
+        self.assertEqual(prop.value, 'component-name.*')
+
+    def test_can_ensure_package_on_repo_from_empty_config(self):
+        configurator = GoCdConfigurator(empty_config())
+        yum_repository = configurator.ensure_repository('ts-yum-repo')
+        package = yum_repository.ensure_package('yum-component-name')
+
+        self.assertIsNotNone(package.id, 'should have a package id')
+
+        prop = package.ensure_property('PACKAGE_SPEC', 'component-name.*')
+        self.assertEqual(prop.key, 'PACKAGE_SPEC')
+        self.assertEqual(prop.value, 'component-name.*')
 
 
 def simplified(s):
