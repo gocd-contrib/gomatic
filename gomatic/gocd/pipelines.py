@@ -591,6 +591,33 @@ class Pipeline(CommonEqualityMixin):
         return sorted(materials, cmp_materials)
 
 
+class PipelineEnvironment(CommonEqualityMixin):
+    def __init__(self, element, configurator):
+        self.element = element
+        self.__configurator = configurator
+
+    def __repr__(self):
+        return 'PipelineEnvironment("%s")' % self.name
+
+    @property
+    def name(self):
+        return self.element.attrib['name']
+
+    def ensure_pipeline(self, name):
+        # This needs to be coded later to guarantee pipeline uniqueness
+        # self.__configurator.remove_pipeline_from_envs(name)
+        pipelines = Ensurance(self.element).ensure_child("pipelines")
+        pipeline  = Ensurance(pipelines.element).ensure_child_with_attribute("pipeline", "name", name)
+        return self
+
+    def ensure_var(self, name, value):
+        allvars = Ensurance(self.element).ensure_child("environmentvariables")
+        varname = Ensurance(allvars.element).ensure_child_with_attribute("variable", "name", name)
+        varval  = Ensurance(varname.element).ensure_child("value")
+        vartext = Ensurance(varval.element).set_text(value)
+        return self
+
+
 class PipelineGroup(CommonEqualityMixin):
     def __init__(self, element, configurator):
         self.element = element

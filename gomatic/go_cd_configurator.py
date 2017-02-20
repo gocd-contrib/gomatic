@@ -9,7 +9,7 @@ import subprocess
 import requests
 from decimal import Decimal
 
-from gomatic.gocd.pipelines import Pipeline, PipelineGroup
+from gomatic.gocd.pipelines import Pipeline, PipelineGroup, PipelineEnvironment
 from gomatic.gocd.agents import Agent
 from gomatic.xml_operations import Ensurance, PossiblyMissingElement, move_all_to_end, prettify
 
@@ -118,6 +118,11 @@ class GoCdConfigurator(object):
     @property
     def pipeline_groups(self):
         return [PipelineGroup(e, self) for e in self.__xml_root.findall('pipelines')]
+
+    def ensure_env(self, env_name):
+        envs = Ensurance(self.__xml_root).ensure_child("environments")
+        env  = Ensurance(envs.element).ensure_child_with_attribute("environment", "name", env_name)
+        return PipelineEnvironment(env.element, self)
 
     def ensure_pipeline_group(self, group_name):
         pipeline_group_element = Ensurance(self.__xml_root).ensure_child_with_attribute("pipelines", "group", group_name)
