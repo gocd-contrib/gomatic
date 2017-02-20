@@ -592,6 +592,32 @@ class Pipeline(CommonEqualityMixin):
 
 
 class PipelineEnvironment(CommonEqualityMixin):
+    """Basic usage:
+
+    #!/usr/bin/env python
+    import os
+    from gomatic import *
+
+    # GOCD_HOST should be like "user:pass@gocd.exmaple.com"
+    gocd = GoCdConfigurator(HostRestClient(os.environ.get("GOCD_HOST")))
+    line = gocd \
+        .ensure_pipeline_group("test-group") \
+        .ensure_replacement_of_pipeline("test-pipeline") \
+        .set_git_url("https://github.com/pallets/flask.git")
+
+
+    env = gocd.ensure_env("test-env") \
+        .ensure_pipeline("test-pipeline")
+
+    stage = line.ensure_stage("test-stage")
+    job   = stage.ensure_job("test-job")
+
+    job.add_task(ExecTask(["pwd"]))
+    job.add_task(ExecTask(["ls"]))
+
+    gocd.save_updated_config()
+    """
+
     def __init__(self, element, configurator):
         self.element = element
         self.__configurator = configurator
