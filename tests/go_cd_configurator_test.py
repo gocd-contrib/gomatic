@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 from decimal import Decimal
 
 from gomatic import GoCdConfigurator, FetchArtifactDir, RakeTask, ExecTask, FetchArtifactTask, \
-    FetchArtifactFile, Tab, GitMaterial, PipelineMaterial, Pipeline
+    FetchArtifactFile, Tab, GitMaterial, PipelineMaterial, Pipeline, PackageMaterial
 from gomatic.fake import FakeHostRestClient, empty_config_xml, config, empty_config
 from gomatic.gocd.pipelines import DEFAULT_LABEL_TEMPLATE
 from gomatic.gocd.artifacts import Artifact
@@ -637,6 +637,20 @@ class TestPipeline(unittest.TestCase):
         pipeline = more_options_pipeline()
         self.assertEquals("git@bitbucket.org:springersbm/gomatic.git", pipeline.git_url)
         self.assertEquals("some-material-name", pipeline.git_material.material_name)
+
+    def test_package_material_can_find_package_id(self):
+        configurator = GoCdConfigurator(config('config-with-typical-pipeline-repositories-and-packages'))
+        p  = PackageMaterial.of(repository_name="baboon", package_name="bar", configurator=configurator)
+        self.assertEquals("cf8d24ea-50ec-478d-a8a2-60a5e0ca958b", p.package_id)
+
+    def test_package_can_have_package_material(self):
+        configurator = GoCdConfigurator(config('config-with-typical-pipeline-repositories-and-packages'))
+        p = configurator.ensure_pipeline_group('P.Group') \
+            .ensure_pipeline('typical') \
+            .ensure_material(PackageMaterial.of(repository_name="baboon", package_name="bar", configurator=configurator))
+
+        self.assertEquals(2, len(p.materials))
+        self.assertEquals(False, p.materials[1].is_git)
 
     def test_git_material_can_ignore_sources(self):
         pipeline = GoCdConfigurator(config('config-with-source-exclusions')).ensure_pipeline_group("P.Group").find_pipeline("with-exclusions")
@@ -1276,7 +1290,7 @@ class TestGoCdConfigurator(unittest.TestCase):
 
         xml = configurator.config
         root = ET.fromstring(xml)
-        self.assertEqual(['server', 'repositories', 'scms', 'pipelines', 'environments', 'agents'],
+        self.assertEqual(['server', 'scms', 'pipelines', 'environments', 'agents'],
                          [element.tag for element in root])
 
     def test_elements_can_be_created_in_order_to_please_go(self):
