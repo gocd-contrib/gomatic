@@ -110,3 +110,44 @@ class ThingWithEnvironmentVariables(object):
             del env_vars[name]
         self.ensure_environment_variables(env_vars)
         self.ensure_encrypted_environment_variables(encrypted_env_vars)
+
+
+class EnvironmentVariableMixin(object):
+    """
+    Mixin to add to pipelines, stages, and jobs to provide environment variable functionality.
+    """
+    @property
+    def environment_variables(self):
+        return self.thing_with_environment_variables.environment_variables
+
+    @property
+    def encrypted_environment_variables(self):
+        return self.thing_with_environment_variables.encrypted_environment_variables
+
+    @property
+    def unencrypted_secure_environment_variables(self):
+        return self.thing_with_environment_variables.unencrypted_secure_environment_variables
+
+    def ensure_environment_variables(self, environment_variables):
+        self.thing_with_environment_variables.ensure_environment_variables(environment_variables)
+        return self
+
+    def ensure_encrypted_environment_variables(self, environment_variables):
+        self.thing_with_environment_variables.ensure_encrypted_environment_variables(environment_variables)
+        return self
+
+    def ensure_unencrypted_secure_environment_variables(self, environment_variables):
+        self.thing_with_environment_variables.ensure_unencrypted_secure_environment_variables(environment_variables)
+        return self
+
+    def without_any_environment_variables(self):
+        self.thing_with_environment_variables.remove_all()
+        return self
+
+    def remove_environment_variable(self, name):
+        self.thing_with_environment_variables.remove(name)
+        return self
+
+    @property
+    def thing_with_environment_variables(self):
+        return ThingWithEnvironmentVariables(self.element)
