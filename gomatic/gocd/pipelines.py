@@ -121,12 +121,20 @@ class Job(CommonEqualityMixin):
     def encrypted_environment_variables(self):
         return self.__thing_with_environment_variables.encrypted_environment_variables
 
+    @property
+    def unencrypted_secure_environment_variables(self):
+        return self.__thing_with_environment_variables.unencrypted_secure_environment_variables
+
     def ensure_environment_variables(self, environment_variables):
         self.__thing_with_environment_variables.ensure_environment_variables(environment_variables)
         return self
 
     def ensure_encrypted_environment_variables(self, environment_variables):
         self.__thing_with_environment_variables.ensure_encrypted_environment_variables(environment_variables)
+        return self
+
+    def ensure_unencrypted_secure_environment_variables(self, environment_variables):
+        self.__thing_with_environment_variables.ensure_unencrypted_secure_environment_variables(environment_variables)
         return self
 
     def without_any_environment_variables(self):
@@ -206,12 +214,20 @@ class Stage(CommonEqualityMixin):
     def encrypted_environment_variables(self):
         return self.__thing_with_environment_variables.encrypted_environment_variables
 
+    @property
+    def unencrypted_secure_environment_variables(self):
+        return self.__thing_with_environment_variables.unencrypted_secure_environment_variables
+
     def ensure_environment_variables(self, environment_variables):
         self.__thing_with_environment_variables.ensure_environment_variables(environment_variables)
         return self
 
     def ensure_encrypted_environment_variables(self, environment_variables):
         self.__thing_with_environment_variables.ensure_encrypted_environment_variables(environment_variables)
+        return self
+
+    def ensure_unencrypted_secure_environment_variables(self, environment_variables):
+        self.__thing_with_environment_variables.ensure_unencrypted_secure_environment_variables(environment_variables)
         return self
 
     def without_any_environment_variables(self):

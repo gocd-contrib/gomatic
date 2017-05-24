@@ -424,6 +424,11 @@ class TestJobs(unittest.TestCase):
         job.ensure_encrypted_environment_variables({'one': 'blah=='})
         self.assertEquals({"one": "blah=="}, job.encrypted_environment_variables)
 
+    def test_can_add_unencrypted_secure_environment_variables_to_stage(self):
+        job = empty_stage().ensure_job("j")
+        job.ensure_unencrypted_secure_environment_variables({"new": "one", "again": "two"})
+        self.assertEquals({"new": "one", "again": "two"}, job.unencrypted_secure_environment_variables)
+
     def test_can_add_environment_variables(self):
         job = typical_pipeline() \
             .ensure_stage("build") \
@@ -555,6 +560,11 @@ class TestStages(unittest.TestCase):
         s = stage.ensure_environment_variables({"new": "one"})
         self.assertEquals(s, stage)
         self.assertEquals({"BASE_URL": "http://myurl", "new": "one"}, stage.environment_variables)
+
+    def test_can_add_unencrypted_secure_environment_variables_to_stage(self):
+        stage = typical_pipeline().ensure_stage("deploy")
+        stage.ensure_unencrypted_secure_environment_variables({"new": "one", "again": "two"})
+        self.assertEquals({"new": "one", "again": "two"}, stage.unencrypted_secure_environment_variables)
 
     def test_can_remove_all_environment_variables(self):
         stage = typical_pipeline().ensure_stage("deploy")
