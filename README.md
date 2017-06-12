@@ -1,10 +1,6 @@
-# [Looking for new maintainers] Gomatic
+# Gomatic
 
 This is a Python API for configuring ThoughtWorks [GoCD](http://www.go.cd/).
-
-## Looking for new maintainers
-
-We no longer have the time and resources to maintain this project, and are looking for new maintainers. If you are interested then please reply to [#17](https://github.com/SpringerSBM/gomatic/issues/17).
 
 ## What does it do?
 
