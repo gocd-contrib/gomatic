@@ -21,7 +21,10 @@ class GoCdConfigurator(object):
 
     def __set_initial_config_xml(self):
         initial_config, self._initial_md5 = self.__current_config_response()
-        self.__initial_config = initial_config.encode('ascii', errors='xmlcharrefreplace')
+        if isinstance(initial_config, bytes):
+            self.__initial_config = initial_config.decode('ascii', errors='xmlcharrefreplace')
+        else:
+            self.__initial_config = initial_config.encode('ascii', errors='xmlcharrefreplace') 
         self.__xml_root = ET.fromstring(self.__initial_config)
 
     def __repr__(self):

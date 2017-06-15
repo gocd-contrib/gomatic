@@ -5,6 +5,7 @@ from gomatic.gocd.materials import Materials, GitMaterial
 from gomatic.gocd.tasks import Task
 from gomatic.mixins import CommonEqualityMixin
 from gomatic.xml_operations import PossiblyMissingElement, Ensurance, move_all_to_end
+from functools import cmp_to_key
 
 
 DEFAULT_LABEL_TEMPLATE = "0.${COUNT}"  # TODO confirm what default really is. I am pretty sure this is mistaken!
@@ -496,7 +497,7 @@ class Pipeline(CommonEqualityMixin):
 
     def ensure_parameters(self, parameters):
         parameters_ensurance = Ensurance(self.element).ensure_child("params")
-        for key, value in parameters.iteritems():
+        for key, value in parameters.items():
             parameters_ensurance.ensure_child_with_attribute("param", "name", key).set_text(value)
         return self
 
@@ -576,19 +577,22 @@ class Pipeline(CommonEqualityMixin):
 
     @staticmethod
     def __reordered_materials_to_reduce_thrash(materials):
+        def _cmp(a, b):
+            return (a > b) - (a < b)
+
         def cmp_materials(m1, m2):
             if m1.is_git:
                 if m2.is_git:
-                    return cmp(m1.url, m2.url)
+                    return _cmp(m1.url, m2.url)
                 else:
                     return -1
             else:
                 if m2.is_git:
                     return 1
                 else:
-                    return cmp(str(m1), str(m2))
+                    return _cmp(str(m1), str(m2))
 
-        return sorted(materials, cmp_materials)
+        return sorted(materials, key=cmp_to_key(cmp_materials))
 
 
 class PipelineGroup(CommonEqualityMixin):
