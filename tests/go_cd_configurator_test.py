@@ -384,7 +384,7 @@ class TestJobs(unittest.TestCase):
             ExecTask(['x'], runif='whatever')
             self.fail("should have thrown exception")
         except RuntimeError as e:
-            self.assertTrue(e.message.count("whatever") > 0)
+            self.assertTrue(str(e).count("whatever") > 0)
 
     def test_can_set_runif_to_particular_values(self):
         self.assertEquals('passed', ExecTask(['x'], runif='passed').runif)
@@ -1069,7 +1069,7 @@ class TestPipelineGroup(unittest.TestCase):
             self._pipeline_group_from_config().find_pipeline("unknown-pipeline")
             self.fail("should have thrown exception")
         except RuntimeError as e:
-            self.assertTrue(e.message.count("unknown-pipeline"))
+            self.assertTrue(str(e).count("unknown-pipeline"))
 
     def test_can_remove_pipeline(self):
         pipeline_group = self._pipeline_group_from_config()
@@ -1127,7 +1127,7 @@ class TestGoCdConfigurator(unittest.TestCase):
     def test_keeps_schema_version(self):
         empty_config = FakeHostRestClient(empty_config_xml.replace('schemaVersion="72"', 'schemaVersion="73"'), "empty_config()")
         configurator = GoCdConfigurator(empty_config)
-        self.assertEquals(1, configurator.config.count('schemaVersion="73"'))
+        self.assertEquals(1, configurator.config.count('schemaVersion="73"'.encode()))
 
     def test_can_find_out_server_settings(self):
         configurator = GoCdConfigurator(config('config-with-server-settings'))
@@ -1378,8 +1378,14 @@ class TestReverseEngineering(unittest.TestCase):
             print(reverse_engineered_python)
         pipeline = "evaluation failed"
         template = "evaluation failed"
-        exec reverse_engineered_python
-        # exec reverse_engineered_python.replace("from gomatic import *", "from gomatic.go_cd_configurator import *")
+
+        # http://bugs.python.org/issue4831
+        _locals = locals()
+        exec(reverse_engineered_python, globals(), _locals)
+        pipeline = _locals['pipeline']
+        template = _locals['template']
+
+        #exec(reverse_engineered_python.replace("from gomatic import *", "from gomatic.go_cd_configurator import *"))
         xml_before = sneakily_converted_to_xml(before)
         # noinspection PyTypeChecker
         xml_after = sneakily_converted_to_xml(pipeline)
