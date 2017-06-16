@@ -9,12 +9,14 @@ def Materials(element):
         material_name = element.attrib.get('materialName', None)
         polling = element.attrib.get('autoUpdate', 'true') == 'true'
         destination_directory = element.attrib.get('dest', None)
+        shallow = element.attrib.get('shallowClone') == 'true'
         return GitMaterial(element.attrib['url'],
                            branch=branch,
                            material_name=material_name,
                            polling=polling,
                            ignore_patterns=ignore_patterns_in(element),
-                           destination_directory=destination_directory)
+                           destination_directory=destination_directory,
+                           shallow=shallow)
     if element.tag == "pipeline":
         material_name = element.attrib.get('materialName', None)
         return PipelineMaterial(element.attrib['pipelineName'], element.attrib['stageName'], material_name)
@@ -22,13 +24,14 @@ def Materials(element):
 
 
 class GitMaterial(CommonEqualityMixin):
-    def __init__(self, url, branch=None, material_name=None, polling=True, ignore_patterns=set(), destination_directory=None):
+    def __init__(self, url, branch=None, material_name=None, polling=True, ignore_patterns=set(), destination_directory=None, shallow=False):
         self.__url = url
         self.__branch = branch
         self.__material_name = material_name
         self.__polling = polling
         self.__ignore_patterns = ignore_patterns
         self.__destination_directory = destination_directory
+        self.__shallow = shallow
 
     def __repr__(self):
         branch_part = ""
@@ -46,7 +49,10 @@ class GitMaterial(CommonEqualityMixin):
         destination_directory_part = ''
         if self.destination_directory:
             destination_directory_part = ', destination_directory="%s"' % self.destination_directory
-        return ('GitMaterial("%s"' % self.__url) + branch_part + material_name_part + polling_part + ignore_patterns_part + destination_directory_part + ')'
+        shallow_part = ''
+        if self.__shallow:
+            shallow_part = ', shallow="%s"' % self.__shallow
+        return ('GitMaterial("%s"' % self.__url) + branch_part + material_name_part + polling_part + ignore_patterns_part + destination_directory_part + shallow_part + ')'
 
     @property
     def __has_options(self):
@@ -92,6 +98,10 @@ class GitMaterial(CommonEqualityMixin):
     def destination_directory(self):
         return self.__destination_directory
 
+    @property
+    def shallow(self):
+        return self.__shallow
+
     def append_to(self, element):
         branch_part = ""
         if not self.is_on_master:
@@ -109,7 +119,11 @@ class GitMaterial(CommonEqualityMixin):
         if self.__destination_directory:
             destination_directory_part = ' dest="%s"' % self.__destination_directory
 
-        new_element = ET.fromstring(('<git url="%s"' % self.__url) + branch_part + material_name_part + polling_part + destination_directory_part + ' />')
+        shallow_part = ''
+        if self.__shallow:
+            shallow_part = ' shallowClone="true"'
+
+        new_element = ET.fromstring(('<git url="%s"' % self.__url) + branch_part + material_name_part + polling_part + destination_directory_part + shallow_part + ' />')
 
         if self.ignore_patterns:
             filter_element = ET.fromstring("<filter/>")
