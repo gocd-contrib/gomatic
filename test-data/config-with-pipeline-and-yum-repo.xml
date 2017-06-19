@@ -1,0 +1,38 @@
+<?xml version="1.0" ?>
+<cruise schemaVersion="72" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="cruise-config.xsd">
+    <server artifactsdir="artifacts" commandRepositoryLocation="default"
+            serverId="96eca4bf-210e-499f-9dc9-0cefdae38d0c"/>
+
+    <repositories>
+        <repository id="ee6a8a7b-96d0-452e-aa99-26e4af46d646" name="ts-yum-repo">
+            <pluginConfiguration id="yum" version="1"/>
+            <configuration>
+                <property>
+                    <key>REPO_URL</key>
+                    <value>http://yum-server/releases/component-name/</value>
+                </property>
+            </configuration>
+            <packages>
+                <package id="eca7f187-73c2-4f62-971a-d15233937256" name="yum-component-name">
+                    <configuration>
+                        <property>
+                            <key>PACKAGE_SPEC</key>
+                            <value>component-name.*</value>
+                        </property>
+                    </configuration>
+                </package>
+            </packages>
+        </repository>
+    </repositories>
+
+    <pipelines group="P.Group">
+        <pipeline name="test">
+            <materials>
+                <package ref="eca7f187-73c2-4f62-971a-d15233937256"/>
+            </materials>
+        </pipeline>
+    </pipelines>
+
+</cruise>
+

@@ -5,10 +5,12 @@ import xml.etree.ElementTree as ET
 import argparse
 import sys
 import subprocess
+from uuid import uuid4
 
 import requests
 from decimal import Decimal
 
+from gomatic.gocd.repositories import Repository
 from gomatic.gocd.pipelines import Pipeline, PipelineGroup
 from gomatic.gocd.agents import Agent
 from gomatic.xml_operations import Ensurance, PossiblyMissingElement, move_all_to_end, prettify
@@ -137,6 +139,16 @@ class GoCdConfigurator(object):
         for e in self.__xml_root.findall('pipelines'):
             self.__xml_root.remove(e)
         return self
+
+    @property
+    def repositories(self):
+        return [Repository(e) for e in PossiblyMissingElement(self.__xml_root).possibly_missing_child('repositories').findall('repository')]
+
+    def ensure_repository(self, repository_name):
+        ensured_repository_element = Ensurance(self.__xml_root).ensure_child('repositories').ensure_child_with_attribute('repository', 'name', repository_name)
+        if not ensured_repository_element.has_attribute('id'):
+            ensured_repository_element.set('id', str(uuid4()))
+        return Repository(ensured_repository_element.element)
 
     @property
     def agents(self):

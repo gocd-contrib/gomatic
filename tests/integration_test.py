@@ -1,15 +1,16 @@
 #!/usr/bin/env python
+import os
+import subprocess
+import sys
+import time
+import unittest
+import webbrowser
 from distutils.version import StrictVersion
 from urllib2 import urlopen
-import time
-import subprocess
-import webbrowser
-import os
-import unittest
-import sys
 
 from gomatic import GoCdConfigurator, HostRestClient, GitMaterial, ExecTask
 from gomatic.gocd.artifacts import Artifact
+from gomatic.gocd.materials import PackageMaterial
 
 
 def start_go_server(gocd_version, gocd_download_version_string):
@@ -170,6 +171,47 @@ class IntegrationTest(unittest.TestCase):
             self.assertEquals(1, len(configurator.ensure_pipeline_group('Test').find_pipeline('new-one').stages))
             self.assertEquals(1, len(configurator.ensure_pipeline_group('Test').find_pipeline('new-two').stages))
 
+    def test_can_save_pipeline_with_package_ref(self):
+        gocd_version, gocd_download_version_string = self.gocd_versions[-1]
+        print 'test_can_save_pipeline_with_package_ref', "*" * 60, gocd_version
+        with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
+            pipeline = configurator \
+                .ensure_pipeline_group("Test") \
+                .ensure_replacement_of_pipeline("new-package")
+
+            repo = configurator.ensure_repository("repo_one")
+            repo.ensure_type('yum', '1')
+            repo.ensure_property('REPO_URL', 'test/repo')
+            package = repo.ensure_package('xxx')
+            package.ensure_property('PACKAGE_SPEC' , 'spec.*')
+
+            pipeline.set_package_material(PackageMaterial(package.id))
+            job = pipeline.ensure_stage("build").ensure_job("build")
+            job.ensure_task(ExecTask(["ls"]))
+
+            configurator.save_updated_config(save_config_locally=True, dry_run=False)
+            self.assertEquals(1, len(configurator.ensure_pipeline_group('Test').find_pipeline('new-package').materials))
+            self.assertEquals(package.id, configurator.ensure_pipeline_group('Test').find_pipeline('new-package').package_material.ref)
+
+    def test_can_save_and_read_repositories(self):
+        gocd_version, gocd_download_version_string = self.gocd_versions[-1]
+        print 'test_can_save_and_read_repositories', "*" * 60, gocd_version
+        with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
+            repo = configurator.ensure_repository("repo_one")
+            repo.ensure_type('yum', '1')
+            repo.ensure_property('REPO_URL', 'test/repo')
+            repo.ensure_property('REPO_URL', 'test/repo')
+            package = repo.ensure_package('xxx')
+            package.ensure_property('PACKAGE_SPEC' , 'spec.*')
+
+            pipeline = configurator.ensure_pipeline_group('repo-pipeline').ensure_pipeline('pone')
+            pipeline.set_package_ref(package.id)
+            job = pipeline.ensure_stage("build").ensure_job("build")
+            job.ensure_task(ExecTask(["ls"]))
+
+            configurator.save_updated_config(save_config_locally=True, dry_run=False)
+
+            self.assertIsNotNone(configurator.ensure_repository("repo_one"))
 
 if __name__ == '__main__':
     if not os.path.exists("go-server-%s.deb" % IntegrationTest.gocd_versions[0][0]):

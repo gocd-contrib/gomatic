@@ -1,7 +1,7 @@
 from xml.etree import ElementTree as ET
 from gomatic.gocd.artifacts import Artifact
 from gomatic.gocd.generic import ThingWithResources, ThingWithEnvironmentVariables
-from gomatic.gocd.materials import Materials, GitMaterial
+from gomatic.gocd.materials import Materials, GitMaterial, PackageMaterial
 from gomatic.gocd.tasks import Task
 from gomatic.mixins import CommonEqualityMixin
 from gomatic.xml_operations import PossiblyMissingElement, Ensurance, move_all_to_end
@@ -410,6 +410,10 @@ class Pipeline(CommonEqualityMixin):
         return [m for m in self.materials if m.is_git]
 
     @property
+    def package_materials(self):
+        return [m for m in self.materials if m.is_package]
+
+    @property
     def git_material(self):
         gits = self.git_materials
 
@@ -424,6 +428,32 @@ class Pipeline(CommonEqualityMixin):
     @property
     def has_single_git_material(self):
         return len(self.git_materials) == 1
+
+    @property
+    def has_single_package_material(self):
+        return len(self.package_materials) == 1
+
+    @property
+    def package_material(self):
+        packages = self.package_materials
+
+        if len(packages) == 0:
+            raise RuntimeError("pipeline %s has no package" % self)
+
+        if len(packages) > 1:
+            raise RuntimeError("pipeline %s has more than one package" % self)
+
+        return packages[0]
+
+    def set_package_ref(self, package_ref):
+        return self.set_package_material(PackageMaterial(package_ref))
+
+    def set_package_material(self, package_material):
+        if len(self.package_materials) > 1:
+            raise RuntimeError('Cannot set package ref for pipeline that already has multiple package materials. Use "ensure_material(PackageMaterial(..." instead')
+        PossiblyMissingElement(self.element).possibly_missing_child('materials').remove_all_children('package')
+        self.__add_material(package_material)
+        return self
 
     @property
     def git_url(self):
