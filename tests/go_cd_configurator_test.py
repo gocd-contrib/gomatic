@@ -563,6 +563,42 @@ class TestStages(unittest.TestCase):
         self.assertEquals({}, stage.environment_variables)
 
 
+class TestConfigRepo(unittest.TestCase):
+    def setUp(self):
+        self.configurator = GoCdConfigurator(empty_config())
+
+    def test_can_ensure_config_repo_with_git_url_and_plugin(self):
+        self.configurator.ensure_config_repos().ensure_config_repo('git://url', 'yaml.config.plugin')
+
+        self.assertEqual(self.configurator.config_repos.config_repo[0].git_url, 'git://url')
+        self.assertEqual(self.configurator.config_repos.config_repo[0].plugin, 'yaml.config.plugin')
+
+    def test_can_ensure_yaml_config_repo_with_git_url(self):
+        self.configurator.ensure_config_repos().ensure_yaml_config_repo('git://url')
+
+        self.assertEqual(self.configurator.config_repos.config_repo[0].git_url, 'git://url')
+        self.assertEqual(self.configurator.config_repos.config_repo[0].plugin, 'yaml.config.plugin')
+
+    def test_can_ensure_json_config_repo_with_git_url(self):
+        self.configurator.ensure_config_repos().ensure_json_config_repo('git://url')
+
+        self.assertEqual(self.configurator.config_repos.config_repo[0].git_url, 'git://url')
+        self.assertEqual(self.configurator.config_repos.config_repo[0].plugin, 'json.config.plugin')
+
+    def test_doesnt_duplicate_config_repos(self):
+        self.configurator.ensure_config_repos().ensure_yaml_config_repo('git://url')
+        self.configurator.ensure_config_repos().ensure_yaml_config_repo('git://url')
+
+        self.assertEqual(len(self.configurator.config_repos.config_repo), 1)
+
+    def test_can_add_more_than_2_config_repos(self):
+        self.configurator.ensure_config_repos().ensure_yaml_config_repo('git://url')
+        self.configurator.ensure_config_repos().ensure_json_config_repo('git://url')
+        self.configurator.ensure_config_repos().ensure_yaml_config_repo('git://url2')
+
+        self.assertEqual(len(self.configurator.config_repos.config_repo), 3)
+
+
 class TestPipeline(unittest.TestCase):
     def test_pipelines_have_names(self):
         pipeline = typical_pipeline()

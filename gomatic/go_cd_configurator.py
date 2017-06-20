@@ -11,6 +11,7 @@ import requests
 from decimal import Decimal
 
 from gomatic.gocd.repositories import Repository
+from gomatic.gocd.config_repos import ConfigRepos
 from gomatic.gocd.pipelines import Pipeline, PipelineGroup
 from gomatic.gocd.agents import Agent
 from gomatic.xml_operations import Ensurance, PossiblyMissingElement, move_all_to_end, prettify
@@ -125,9 +126,17 @@ class GoCdConfigurator(object):
     def pipeline_groups(self):
         return [PipelineGroup(e, self) for e in self.__xml_root.findall('pipelines')]
 
+    @property
+    def config_repos(self):
+        return ConfigRepos(self.__xml_root.find('config-repos'), self)
+
     def ensure_pipeline_group(self, group_name):
         pipeline_group_element = Ensurance(self.__xml_root).ensure_child_with_attribute("pipelines", "group", group_name)
         return PipelineGroup(pipeline_group_element.element, self)
+
+    def ensure_config_repos(self):
+        config_repos = Ensurance(self.__xml_root).ensure_child("config-repos")
+        return ConfigRepos(config_repos.element, self)
 
     def ensure_removal_of_pipeline_group(self, group_name):
         matching = [g for g in self.pipeline_groups if g.name == group_name]
