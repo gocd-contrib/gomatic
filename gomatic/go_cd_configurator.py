@@ -222,7 +222,7 @@ class GoCdConfigurator(object):
 
         if not dry_run and config_before != config_after:
             headers = {
-                "Confirm": True,
+                "Confirm": "true",
             }
             self.__host_rest_client.post('/go/admin/restful/configuration/file/POST/xml', data, headers)
             self.__set_initial_config_xml()
