@@ -221,7 +221,10 @@ class GoCdConfigurator(object):
         }
 
         if not dry_run and config_before != config_after:
-            self.__host_rest_client.post('/go/admin/restful/configuration/file/POST/xml', data)
+            headers = {
+                "Confirm": True,
+            }
+            self.__host_rest_client.post('/go/admin/restful/configuration/file/POST/xml', data, headers)
             self.__set_initial_config_xml()
 
 
@@ -252,9 +255,9 @@ class HostRestClient(object):
             count += 1
         return result
 
-    def post(self, path, data):
+    def post(self, path, data, headers=None):
         url = self.__path(path)
-        result = requests.post(url, data, auth=self.__auth(), verify=self.__verify_ssl)
+        result = requests.post(url, data, auth=self.__auth(), verify=self.__verify_ssl, headers=headers)
         if result.status_code != 200:
             try:
                 result_json = json.loads(result.text.replace("\\'", "'"))
