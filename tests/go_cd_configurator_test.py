@@ -1068,6 +1068,13 @@ class TestPipelineGroup(unittest.TestCase):
         pipeline_group = self._pipeline_group_from_config()
         self.assertEquals(2, len(pipeline_group.pipelines))
 
+    def test_can_authorize_read_only_users(self):
+        pipeline_group = self._pipeline_group_from_config()
+        pipeline_group.ensure_authorization().ensure_view().add_user('user1').add_user('user2')
+        self.assertEquals(2, len(pipeline_group.authorization.view.users))
+        self.assertEquals('user1', pipeline_group.authorization.view.users[0].username)
+        self.assertEquals('user2', pipeline_group.authorization.view.users[1].username)
+
     def test_can_add_pipeline(self):
         configurator = GoCdConfigurator(empty_config())
         pipeline_group = configurator.ensure_pipeline_group("new_group")

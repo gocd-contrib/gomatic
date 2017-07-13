@@ -186,6 +186,41 @@ class Job(CommonEqualityMixin):
         return result
 
 
+class User(CommonEqualityMixin):
+    def __init__(self, element):
+        self.element = element
+
+    @property
+    def username(self):
+        return self.element.text
+
+
+class ViewAuthorization(CommonEqualityMixin):
+    def __init__(self, element):
+        self.element = element
+
+    @property
+    def users(self):
+        return [User(e) for e in self.element.findall('user')]
+
+    def add_user(self, username):
+        Ensurance(self.element).ensure_child_with_text('user', username)
+        return self
+
+
+class Authorization(CommonEqualityMixin):
+    def __init__(self, element):
+        self.element = element
+
+    @property
+    def view(self):
+        return ViewAuthorization(self.element.find('view'))
+
+    def ensure_view(self):
+        view_element = Ensurance(self.element).ensure_child('view').element
+        return ViewAuthorization(view_element)
+
+
 class Stage(CommonEqualityMixin):
     def __init__(self, element):
         self.element = element
@@ -658,6 +693,10 @@ class PipelineGroup(CommonEqualityMixin):
         return self.__configurator.templates
 
     @property
+    def authorization(self):
+        return Authorization(self.element.find('authorization'))
+
+    @property
     def pipelines(self):
         return [Pipeline(e, self) for e in self.element.findall('pipeline')]
 
@@ -672,6 +711,10 @@ class PipelineGroup(CommonEqualityMixin):
             return self._matching_pipelines(name)[0]
         else:
             raise RuntimeError('Cannot find pipeline with name "%s" in %s' % (name, self.pipelines))
+
+    def ensure_authorization(self):
+        authorization_element = Ensurance(self.element).ensure_child('authorization').element
+        return Authorization(authorization_element)
 
     def ensure_pipeline(self, name):
         pipeline_element = Ensurance(self.element).ensure_child_with_attribute('pipeline', 'name', name).element

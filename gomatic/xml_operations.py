@@ -16,6 +16,15 @@ class Ensurance(object):
         else:
             return Ensurance(child)
 
+    def ensure_child_with_text(self, name, text):
+        matching_elements = [e for e in self.element.findall(name) if e.text == text]
+        if len(matching_elements) == 0:
+            new_element = ET.fromstring('<%s>%s</%s>' % (name, text, name))
+            self.element.append(new_element)
+            return Ensurance(new_element)
+        else:
+            return Ensurance(matching_elements[0])
+
     def ensure_child_with_attribute(self, name, attribute_name, attribute_value):
         matching_elements = [e for e in self.element.findall(name) if e.attrib[attribute_name] == attribute_value]
         if len(matching_elements) == 0:
