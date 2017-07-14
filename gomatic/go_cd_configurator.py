@@ -1,18 +1,18 @@
 #!/usr/bin/env python
+import argparse
 import json
+import subprocess
+import sys
 import time
 import xml.etree.ElementTree as ET
-import argparse
-import sys
-import subprocess
+from decimal import Decimal
 from uuid import uuid4
 
 import requests
-from decimal import Decimal
 
-from gomatic.gocd.repositories import Repository
-from gomatic.gocd.pipelines import Pipeline, PipelineGroup
 from gomatic.gocd.agents import Agent
+from gomatic.gocd.pipelines import Pipeline, PipelineGroup
+from gomatic.gocd.repositories import Repository
 from gomatic.xml_operations import Ensurance, PossiblyMissingElement, move_all_to_end, prettify
 
 

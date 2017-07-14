@@ -2,16 +2,25 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from xml.dom.minidom import parseString
 import xml.etree.ElementTree as ET
-
 from decimal import Decimal
+from xml.dom.minidom import parseString
 
-from gomatic import GoCdConfigurator, FetchArtifactDir, RakeTask, ExecTask, FetchArtifactTask, \
-    FetchArtifactFile, Tab, GitMaterial, PipelineMaterial, Pipeline
-from gomatic.fake import FakeHostRestClient, empty_config_xml, config, empty_config, load_file
-from gomatic.gocd.pipelines import DEFAULT_LABEL_TEMPLATE
+from gomatic import (
+    ExecTask,
+    FetchArtifactDir,
+    FetchArtifactFile,
+    FetchArtifactTask,
+    GitMaterial,
+    GoCdConfigurator,
+    Pipeline,
+    PipelineMaterial,
+    RakeTask,
+    Tab
+)
+from gomatic.fake import FakeHostRestClient, config, empty_config, empty_config_xml, load_file
 from gomatic.gocd.artifacts import Artifact
+from gomatic.gocd.pipelines import DEFAULT_LABEL_TEMPLATE
 from gomatic.xml_operations import prettify
 
 

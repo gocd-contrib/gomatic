@@ -1,12 +1,12 @@
+from functools import cmp_to_key
 from xml.etree import ElementTree as ET
+
 from gomatic.gocd.artifacts import Artifact
 from gomatic.gocd.generic import EnvironmentVariableMixin, ResourceMixin
-from gomatic.gocd.materials import Materials, GitMaterial, PackageMaterial
+from gomatic.gocd.materials import GitMaterial, Materials, PackageMaterial
 from gomatic.gocd.tasks import Task
 from gomatic.mixins import CommonEqualityMixin
-from gomatic.xml_operations import PossiblyMissingElement, Ensurance, move_all_to_end
-from functools import cmp_to_key
-
+from gomatic.xml_operations import Ensurance, PossiblyMissingElement, move_all_to_end
 
 DEFAULT_LABEL_TEMPLATE = "0.${COUNT}"  # TODO confirm what default really is. I am pretty sure this is mistaken!
 

@@ -1,6 +1,7 @@
 from xml.etree import ElementTree as ET
+
 from gomatic.mixins import CommonEqualityMixin
-from gomatic.xml_operations import PossiblyMissingElement, Ensurance
+from gomatic.xml_operations import Ensurance, PossiblyMissingElement
 
 
 class ResourceMixin(object):

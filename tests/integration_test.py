@@ -8,7 +8,7 @@ import webbrowser
 from distutils.version import StrictVersion
 from urllib2 import urlopen
 
-from gomatic import GoCdConfigurator, HostRestClient, GitMaterial, ExecTask
+from gomatic import ExecTask, GitMaterial, GoCdConfigurator, HostRestClient
 from gomatic.gocd.artifacts import Artifact
 from gomatic.gocd.materials import PackageMaterial
 

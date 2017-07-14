@@ -1,9 +1,8 @@
 from uuid import uuid4
+from xml.etree import ElementTree as ET
 
 from gomatic.mixins import CommonEqualityMixin
 from gomatic.xml_operations import Ensurance
-
-from xml.etree import ElementTree as ET
 
 
 class Repository(CommonEqualityMixin):
@@ -95,5 +94,3 @@ class Package(CommonEqualityMixin):
         value_tag = Ensurance(property_element).ensure_child('value')
         value_tag.set_text(value)
         return Property(property_element)
-
-
