@@ -3,10 +3,7 @@ from gomatic.mixins import CommonEqualityMixin
 from gomatic.xml_operations import PossiblyMissingElement, Ensurance
 
 
-class ThingWithResources(CommonEqualityMixin):
-    def __init__(self, element):
-        self.element = element
-
+class ResourceMixin(object):
     @property
     def resources(self):
         guarded_element = PossiblyMissingElement(self.element)
@@ -16,12 +13,13 @@ class ThingWithResources(CommonEqualityMixin):
         if resource not in self.resources:
             Ensurance(self.element).ensure_child('resources')\
                 .append(ET.fromstring('<resource>%s</resource>' % resource))
+        return self
 
 
-class ThingWithEnvironmentVariables(object):
-    def __init__(self, element):
-        self.element = element
-
+class EnvironmentVariableMixin(object):
+    """
+    Mixin to add to pipelines, stages, and jobs to provide environment variable functionality.
+    """
     @staticmethod
     def __is_secure(variable_element):
         return 'secure' in variable_element.attrib and variable_element.attrib['secure'] == 'true'
@@ -41,18 +39,6 @@ class ThingWithEnvironmentVariables(object):
                 if encrypted == is_encrypted:
                     result[variable_element.attrib['name']] = variable_element.find(value_element_name).text
         return result
-
-    @property
-    def environment_variables(self):
-        return self.__environment_variables(secure=False)
-
-    @property
-    def encrypted_environment_variables(self):
-        return self.__environment_variables(secure=True, encrypted=True)
-
-    @property
-    def unencrypted_secure_environment_variables(self):
-        return self.__environment_variables(secure=True, encrypted=False)
 
     def __ensure_environment_variables(self, environment_variables, secure, encrypted):
         ensured_env_variables = Ensurance(self.element).ensure_child("environmentvariables")
@@ -76,17 +62,49 @@ class ThingWithEnvironmentVariables(object):
         for environment_variable_element in sorted(environment_variable_elements, key=lambda e: e.attrib['name']):
             env_variables_element.append(environment_variable_element)
 
+    def _remove(self, name):
+        env_vars = self.environment_variables
+        encrypted_env_vars = self.encrypted_environment_variables
+        self._remove_all()
+        if name in env_vars:
+            del env_vars[name]
+        self.ensure_environment_variables(env_vars)
+        self.ensure_encrypted_environment_variables(encrypted_env_vars)
+
+    def _remove_all(self):
+        PossiblyMissingElement(self.element).possibly_missing_child("environmentvariables").remove_all_children()
+
+    @property
+    def environment_variables(self):
+        return self.__environment_variables(secure=False)
+
+    @property
+    def encrypted_environment_variables(self):
+        return self.__environment_variables(secure=True, encrypted=True)
+
+    @property
+    def unencrypted_secure_environment_variables(self):
+        return self.__environment_variables(secure=True, encrypted=False)
+
     def ensure_environment_variables(self, environment_variables):
         self.__ensure_environment_variables(environment_variables, secure=False, encrypted=False)
+        return self
 
     def ensure_encrypted_environment_variables(self, environment_variables):
         self.__ensure_environment_variables(environment_variables, secure=True, encrypted=True)
+        return self
 
     def ensure_unencrypted_secure_environment_variables(self, environment_variables):
         self.__ensure_environment_variables(environment_variables, secure=True, encrypted=False)
+        return self
 
-    def remove_all(self):
-        PossiblyMissingElement(self.element).possibly_missing_child("environmentvariables").remove_all_children()
+    def without_any_environment_variables(self):
+        self._remove_all()
+        return self
+
+    def remove_environment_variable(self, name):
+        self._remove(name)
+        return self
 
     def as_python(self):
         result = ""
@@ -101,53 +119,3 @@ class ThingWithEnvironmentVariables(object):
             result += '.ensure_unencrypted_secure_environment_variables(%s)' % self.unencrypted_secure_environment_variables
 
         return result
-
-    def remove(self, name):
-        env_vars = self.environment_variables
-        encrypted_env_vars = self.encrypted_environment_variables
-        self.remove_all()
-        if name in env_vars:
-            del env_vars[name]
-        self.ensure_environment_variables(env_vars)
-        self.ensure_encrypted_environment_variables(encrypted_env_vars)
-
-
-class EnvironmentVariableMixin(object):
-    """
-    Mixin to add to pipelines, stages, and jobs to provide environment variable functionality.
-    """
-    @property
-    def environment_variables(self):
-        return self.thing_with_environment_variables.environment_variables
-
-    @property
-    def encrypted_environment_variables(self):
-        return self.thing_with_environment_variables.encrypted_environment_variables
-
-    @property
-    def unencrypted_secure_environment_variables(self):
-        return self.thing_with_environment_variables.unencrypted_secure_environment_variables
-
-    def ensure_environment_variables(self, environment_variables):
-        self.thing_with_environment_variables.ensure_environment_variables(environment_variables)
-        return self
-
-    def ensure_encrypted_environment_variables(self, environment_variables):
-        self.thing_with_environment_variables.ensure_encrypted_environment_variables(environment_variables)
-        return self
-
-    def ensure_unencrypted_secure_environment_variables(self, environment_variables):
-        self.thing_with_environment_variables.ensure_unencrypted_secure_environment_variables(environment_variables)
-        return self
-
-    def without_any_environment_variables(self):
-        self.thing_with_environment_variables.remove_all()
-        return self
-
-    def remove_environment_variable(self, name):
-        self.thing_with_environment_variables.remove(name)
-        return self
-
-    @property
-    def thing_with_environment_variables(self):
-        return ThingWithEnvironmentVariables(self.element)

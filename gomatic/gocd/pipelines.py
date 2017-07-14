@@ -1,6 +1,6 @@
 from xml.etree import ElementTree as ET
 from gomatic.gocd.artifacts import Artifact
-from gomatic.gocd.generic import EnvironmentVariableMixin, ThingWithResources, ThingWithEnvironmentVariables
+from gomatic.gocd.generic import EnvironmentVariableMixin, ResourceMixin
 from gomatic.gocd.materials import Materials, GitMaterial, PackageMaterial
 from gomatic.gocd.tasks import Task
 from gomatic.mixins import CommonEqualityMixin
@@ -23,10 +23,9 @@ class Tab(CommonEqualityMixin):
         element.append(ET.fromstring('<tab name="%s" path="%s" />' % (self.__name, self.__path)))
 
 
-class Job(CommonEqualityMixin, EnvironmentVariableMixin):
+class Job(CommonEqualityMixin, EnvironmentVariableMixin, ResourceMixin):
     def __init__(self, element):
         self.element = element
-        self.__thing_with_resources = ThingWithResources(element)
 
     def __repr__(self):
         return "Job('%s', %s)" % (self.name, self.tasks)
@@ -63,14 +62,6 @@ class Job(CommonEqualityMixin, EnvironmentVariableMixin):
 
     def set_runs_on_all_agents(self, run_on_all_agents=True):
         self.runs_on_all_agents = run_on_all_agents
-        return self
-
-    @property
-    def resources(self):
-        return self.__thing_with_resources.resources
-
-    def ensure_resource(self, resource):
-        self.__thing_with_resources.ensure_resource(resource)
         return self
 
     @property
@@ -133,7 +124,7 @@ class Job(CommonEqualityMixin, EnvironmentVariableMixin):
                 artifact, = self.artifacts
                 result += '.ensure_artifacts({%s})' % artifact
 
-        result += self.thing_with_environment_variables.as_python()
+        result += self.as_python()
 
         for resource in self.resources:
             result += '.ensure_resource("%s")' % resource
@@ -250,7 +241,7 @@ class Stage(CommonEqualityMixin, EnvironmentVariableMixin):
     def as_python_commands_applied_to(self, receiver):
         result = 'stage = %s.ensure_stage("%s")' % (receiver, self.name)
 
-        result += self.thing_with_environment_variables.as_python()
+        result += self.as_python()
 
         if self.clean_working_dir:
             result += '.set_clean_working_dir()'
@@ -313,7 +304,7 @@ class Pipeline(CommonEqualityMixin, EnvironmentVariableMixin):
             if not (self.has_single_git_material and material.is_git):
                 result += then('ensure_material(%s)' % material)
 
-        result += self.thing_with_environment_variables.as_python()
+        result += self.as_python()
 
         if len(self.parameters) != 0:
             result += then('ensure_parameters(%s)' % self.parameters)
