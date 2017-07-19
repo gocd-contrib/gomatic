@@ -34,7 +34,9 @@ class FakeHostRestClient(object):
 
 
 def load_file(config_name):
-    return codecs.open('test-data/' + config_name + '.xml', encoding='utf-8').read()
+    with codecs.open('test-data/' + config_name + '.xml', encoding='utf-8') as xml_file:
+        xml_data = xml_file.read()
+    return xml_data
 
 
 def config(config_name):
