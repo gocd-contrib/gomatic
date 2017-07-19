@@ -1,18 +1,18 @@
 #!/usr/bin/env python
+import argparse
 import json
+import subprocess
+import sys
 import time
 import xml.etree.ElementTree as ET
-import argparse
-import sys
-import subprocess
+from decimal import Decimal
 from uuid import uuid4
 
 import requests
-from decimal import Decimal
 
-from gomatic.gocd.repositories import Repository
-from gomatic.gocd.pipelines import Pipeline, PipelineGroup
 from gomatic.gocd.agents import Agent
+from gomatic.gocd.pipelines import Pipeline, PipelineGroup
+from gomatic.gocd.repositories import Repository
 from gomatic.xml_operations import Ensurance, PossiblyMissingElement, move_all_to_end, prettify
 
 
@@ -26,7 +26,7 @@ class GoCdConfigurator(object):
         if isinstance(initial_config, bytes):
             self.__initial_config = initial_config.decode('ascii', errors='xmlcharrefreplace')
         else:
-            self.__initial_config = initial_config.encode('ascii', errors='xmlcharrefreplace') 
+            self.__initial_config = initial_config.encode('ascii', errors='xmlcharrefreplace')
         self.__xml_root = ET.fromstring(self.__initial_config)
 
     def __repr__(self):
@@ -157,7 +157,7 @@ class GoCdConfigurator(object):
     def ensure_removal_of_agent(self, hostname):
         matching = [agent for agent in self.agents if agent.hostname == hostname]
         for agent in matching:
-            Ensurance(self.__xml_root).ensure_child('agents').element.remove(agent._element)
+            Ensurance(self.__xml_root).ensure_child('agents').element.remove(agent.element)
         return self
 
     @property
@@ -244,7 +244,7 @@ class HostRestClient(object):
         return (self.__username, self.__password) if self.__username or self.__password else None
 
     def get(self, path):
-        result = requests.get(self.__path(path), auth=self.__auth(), verify=self.__verify_ssl) 
+        result = requests.get(self.__path(path), auth=self.__auth(), verify=self.__verify_ssl)
         count = 0
         while ((result.status_code == 503) or (result.status_code == 504)) and (count < 5):
             result = requests.get(self.__path(path))

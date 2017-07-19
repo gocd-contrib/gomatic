@@ -1,18 +1,11 @@
-from gomatic.gocd.generic import ThingWithResources
+from gomatic.gocd.generic import ResourceMixin
+from gomatic.mixins import CommonEqualityMixin
 
 
-class Agent(object):
+class Agent(CommonEqualityMixin, ResourceMixin):
     def __init__(self, element):
-        self._element = element
-        self.__thing_with_resources = ThingWithResources(element)
+        self.element = element
 
     @property
     def hostname(self):
-        return self._element.attrib['hostname']
-
-    @property
-    def resources(self):
-        return self.__thing_with_resources.resources
-
-    def ensure_resource(self, resource):
-        self.__thing_with_resources.ensure_resource(resource)
+        return self.element.attrib['hostname']
