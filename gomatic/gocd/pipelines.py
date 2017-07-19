@@ -1,12 +1,12 @@
+from functools import cmp_to_key
 from xml.etree import ElementTree as ET
+
 from gomatic.gocd.artifacts import Artifact
-from gomatic.gocd.generic import ThingWithResources, ThingWithEnvironmentVariables
-from gomatic.gocd.materials import Materials, GitMaterial, PackageMaterial
+from gomatic.gocd.generic import EnvironmentVariableMixin, ResourceMixin
+from gomatic.gocd.materials import GitMaterial, Materials, PackageMaterial
 from gomatic.gocd.tasks import Task
 from gomatic.mixins import CommonEqualityMixin
-from gomatic.xml_operations import PossiblyMissingElement, Ensurance, move_all_to_end
-from functools import cmp_to_key
-
+from gomatic.xml_operations import Ensurance, PossiblyMissingElement, move_all_to_end
 
 DEFAULT_LABEL_TEMPLATE = "0.${COUNT}"  # TODO confirm what default really is. I am pretty sure this is mistaken!
 
@@ -23,31 +23,30 @@ class Tab(CommonEqualityMixin):
         element.append(ET.fromstring('<tab name="%s" path="%s" />' % (self.__name, self.__path)))
 
 
-class Job(CommonEqualityMixin):
+class Job(CommonEqualityMixin, EnvironmentVariableMixin, ResourceMixin):
     def __init__(self, element):
-        self.__element = element
-        self.__thing_with_resources = ThingWithResources(element)
+        self.element = element
 
     def __repr__(self):
         return "Job('%s', %s)" % (self.name, self.tasks)
 
     @property
     def name(self):
-        return self.__element.attrib['name']
+        return self.element.attrib['name']
 
     @property
     def has_timeout(self):
-        return 'timeout' in self.__element.attrib
+        return 'timeout' in self.element.attrib
 
     @property
     def timeout(self):
         if not self.has_timeout:
             raise RuntimeError("Job (%s) does not have timeout" % self)
-        return self.__element.attrib['timeout']
+        return self.element.attrib['timeout']
 
     @timeout.setter
     def timeout(self, timeout):
-        self.__element.attrib['timeout'] = timeout
+        self.element.attrib['timeout'] = timeout
 
     def set_timeout(self, timeout):
         self.timeout = timeout
@@ -55,32 +54,24 @@ class Job(CommonEqualityMixin):
 
     @property
     def runs_on_all_agents(self):
-        return self.__element.attrib.get('runOnAllAgents', 'false') == 'true'
+        return self.element.attrib.get('runOnAllAgents', 'false') == 'true'
 
     @runs_on_all_agents.setter
     def runs_on_all_agents(self, run_on_all_agents):
-        self.__element.attrib['runOnAllAgents'] = 'true' if run_on_all_agents else 'false'
+        self.element.attrib['runOnAllAgents'] = 'true' if run_on_all_agents else 'false'
 
     def set_runs_on_all_agents(self, run_on_all_agents=True):
         self.runs_on_all_agents = run_on_all_agents
         return self
 
     @property
-    def resources(self):
-        return self.__thing_with_resources.resources
-
-    def ensure_resource(self, resource):
-        self.__thing_with_resources.ensure_resource(resource)
-        return self
-
-    @property
     def artifacts(self):
-        artifact_elements = PossiblyMissingElement(self.__element).possibly_missing_child("artifacts").iterator
+        artifact_elements = PossiblyMissingElement(self.element).possibly_missing_child("artifacts").iterator
         return set([Artifact.get_artifact_for(e) for e in artifact_elements])
 
     def ensure_artifacts(self, artifacts):
         if artifacts:
-            artifacts_ensurance = Ensurance(self.__element).ensure_child("artifacts")
+            artifacts_ensurance = Ensurance(self.element).ensure_child("artifacts")
             artifacts_to_add = artifacts.difference(self.artifacts)
             for artifact in artifacts_to_add:
                 artifact.append_to(artifacts_ensurance)
@@ -88,62 +79,38 @@ class Job(CommonEqualityMixin):
 
     @property
     def tabs(self):
-        return [Tab(e.attrib['name'], e.attrib['path']) for e in PossiblyMissingElement(self.__element).possibly_missing_child('tabs').findall('tab')]
+        return [Tab(e.attrib['name'], e.attrib['path']) for e in PossiblyMissingElement(self.element).possibly_missing_child('tabs').findall('tab')]
 
     def ensure_tab(self, tab):
-        tab_ensurance = Ensurance(self.__element).ensure_child("tabs")
+        tab_ensurance = Ensurance(self.element).ensure_child("tabs")
         if self.tabs.count(tab) == 0:
             tab.append_to(tab_ensurance)
         return self
 
     @property
     def tasks(self):
-        return [Task(e) for e in PossiblyMissingElement(self.__element).possibly_missing_child("tasks").iterator]
+        return [Task(e) for e in PossiblyMissingElement(self.element).possibly_missing_child("tasks").iterator]
 
     def add_task(self, task):
-        return task.append_to(self.__element)
+        return task.append_to(self.element)
 
     def ensure_task(self, task):
         if self.tasks.count(task) == 0:
-            return task.append_to(self.__element)
+            return task.append_to(self.element)
         else:
             return task
 
     def without_any_tasks(self):
-        PossiblyMissingElement(self.__element).possibly_missing_child("tasks").remove_all_children()
+        PossiblyMissingElement(self.element).possibly_missing_child("tasks").remove_all_children()
         return self
-
-    @property
-    def environment_variables(self):
-        return self.__thing_with_environment_variables.environment_variables
-
-    @property
-    def encrypted_environment_variables(self):
-        return self.__thing_with_environment_variables.encrypted_environment_variables
-
-    def ensure_environment_variables(self, environment_variables):
-        self.__thing_with_environment_variables.ensure_environment_variables(environment_variables)
-        return self
-
-    def ensure_encrypted_environment_variables(self, environment_variables):
-        self.__thing_with_environment_variables.ensure_encrypted_environment_variables(environment_variables)
-        return self
-
-    def without_any_environment_variables(self):
-        self.__thing_with_environment_variables.remove_all()
-        return self
-
-    @property
-    def __thing_with_environment_variables(self):
-        return ThingWithEnvironmentVariables(self.__element)
 
     def reorder_elements_to_please_go(self):
         # see https://github.com/SpringerSBM/gomatic/issues/6
-        move_all_to_end(self.__element, "environment_variables")
-        move_all_to_end(self.__element, "tasks")
-        move_all_to_end(self.__element, "tabs")
-        move_all_to_end(self.__element, "resources")
-        move_all_to_end(self.__element, "artifacts")
+        move_all_to_end(self.element, "environment_variables")
+        move_all_to_end(self.element, "tasks")
+        move_all_to_end(self.element, "tabs")
+        move_all_to_end(self.element, "resources")
+        move_all_to_end(self.element, "artifacts")
 
     def as_python_commands_applied_to_stage(self):
         result = 'job = stage.ensure_job("%s")' % self.name
@@ -157,7 +124,7 @@ class Job(CommonEqualityMixin):
                 artifact, = self.artifacts
                 result += '.ensure_artifacts({%s})' % artifact
 
-        result += self.__thing_with_environment_variables.as_python()
+        result += self.as_python()
 
         for resource in self.resources:
             result += '.ensure_resource("%s")' % resource
@@ -178,7 +145,42 @@ class Job(CommonEqualityMixin):
         return result
 
 
-class Stage(CommonEqualityMixin):
+class User(CommonEqualityMixin):
+    def __init__(self, element):
+        self.element = element
+
+    @property
+    def username(self):
+        return self.element.text
+
+
+class ViewAuthorization(CommonEqualityMixin):
+    def __init__(self, element):
+        self.element = element
+
+    @property
+    def users(self):
+        return [User(e) for e in self.element.findall('user')]
+
+    def add_user(self, username):
+        Ensurance(self.element).ensure_child_with_text('user', username)
+        return self
+
+
+class Authorization(CommonEqualityMixin):
+    def __init__(self, element):
+        self.element = element
+
+    @property
+    def view(self):
+        return ViewAuthorization(self.element.find('view'))
+
+    def ensure_view(self):
+        view_element = Ensurance(self.element).ensure_child('view').element
+        return ViewAuthorization(view_element)
+
+
+class Stage(CommonEqualityMixin, EnvironmentVariableMixin):
     def __init__(self, element):
         self.element = element
 
@@ -197,30 +199,6 @@ class Stage(CommonEqualityMixin):
     def ensure_job(self, name):
         job_element = Ensurance(self.element).ensure_child("jobs").ensure_child_with_attribute("job", "name", name)
         return Job(job_element.element)
-
-    @property
-    def environment_variables(self):
-        return self.__thing_with_environment_variables.environment_variables
-
-    @property
-    def encrypted_environment_variables(self):
-        return self.__thing_with_environment_variables.encrypted_environment_variables
-
-    def ensure_environment_variables(self, environment_variables):
-        self.__thing_with_environment_variables.ensure_environment_variables(environment_variables)
-        return self
-
-    def ensure_encrypted_environment_variables(self, environment_variables):
-        self.__thing_with_environment_variables.ensure_encrypted_environment_variables(environment_variables)
-        return self
-
-    def without_any_environment_variables(self):
-        self.__thing_with_environment_variables.remove_all()
-        return self
-
-    @property
-    def __thing_with_environment_variables(self):
-        return ThingWithEnvironmentVariables(self.element)
 
     def set_clean_working_dir(self):
         self.element.attrib['cleanWorkingDir'] = "true"
@@ -263,7 +241,7 @@ class Stage(CommonEqualityMixin):
     def as_python_commands_applied_to(self, receiver):
         result = 'stage = %s.ensure_stage("%s")' % (receiver, self.name)
 
-        result += self.__thing_with_environment_variables.as_python()
+        result += self.as_python()
 
         if self.clean_working_dir:
             result += '.set_clean_working_dir()'
@@ -280,7 +258,7 @@ class Stage(CommonEqualityMixin):
         return result
 
 
-class Pipeline(CommonEqualityMixin):
+class Pipeline(CommonEqualityMixin, EnvironmentVariableMixin):
     def __init__(self, element, parent):
         self.element = element
         self.parent = parent
@@ -326,7 +304,7 @@ class Pipeline(CommonEqualityMixin):
             if not (self.has_single_git_material and material.is_git):
                 result += then('ensure_material(%s)' % material)
 
-        result += self.__thing_with_environment_variables.as_python()
+        result += self.as_python()
 
         if len(self.parameters) != 0:
             result += then('ensure_parameters(%s)' % self.parameters)
@@ -482,42 +460,6 @@ class Pipeline(CommonEqualityMixin):
         return next(template for template in self.parent.templates if template.name == self.__template_name)
 
     @property
-    def environment_variables(self):
-        return self.__thing_with_environment_variables.environment_variables
-
-    @property
-    def encrypted_environment_variables(self):
-        return self.__thing_with_environment_variables.encrypted_environment_variables
-
-    @property
-    def unencrypted_secure_environment_variables(self):
-        return self.__thing_with_environment_variables.unencrypted_secure_environment_variables
-
-    def ensure_environment_variables(self, environment_variables):
-        self.__thing_with_environment_variables.ensure_environment_variables(environment_variables)
-        return self
-
-    def ensure_encrypted_environment_variables(self, environment_variables):
-        self.__thing_with_environment_variables.ensure_encrypted_environment_variables(environment_variables)
-        return self
-
-    def ensure_unencrypted_secure_environment_variables(self, environment_variables):
-        self.__thing_with_environment_variables.ensure_unencrypted_secure_environment_variables(environment_variables)
-        return self
-
-    def without_any_environment_variables(self):
-        self.__thing_with_environment_variables.remove_all()
-        return self
-
-    def remove_environment_variable(self, name):
-        self.__thing_with_environment_variables.remove(name)
-        return self
-
-    @property
-    def __thing_with_environment_variables(self):
-        return ThingWithEnvironmentVariables(self.element)
-
-    @property
     def parameters(self):
         param_elements = PossiblyMissingElement(self.element).possibly_missing_child("params").findall("param")
         result = {}
@@ -642,6 +584,10 @@ class PipelineGroup(CommonEqualityMixin):
         return self.__configurator.templates
 
     @property
+    def authorization(self):
+        return Authorization(self.element.find('authorization'))
+
+    @property
     def pipelines(self):
         return [Pipeline(e, self) for e in self.element.findall('pipeline')]
 
@@ -656,6 +602,10 @@ class PipelineGroup(CommonEqualityMixin):
             return self._matching_pipelines(name)[0]
         else:
             raise RuntimeError('Cannot find pipeline with name "%s" in %s' % (name, self.pipelines))
+
+    def ensure_authorization(self):
+        authorization_element = Ensurance(self.element).ensure_child('authorization').element
+        return Authorization(authorization_element)
 
     def ensure_pipeline(self, name):
         pipeline_element = Ensurance(self.element).ensure_child_with_attribute('pipeline', 'name', name).element

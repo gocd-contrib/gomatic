@@ -114,7 +114,8 @@ Then, if you are using IntelliJ IDEA:
 
 Unit tests:
 
-1. `./build.sh`
+1. `pip install -r requirements.txt`
+2. `./build.sh`
 
 Integration tests (takes a long time to download many versions of GoCD) (requires [docker](https://www.docker.com/) to be installed in order to run):
  
