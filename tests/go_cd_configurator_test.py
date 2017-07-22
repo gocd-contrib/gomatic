@@ -586,6 +586,13 @@ class TestConfigRepo(unittest.TestCase):
     def setUp(self):
         self.configurator = GoCdConfigurator(empty_config())
 
+    def test_ensure_replacement_of_config_repos(self):
+        self.configurator.ensure_config_repos().ensure_config_repo('git://url', 'yaml.config.plugin')
+        self.assertEqual(len(self.configurator.config_repos.config_repo), 1)
+
+        self.configurator.ensure_replacement_of_config_repos().ensure_config_repo('git://otherurl', 'yaml.config.plugin')
+        self.assertEqual(len(self.configurator.config_repos.config_repo), 1)
+
     def test_can_ensure_config_repo_with_git_url_and_plugin(self):
         self.configurator.ensure_config_repos().ensure_config_repo('git://url', 'yaml.config.plugin')
 

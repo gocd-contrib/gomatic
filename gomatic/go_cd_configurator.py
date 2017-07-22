@@ -138,6 +138,11 @@ class GoCdConfigurator(object):
         config_repos = Ensurance(self.__xml_root).ensure_child("config-repos")
         return ConfigRepos(config_repos.element, self)
 
+    def ensure_replacement_of_config_repos(self):
+        config_repos = self.ensure_config_repos()
+        config_repos.make_empty()
+        return config_repos
+    
     def ensure_removal_of_pipeline_group(self, group_name):
         matching = [g for g in self.pipeline_groups if g.name == group_name]
         for group in matching:

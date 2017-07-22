@@ -51,6 +51,9 @@ class ConfigRepos(CommonEqualityMixin):
     def config_repo(self):
         return [ConfigRepo(e) for e in self.element.findall('config-repo')]
 
+    def make_empty(self):
+        PossiblyMissingElement(self.element).remove_all_children()
+
     def ensure_config_repo(self, url, plugin, cvs='git', configuration=None):
         configuration_xml_string = ""
         if configuration:
