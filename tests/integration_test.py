@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import os
 import subprocess
 import sys
@@ -6,7 +7,10 @@ import time
 import unittest
 import webbrowser
 from distutils.version import StrictVersion
-from urllib2 import urlopen
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import urlopen
 
 from gomatic import ExecTask, GitMaterial, GoCdConfigurator, HostRestClient
 from gomatic.gocd.artifacts import Artifact
@@ -28,7 +32,7 @@ def start_go_server(gocd_version, gocd_download_version_string):
             count += 1
             time.sleep(1)
             if count % 10 == 0:
-                print "Waiting for Docker-based Go server to start..."
+                print("Waiting for Docker-based Go server to start...")
 
     raise Exception("Failed to connect to gocd. It didn't start up correctly in time")
 
@@ -67,12 +71,12 @@ class populated_go_server(object):
                 raise
 
     def __exit__(self, type, value, traceback):
-        print "*" * 60, "trying to clean up docker for %s" % self.gocd_version
+        print("*" * 60, "trying to clean up docker for %s" % self.gocd_version)
         os.system("docker rm -f gocd-test-server-%s" % self.gocd_version)
 
 
 def fail_with(message):
-    print message
+    print(message)
     sys.exit(1)
 
 
@@ -128,7 +132,7 @@ class IntegrationTest(unittest.TestCase):
 
     def test_all_versions(self):
         for gocd_version, gocd_download_version_string in self.gocd_versions:
-            print 'test_all_versions', "*" * 60, gocd_version
+            print('test_all_versions', "*" * 60, gocd_version)
             with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
                 self.assertEquals(["P.Group"], [p.name for p in configurator.pipeline_groups])
                 self.assertEquals(["more-options"], [p.name for p in configurator.pipeline_groups[0].pipelines])
@@ -148,7 +152,7 @@ class IntegrationTest(unittest.TestCase):
 
     def test_can_save_multiple_times_using_same_configurator(self):
         gocd_version, gocd_download_version_string = self.gocd_versions[-1]
-        print 'test_can_save_multiple_times_using_same_configurator', "*" * 60, gocd_version
+        print('test_can_save_multiple_times_using_same_configurator', "*" * 60, gocd_version)
         with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
             pipeline = configurator \
                 .ensure_pipeline_group("Test") \
@@ -173,7 +177,7 @@ class IntegrationTest(unittest.TestCase):
 
     def test_can_save_pipeline_with_package_ref(self):
         gocd_version, gocd_download_version_string = self.gocd_versions[-1]
-        print 'test_can_save_pipeline_with_package_ref', "*" * 60, gocd_version
+        print('test_can_save_pipeline_with_package_ref', "*" * 60, gocd_version)
         with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
             pipeline = configurator \
                 .ensure_pipeline_group("Test") \
@@ -195,7 +199,7 @@ class IntegrationTest(unittest.TestCase):
 
     def test_can_save_and_read_repositories(self):
         gocd_version, gocd_download_version_string = self.gocd_versions[-1]
-        print 'test_can_save_and_read_repositories', "*" * 60, gocd_version
+        print('test_can_save_and_read_repositories', "*" * 60, gocd_version)
         with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
             repo = configurator.ensure_repository("repo_one")
             repo.ensure_type('yum', '1')
@@ -215,7 +219,7 @@ class IntegrationTest(unittest.TestCase):
 
 if __name__ == '__main__':
     if not os.path.exists("go-server-%s.deb" % IntegrationTest.gocd_versions[0][0]):
-        print "This takes a long time to run first time, because it downloads a Java docker image and GoCD .deb packages from the internet"
+        print("This takes a long time to run first time, because it downloads a Java docker image and GoCD .deb packages from the internet")
     check_docker()
 
     unittest.main()
