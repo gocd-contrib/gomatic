@@ -17,7 +17,7 @@ def start_go_server(gocd_version, gocd_download_version_string):
     with open('Dockerfile', 'w') as f:
         f.write(open("Dockerfile.tmpl").read().replace('GO-VERSION-REPLACE-ME', gocd_version))
 
-    os.system("./build-and-run-go-server-in-docker %s %s" % (gocd_version, gocd_download_version_string))
+    os.system("./build-and-run-go-server-in-docker.sh %s %s" % (gocd_version, gocd_download_version_string))
 
     count = 0
     for attempt in range(300):
