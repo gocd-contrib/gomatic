@@ -56,13 +56,16 @@ class AuthConfig(CommonEqualityMixin):
         return props
 
     @property
-    def id(self):
+    def auth_config_id(self):
         return self.element.get('id')
 
     
     @property
     def plugin_id(self):
         return self.element.get('pluginId')
+
+    def __eq__(self, other):
+        return self.auth_plugin_id == other.auth_plugin_id
 
 
 class AuthConfigs(CommonEqualityMixin):
@@ -90,7 +93,7 @@ class AuthConfigs(CommonEqualityMixin):
         return self.auth_config[index]
 
     def __len__(self):
-        return len(self.role)
+        return len(self.auth_config)
 
 
 class Security(CommonEqualityMixin):
@@ -112,6 +115,11 @@ class Security(CommonEqualityMixin):
     def ensure_auth_configs(self):
         auth_config = Ensurance(self.element).ensure_child('authConfigs')
         return AuthConfigs(auth_config.element)
+
+    def ensure_replacement_of_auth_configs(self):
+        auth_configs = self.ensure_auth_configs()
+        auth_configs.make_empty()
+        return auth_configs
 
     def ensure_replacement_of_roles(self):
         roles = self.ensure_roles()
