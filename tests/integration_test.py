@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import os
 import subprocess
 import sys
@@ -6,7 +7,10 @@ import time
 import unittest
 import webbrowser
 from distutils.version import StrictVersion
-from urllib2 import urlopen
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import urlopen
 
 from gomatic import ExecTask, GitMaterial, GoCdConfigurator, HostRestClient
 from gomatic.gocd.artifacts import Artifact
@@ -14,10 +18,8 @@ from gomatic.gocd.materials import PackageMaterial
 
 
 def start_go_server(gocd_version, gocd_download_version_string):
-    with open('Dockerfile', 'w') as f:
-        f.write(open("Dockerfile.tmpl").read().replace('GO-VERSION-REPLACE-ME', gocd_version))
 
-    os.system("./build-and-run-go-server-in-docker %s %s" % (gocd_version, gocd_download_version_string))
+    os.system("./build-and-run-go-server-in-docker.sh %s %s" % (gocd_version, gocd_download_version_string))
 
     count = 0
     for attempt in range(300):
@@ -28,7 +30,7 @@ def start_go_server(gocd_version, gocd_download_version_string):
             count += 1
             time.sleep(1)
             if count % 10 == 0:
-                print "Waiting for Docker-based Go server to start..."
+                print("Waiting for Docker-based Go server to start...")
 
     raise Exception("Failed to connect to gocd. It didn't start up correctly in time")
 
@@ -67,12 +69,12 @@ class populated_go_server(object):
                 raise
 
     def __exit__(self, type, value, traceback):
-        print "*" * 60, "trying to clean up docker for %s" % self.gocd_version
+        print("*" * 60, "trying to clean up docker for %s" % self.gocd_version)
         os.system("docker rm -f gocd-test-server-%s" % self.gocd_version)
 
 
 def fail_with(message):
-    print message
+    print(message)
     sys.exit(1)
 
 
@@ -100,35 +102,28 @@ def check_docker():
 
 class IntegrationTest(unittest.TestCase):
     gocd_versions = [
-        ('13.1.1-16714','-13.1.1-16714'),
-        ('13.2.2-17585','-13.2.2-17585'),
-        ('13.3.1-18130','-13.3.1-18130'),
-        ('13.4.0-18334','-13.4.0-18334'),
-        ('13.4.1-18342','-13.4.1-18342'),
-        ('14.1.0-18882','-14.1.0-18882'),
-        ('14.2.0-377',  '-14.2.0-377'),
-        ('14.3.0-1186', '-14.3.0-1186'),
-        ('14.4.0-1356', '-14.4.0-1356'),
-        ('15.1.0-1863', '-15.1.0-1863'),
-        ('15.2.0-2248', '-15.2.0-2248'),
-        # '15.3.0-2771', no longer on download page
-        # '15.3.1-2777', no longer on download page
-        ('16.1.0-2855', '-16.1.0-2855'),
-        ('16.2.1-3027', '-16.2.1-3027'),
-        ('16.3.0-3183', '-16.3.0-3183'),
-        ('16.4.0-3223', '-16.4.0-3223'),
-        ('16.5.0-3305', '-16.5.0-3305'),
-        ('16.6.0-3590', '-16.6.0-3590'),
-        ('16.7.0-3819', '_16.7.0-3819_all'), # arghhh! from now they have "_all" suffix
-        ('16.8.0-3929', '_16.8.0-3929_all'),
-        ('16.9.0-4001', '_16.9.0-4001_all'),
+        ('16.3.0-3183',  '-16.3.0-3183'),
+        ('16.4.0-3223',  '-16.4.0-3223'),
+        ('16.5.0-3305',  '-16.5.0-3305'),
+        ('16.6.0-3590',  '-16.6.0-3590'),
+        ('16.7.0-3819',  '_16.7.0-3819_all'),
+        ('16.8.0-3929',  '_16.8.0-3929_all'),
+        ('16.9.0-4001',  '_16.9.0-4001_all'),
         ('16.10.0-4131', '_16.10.0-4131_all'),
-        ('16.11.0-4185', '_16.11.0-4185_all')
+        ('16.11.0-4185', '_16.11.0-4185_all'),
+        ('16.12.0-4352', '_16.12.0-4352_all'),
+        ('17.1.0-4511',  '_17.1.0-4511_all'),
+        ('17.2.0-4587',  '_17.2.0-4587_all'),
+        ('17.3.0-4704',  '_17.3.0-4704_all'),
+        ('17.4.0-4892',  '_17.4.0-4892_all'),
+        ('17.5.0-5095',  '_17.5.0-5095_all'),
+        ('17.6.0-5142',  '_17.6.0-5142_all'),
+        ('17.7.0-5147',  '_17.7.0-5147_all')
     ]
 
     def test_all_versions(self):
         for gocd_version, gocd_download_version_string in self.gocd_versions:
-            print 'test_all_versions', "*" * 60, gocd_version
+            print('test_all_versions', "*" * 60, gocd_version)
             with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
                 self.assertEquals(["P.Group"], [p.name for p in configurator.pipeline_groups])
                 self.assertEquals(["more-options"], [p.name for p in configurator.pipeline_groups[0].pipelines])
@@ -148,7 +143,7 @@ class IntegrationTest(unittest.TestCase):
 
     def test_can_save_multiple_times_using_same_configurator(self):
         gocd_version, gocd_download_version_string = self.gocd_versions[-1]
-        print 'test_can_save_multiple_times_using_same_configurator', "*" * 60, gocd_version
+        print('test_can_save_multiple_times_using_same_configurator', "*" * 60, gocd_version)
         with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
             pipeline = configurator \
                 .ensure_pipeline_group("Test") \
@@ -173,7 +168,7 @@ class IntegrationTest(unittest.TestCase):
 
     def test_can_save_pipeline_with_package_ref(self):
         gocd_version, gocd_download_version_string = self.gocd_versions[-1]
-        print 'test_can_save_pipeline_with_package_ref', "*" * 60, gocd_version
+        print('test_can_save_pipeline_with_package_ref', "*" * 60, gocd_version)
         with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
             pipeline = configurator \
                 .ensure_pipeline_group("Test") \
@@ -195,7 +190,7 @@ class IntegrationTest(unittest.TestCase):
 
     def test_can_save_and_read_repositories(self):
         gocd_version, gocd_download_version_string = self.gocd_versions[-1]
-        print 'test_can_save_and_read_repositories', "*" * 60, gocd_version
+        print('test_can_save_and_read_repositories', "*" * 60, gocd_version)
         with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
             repo = configurator.ensure_repository("repo_one")
             repo.ensure_type('yum', '1')
@@ -215,7 +210,7 @@ class IntegrationTest(unittest.TestCase):
 
 if __name__ == '__main__':
     if not os.path.exists("go-server-%s.deb" % IntegrationTest.gocd_versions[0][0]):
-        print "This takes a long time to run first time, because it downloads a Java docker image and GoCD .deb packages from the internet"
+        print("This takes a long time to run first time, because it downloads a Java docker image and GoCD .deb packages from the internet")
     check_docker()
 
     unittest.main()

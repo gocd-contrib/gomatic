@@ -14,16 +14,10 @@ if [ -z "$GO_DOWNLOAD_VERSION_STRING" ]; then
   exit 1
 fi
 
-GO_DOWNLOAD_URL=https://download.go.cd/binaries/${GO_VERSION}/deb/go-server${GO_DOWNLOAD_VERSION_STRING}.deb
-
-if [ ! -f go-server-${GO_VERSION}.deb ]; then
-  wget -O go-server-${GO_VERSION}.deb ${GO_DOWNLOAD_URL}
-fi
-
 IMAGE_NAME=springersbm/gocd:${GO_VERSION}
 
 if [[ "$(docker images -q ${IMAGE_NAME} 2> /dev/null)" == "" ]]; then
-    docker build -t ${IMAGE_NAME} .
+    docker build -t ${IMAGE_NAME} --build-arg GO_VERSION=$GO_VERSION --build-arg GO_DOWNLOAD_VERSION_STRING=$GO_DOWNLOAD_VERSION_STRING docker/
 fi
 
 docker run -d --name gocd-test-server-${GO_VERSION} -it -p 8153:8153 ${IMAGE_NAME}
