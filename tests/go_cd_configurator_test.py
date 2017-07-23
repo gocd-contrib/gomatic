@@ -582,6 +582,73 @@ class TestStages(unittest.TestCase):
         self.assertEqual({}, stage.environment_variables)
 
 
+class TestConfigRepo(unittest.TestCase):
+    def setUp(self):
+        self.configurator = GoCdConfigurator(empty_config())
+
+    def test_ensure_replacement_of_config_repos(self):
+        self.configurator.ensure_config_repos().ensure_config_repo('git://url', 'yaml.config.plugin')
+        self.assertEqual(len(self.configurator.config_repos.config_repo), 1)
+
+        self.configurator.ensure_replacement_of_config_repos().ensure_config_repo('git://otherurl', 'yaml.config.plugin')
+        self.assertEqual(len(self.configurator.config_repos.config_repo), 1)
+
+    def test_can_ensure_config_repo_with_git_url_and_plugin(self):
+        self.configurator.ensure_config_repos().ensure_config_repo('git://url', 'yaml.config.plugin')
+
+        self.assertEqual(self.configurator.config_repos.config_repo[0].url, 'git://url')
+        self.assertEqual(self.configurator.config_repos.config_repo[0].plugin, 'yaml.config.plugin')
+
+    def test_can_ensure_yaml_config_repo_with_git_url(self):
+        self.configurator.ensure_config_repos().ensure_yaml_config_repo('git://url')
+
+        self.assertEqual(self.configurator.config_repos.config_repo[0].url, 'git://url')
+        self.assertEqual(self.configurator.config_repos.config_repo[0].plugin, 'yaml.config.plugin')
+
+    def test_can_ensure_json_config_repo_with_git_url(self):
+        self.configurator.ensure_config_repos().ensure_json_config_repo('git://url')
+
+        self.assertEqual(self.configurator.config_repos.config_repo[0].url, 'git://url')
+        self.assertEqual(self.configurator.config_repos.config_repo[0].plugin, 'json.config.plugin')
+
+    def test_can_ensure_repo_for_different_cvs(self):
+        self.configurator.ensure_config_repos().ensure_config_repo('svn://url', 'json.config.plugin', cvs='svn')
+
+        self.assertEqual(self.configurator.config_repos.config_repo[0].url, 'svn://url')
+        self.assertEqual(self.configurator.config_repos.config_repo[0].plugin, 'json.config.plugin')
+
+    def test_can_ensure_config_repo_with_configuration(self):
+        self.configurator.ensure_config_repos().ensure_config_repo('yml://url', 'yml.config.plugin', cvs='yml',
+                                                                   configuration={
+                                                                       'file_pattern': '*.gocd.yml'
+                                                                   })
+
+        self.assertEquals(self.configurator.config_repos.config_repo[0].configuration, {
+            'file_pattern': '*.gocd.yml'
+        })
+
+    def test_can_ensure_replacement_of_config_repo(self):
+        self.configurator.ensure_config_repos().ensure_config_repo('git://url', 'yml.config.plugin')
+
+        self.configurator.ensure_config_repos().ensure_replacement_of_config_repo('git://url', 'json.config.plugin')
+
+        self.assertEqual(self.configurator.config_repos.config_repo[0].url, 'git://url')
+        self.assertEqual(self.configurator.config_repos.config_repo[0].plugin, 'json.config.plugin')
+
+    def test_doesnt_duplicate_config_repos(self):
+        self.configurator.ensure_config_repos().ensure_yaml_config_repo('git://url')
+        self.configurator.ensure_config_repos().ensure_yaml_config_repo('git://url')
+
+        self.assertEqual(len(self.configurator.config_repos.config_repo), 1)
+
+    def test_can_add_more_than_2_config_repos(self):
+        self.configurator.ensure_config_repos().ensure_yaml_config_repo('git://url')
+        self.configurator.ensure_config_repos().ensure_json_config_repo('git://url')
+        self.configurator.ensure_config_repos().ensure_yaml_config_repo('git://url2')
+
+        self.assertEqual(len(self.configurator.config_repos.config_repo), 3)
+
+
 class TestPipeline(unittest.TestCase):
     def test_pipelines_have_names(self):
         pipeline = typical_pipeline()
