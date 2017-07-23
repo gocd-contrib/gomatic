@@ -44,6 +44,55 @@ class Roles(CommonEqualityMixin):
         return len(self.role)
 
 
+class AuthConfig(CommonEqualityMixin):
+    def __init__(self, element):
+        self.element = element
+
+    @property
+    def properties(self):
+        props = {}
+        for prop in self.element.findall('property'):
+            props[prop.find('key').text] = prop.find('value').text
+        return props
+
+    @property
+    def id(self):
+        return self.element.get('id')
+
+    
+    @property
+    def plugin_id(self):
+        return self.element.get('pluginId')
+
+
+class AuthConfigs(CommonEqualityMixin):
+    def __init__(self, element):
+        self.element = element
+
+    @property
+    def auth_config(self):
+        return [AuthConfig(e) for e in self.element.findall('authConfig')]
+
+    def ensure_auth_config(self, auth_config_id, plugin_id, properties):
+        properties_xml = "".join(["<property><key>{}</key><value>{}</value></property>".format(k, v) for k, v in properties.items()])
+        auth_config = ET.fromstring('<authConfig id="{}" pluginId="{}">{}</authConfig>'.format(auth_config_id,
+                                                                                               plugin_id,
+                                                                                               properties_xml))
+        self.element.append(auth_config)
+        return self
+
+    def make_empty(self):
+        PossiblyMissingElement(self.element).remove_all_children()
+
+    def __getitem__(self, index):
+        if not isinstance(index, int):
+            raise Exception("Roles index must be an integer, got {}".format(type(index)))
+        return self.auth_config[index]
+
+    def __len__(self):
+        return len(self.role)
+
+
 class Security(CommonEqualityMixin):
     def __init__(self, element):
         self.element = element
@@ -52,9 +101,17 @@ class Security(CommonEqualityMixin):
     def roles(self):
         return Roles(self.element.find('roles'))
 
+    @property
+    def auth_configs(self):
+        return AuthConfigs(self.element.find('authConfigs'))
+
     def ensure_roles(self):
         roles = Ensurance(self.element).ensure_child('roles')
         return Roles(roles.element)
+
+    def ensure_auth_configs(self):
+        auth_config = Ensurance(self.element).ensure_child('authConfigs')
+        return AuthConfigs(auth_config.element)
 
     def ensure_replacement_of_roles(self):
         roles = self.ensure_roles()

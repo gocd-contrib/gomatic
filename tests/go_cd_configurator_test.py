@@ -1217,22 +1217,33 @@ class TestSecurity(unittest.TestCase):
     def test_can_ensure_roles(self):
         self.configurator.ensure_security().ensure_roles().ensure_role(name='role_name', users=['user1', 'user2'])
 
-        self.assertEquals(self.configurator.security.roles[0].name, 'role_name')
-        self.assertEquals(self.configurator.security.roles[0].users, ['user1', 'user2'])
+        self.assertEqual(self.configurator.security.roles[0].name, 'role_name')
+        self.assertEqual(self.configurator.security.roles[0].users, ['user1', 'user2'])
 
     def test_can_ensure_replacement_of_security(self):
         self.configurator.ensure_security().ensure_roles().ensure_role(name='role_name', users=['user1', 'user2'])
-        self.assertEquals(len(self.configurator.security.roles), 1)
+        self.assertEqual(len(self.configurator.security.roles), 1)
 
         self.configurator.ensure_replacement_of_security().ensure_roles().ensure_role(name='another_role_name', users=['user1', 'user2'])
-        self.assertEquals(len(self.configurator.security.roles), 1)
+        self.assertEqual(len(self.configurator.security.roles), 1)
 
     def test_can_ensure_replacement_of_roles(self):
         self.configurator.ensure_security().ensure_roles().ensure_role(name='role_name', users=['user1', 'user2'])
-        self.assertEquals(len(self.configurator.security.roles), 1)
+        self.assertEqual(len(self.configurator.security.roles), 1)
 
         self.configurator.ensure_security().ensure_replacement_of_roles().ensure_role(name='another_role_name', users=['user1', 'user2'])
-        self.assertEquals(len(self.configurator.security.roles), 1)
+        self.assertEqual(len(self.configurator.security.roles), 1)
+
+    def test_can_ensure_auth_config(self):
+        properties = {'key': 'value' }
+        self.configurator.ensure_security().ensure_auth_configs().ensure_auth_config(auth_config_id='auth-plugin-1',
+                                                                                     plugin_id='auth.plugin.id',
+                                                                                     properties=properties)
+
+        self.assertEqual(self.configurator.security.auth_configs[0].id, 'auth-plugin-1')
+        self.assertEqual(self.configurator.security.auth_configs[0].plugin_id, 'auth.plugin.id')
+        self.assertEqual(self.configurator.security.auth_configs[0].properties, properties)
+
 
 class TestGoCdConfigurator(unittest.TestCase):
     def test_can_tell_if_there_is_no_change_to_save(self):
