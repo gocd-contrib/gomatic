@@ -624,7 +624,7 @@ class TestConfigRepo(unittest.TestCase):
                                                                        'file_pattern': '*.gocd.yml'
                                                                    })
 
-        self.assertEquals(self.configurator.config_repos.config_repo[0].configuration, {
+        self.assertEqual(self.configurator.config_repos.config_repo[0].configuration, {
             'file_pattern': '*.gocd.yml'
         })
 
@@ -1258,6 +1258,7 @@ class TestSecurity(unittest.TestCase):
         self.assertEqual(self.configurator.security.auth_configs[0].properties, {})
 
     def test_can_ensure_replacement_of_auth_configs(self):
+        # this test ensures that you can replace ALL auth configs
         self.configurator.ensure_security(). \
             ensure_auth_configs(). \
             ensure_auth_config(auth_config_id='auth-plugin-1', plugin_id='auth.plugin.id', properties={})
@@ -1269,6 +1270,21 @@ class TestSecurity(unittest.TestCase):
             ensure_auth_config(auth_config_id='auth-plugin-2', plugin_id='auth.plugin.id', properties={})
 
         self.assertEqual(len(self.configurator.security.auth_configs), 1)
+
+    def test_can_ensure_replacement_of_auth_config(self):
+        # this test ensures that you can override just a single auth config
+        self.configurator.ensure_security(). \
+            ensure_auth_configs(). \
+            ensure_auth_config(auth_config_id='auth-plugin-1', plugin_id='auth.plugin.id', properties={})
+
+        self.assertEqual(len(self.configurator.security.auth_configs), 1)
+
+        self.configurator.ensure_security(). \
+            ensure_auth_configs(). \
+            ensure_replacement_of_auth_config(auth_config_id='auth-plugin-1', plugin_id='auth.plugin.id', properties={})
+
+        self.assertEqual(len(self.configurator.security.auth_configs), 1)
+
 
 class TestGoCdConfigurator(unittest.TestCase):
     def test_can_tell_if_there_is_no_change_to_save(self):

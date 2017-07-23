@@ -58,7 +58,6 @@ class AuthConfig(CommonEqualityMixin):
     @property
     def auth_config_id(self):
         return self.element.get('id')
-
     
     @property
     def plugin_id(self):
@@ -83,6 +82,12 @@ class AuthConfigs(CommonEqualityMixin):
                                                                                                properties_xml))
         self.element.append(auth_config)
         return self
+
+    def ensure_replacement_of_auth_config(self, auth_config_id, plugin_id, properties):
+        current_auth_config = [ac for ac in self.auth_config if ac.auth_config_id == auth_config_id]
+        if current_auth_config:
+            self.element.remove(current_auth_config[0].element)
+        return self.ensure_auth_config(auth_config_id, plugin_id, properties)
 
     def make_empty(self):
         PossiblyMissingElement(self.element).remove_all_children()
