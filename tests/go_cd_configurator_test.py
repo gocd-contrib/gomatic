@@ -1132,6 +1132,31 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual("eca7f187-73c2-4f62-971a-d15233937256", pipeline.package_material.ref)
 
 
+class TestAuthorization(unittest.TestCase):
+    def setUp(self):
+        configurator = GoCdConfigurator(config('config-with-two-pipelines'))
+        self.pipeline_group = configurator.ensure_pipeline_group('g')
+
+    def test_can_authorize_users_and_roles_for_operate(self):
+        self.pipeline_group.ensure_authorization().ensure_operate().add_user('user1').add_role('role1')
+
+        self.assertEqual(self.pipeline_group.authorization.operate.users[0].username, 'user1')
+        self.assertEqual(self.pipeline_group.authorization.operate.roles[0].name, 'role1')
+
+    def test_can_authorize_users_and_roles_for_admins(self):
+        self.pipeline_group.ensure_authorization().ensure_admins().add_user('user1').add_role('role1')
+
+        self.assertEqual(self.pipeline_group.authorization.admins.users[0].username, 'user1')
+        self.assertEqual(self.pipeline_group.authorization.admins.roles[0].name, 'role1')
+
+    def test_can_ensure_replacement_of_authorization(self):
+        self.pipeline_group.ensure_authorization().ensure_admins().add_user('user1')
+        self.assertEqual(len(self.pipeline_group.authorization.admins.users), 1)
+
+        self.pipeline_group.ensure_replacement_of_authorization().ensure_admins().add_user('user2')
+        self.assertEqual(len(self.pipeline_group.authorization.admins.users), 1)
+
+
 class TestPipelineGroup(unittest.TestCase):
     def _pipeline_group_from_config(self):
         return GoCdConfigurator(config('config-with-two-pipelines')).ensure_pipeline_group('P.Group')

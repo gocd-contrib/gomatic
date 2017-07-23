@@ -1,6 +1,7 @@
 from functools import cmp_to_key
 from xml.etree import ElementTree as ET
 
+from gomatic.gocd.authorization import Authorization
 from gomatic.gocd.artifacts import Artifact
 from gomatic.gocd.generic import EnvironmentVariableMixin, ResourceMixin
 from gomatic.gocd.materials import GitMaterial, Materials, PackageMaterial
@@ -143,41 +144,6 @@ class Job(CommonEqualityMixin, EnvironmentVariableMixin, ResourceMixin):
             result += "\njob.add_task(%s)" % task
 
         return result
-
-
-class User(CommonEqualityMixin):
-    def __init__(self, element):
-        self.element = element
-
-    @property
-    def username(self):
-        return self.element.text
-
-
-class ViewAuthorization(CommonEqualityMixin):
-    def __init__(self, element):
-        self.element = element
-
-    @property
-    def users(self):
-        return [User(e) for e in self.element.findall('user')]
-
-    def add_user(self, username):
-        Ensurance(self.element).ensure_child_with_text('user', username)
-        return self
-
-
-class Authorization(CommonEqualityMixin):
-    def __init__(self, element):
-        self.element = element
-
-    @property
-    def view(self):
-        return ViewAuthorization(self.element.find('view'))
-
-    def ensure_view(self):
-        view_element = Ensurance(self.element).ensure_child('view').element
-        return ViewAuthorization(view_element)
 
 
 class Stage(CommonEqualityMixin, EnvironmentVariableMixin):
@@ -606,6 +572,11 @@ class PipelineGroup(CommonEqualityMixin):
     def ensure_authorization(self):
         authorization_element = Ensurance(self.element).ensure_child('authorization').element
         return Authorization(authorization_element)
+
+    def ensure_replacement_of_authorization(self):
+        authorization = self.ensure_authorization()
+        authorization.make_empty()
+        return authorization
 
     def ensure_pipeline(self, name):
         pipeline_element = Ensurance(self.element).ensure_child_with_attribute('pipeline', 'name', name).element
