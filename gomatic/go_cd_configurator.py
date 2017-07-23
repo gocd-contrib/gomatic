@@ -11,6 +11,7 @@ from uuid import uuid4
 import requests
 
 from gomatic.gocd.config_repos import ConfigRepos
+from gomatic.gocd.security import Security
 from gomatic.gocd.agents import Agent
 from gomatic.gocd.pipelines import Pipeline, PipelineGroup
 from gomatic.gocd.repositories import Repository
@@ -204,6 +205,19 @@ class GoCdConfigurator(object):
         if len(self.templates) == 0:
             root.element.remove(templates_element)
         return self
+
+    def ensure_security(self):
+        security_element = self.__server_element_ensurance().ensure_child('security').element
+        return Security(security_element)
+
+    def ensure_replacement_of_security(self):
+        security = self.ensure_security()
+        security.make_empty()
+        return security 
+
+    @property
+    def security(self):
+        return Security(self.__server_element_ensurance().element.find('security'))
 
     @property
     def git_urls(self):

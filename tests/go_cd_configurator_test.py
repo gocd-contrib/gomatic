@@ -16,6 +16,7 @@ from gomatic import (
     Pipeline,
     PipelineMaterial,
     RakeTask,
+    Security,
     Tab
 )
 from gomatic.fake import FakeHostRestClient, config, empty_config, empty_config_xml, load_file
@@ -1208,6 +1209,30 @@ class TestPipelineGroup(unittest.TestCase):
         except RuntimeError:
             pass
 
+
+class TestSecurity(unittest.TestCase):
+    def setUp(self):
+        self.configurator = GoCdConfigurator(empty_config())
+
+    def test_can_ensure_roles(self):
+        self.configurator.ensure_security().ensure_roles().ensure_role(name='role_name', users=['user1', 'user2'])
+
+        self.assertEquals(self.configurator.security.roles[0].name, 'role_name')
+        self.assertEquals(self.configurator.security.roles[0].users, ['user1', 'user2'])
+
+    def test_can_ensure_replacement_of_security(self):
+        self.configurator.ensure_security().ensure_roles().ensure_role(name='role_name', users=['user1', 'user2'])
+        self.assertEquals(len(self.configurator.security.roles), 1)
+
+        self.configurator.ensure_replacement_of_security().ensure_roles().ensure_role(name='another_role_name', users=['user1', 'user2'])
+        self.assertEquals(len(self.configurator.security.roles), 1)
+
+    def test_can_ensure_replacement_of_roles(self):
+        self.configurator.ensure_security().ensure_roles().ensure_role(name='role_name', users=['user1', 'user2'])
+        self.assertEquals(len(self.configurator.security.roles), 1)
+
+        self.configurator.ensure_security().ensure_replacement_of_roles().ensure_role(name='another_role_name', users=['user1', 'user2'])
+        self.assertEquals(len(self.configurator.security.roles), 1)
 
 class TestGoCdConfigurator(unittest.TestCase):
     def test_can_tell_if_there_is_no_change_to_save(self):
