@@ -510,6 +510,14 @@ class TestStages(unittest.TestCase):
         self.assertEqual(s, stage)
         self.assertEqual(True, stage.has_manual_approval)
 
+    def test_manual_approval_can_have_authorization(self):
+        stage = typical_pipeline().stages[0]
+        s = stage.set_has_manual_approval(authorize_users=['user1'], authorize_roles=['role1'])
+
+        self.assertEqual(True, stage.has_manual_approval)
+        self.assertEqual(['user1'], stage.authorized_users)
+        self.assertEqual(['role1'], stage.authorized_roles)
+
     def test_stages_have_fetch_materials_flag(self):
         stage = typical_pipeline().ensure_stage("build")
         self.assertEqual(True, stage.fetch_materials)

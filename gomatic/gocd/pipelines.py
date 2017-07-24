@@ -182,6 +182,18 @@ class Stage(CommonEqualityMixin, EnvironmentVariableMixin):
     def fetch_materials(self):
         return not PossiblyMissingElement(self.element).has_attribute("fetchMaterials", "false")
 
+    @property
+    def _approval_authorization(self):
+        return PossiblyMissingElement(self.element).possibly_missing_child('approval').possibly_missing_child('authorization')
+
+    @property
+    def authorized_users(self):
+        return [u.text for u in self._approval_authorization.findall('user')] 
+
+    @property
+    def authorized_roles(self):
+        return [r.text for r in self._approval_authorization.findall('role')]
+
     @fetch_materials.setter
     def fetch_materials(self, value):
         if value:
@@ -193,8 +205,16 @@ class Stage(CommonEqualityMixin, EnvironmentVariableMixin):
         self.fetch_materials = value
         return self
 
-    def set_has_manual_approval(self):
-        Ensurance(self.element).ensure_child_with_attribute("approval", "type", "manual")
+    def set_has_manual_approval(self, authorize_users=None, authorize_roles=None):
+        approval_element = Ensurance(self.element).ensure_child_with_attribute("approval", "type", "manual").element
+        if authorize_users or authorize_roles:
+            auth_element = Ensurance(approval_element).ensure_child('authorization').element
+            PossiblyMissingElement(auth_element).remove_all_children()
+            for user in (authorize_users or []):
+                auth_element.append(ET.fromstring('<user>{}</user>'.format(user)))
+            for role in (authorize_roles or []):
+                auth_element.append(ET.fromstring('<role>{}</role>'.format(role)))
+
         return self
 
     def reorder_elements_to_please_go(self):
