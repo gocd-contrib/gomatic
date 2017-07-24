@@ -35,6 +35,26 @@ We wrote it for our purposes and find it very useful; however, the current versi
 
 We believe it works for the following versions (as indicated by `integration_test.py`):
 
+* 16.3.0-3183
+* 16.4.0-3223
+* 16.5.0-3305
+* 16.6.0-3590
+* 16.7.0-3819
+* 16.8.0-3929
+* 16.9.0-4001
+* 16.10.0-413
+* 16.11.0-418
+* 16.12.0-435
+* 17.1.0-4511
+* 17.2.0-4587
+* 17.3.0-4704
+* 17.4.0-4892
+* 17.5.0-5095
+* 17.6.0-5142
+* 17.7.0-5147
+
+We don't support the below versions anymore, however we did at some point in time, so it might still work in newer versions:
+
 * 13.1.1-16714
 * 13.2.2-17585
 * 13.3.1-18130
@@ -48,19 +68,10 @@ We believe it works for the following versions (as indicated by `integration_tes
 * 15.2.0-2248
 * 16.1.0-2855
 * 16.2.1-3027
-* 16.3.0-3183
-* 16.4.0-3223
-* 16.5.0-3305
-* 16.6.0-3590
-* 16.7.0-3819
-* 16.8.0-3929
-* 16.9.0-4001
-* 16.10.0-4131
-* 16.11.0-4185
 
 ## Install
 
-We've written it using Python 2.7 (for the moment - should be simple to port to Python 3 - which we might do in the future). You can install it using "pip":
+We've written it using Python 2.7 but have been working on supporting python 3.5 and use `tox` to ensure that all unit tests are passing for both 2.7 and 3.5. You can install gomatic it using "pip":
 
     sudo pip install gomatic
 
