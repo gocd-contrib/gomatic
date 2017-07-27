@@ -510,6 +510,14 @@ class TestStages(unittest.TestCase):
         self.assertEqual(s, stage)
         self.assertEqual(True, stage.has_manual_approval)
 
+    def test_manual_approval_can_have_authorization(self):
+        stage = typical_pipeline().stages[0]
+        s = stage.set_has_manual_approval(authorize_users=['user1'], authorize_roles=['role1'])
+
+        self.assertEqual(True, stage.has_manual_approval)
+        self.assertEqual(['user1'], stage.authorized_users)
+        self.assertEqual(['role1'], stage.authorized_roles)
+
     def test_stages_have_fetch_materials_flag(self):
         stage = typical_pipeline().ensure_stage("build")
         self.assertEqual(True, stage.fetch_materials)
@@ -1130,6 +1138,31 @@ class TestPipeline(unittest.TestCase):
         p = pipeline.set_package_ref("eca7f187-73c2-4f62-971a-d15233937256")
         self.assertEqual(p, pipeline)
         self.assertEqual("eca7f187-73c2-4f62-971a-d15233937256", pipeline.package_material.ref)
+
+
+class TestAuthorization(unittest.TestCase):
+    def setUp(self):
+        configurator = GoCdConfigurator(config('config-with-two-pipelines'))
+        self.pipeline_group = configurator.ensure_pipeline_group('g')
+
+    def test_can_authorize_users_and_roles_for_operate(self):
+        self.pipeline_group.ensure_authorization().ensure_operate().add_user('user1').add_role('role1')
+
+        self.assertEqual(self.pipeline_group.authorization.operate.users[0].username, 'user1')
+        self.assertEqual(self.pipeline_group.authorization.operate.roles[0].name, 'role1')
+
+    def test_can_authorize_users_and_roles_for_admins(self):
+        self.pipeline_group.ensure_authorization().ensure_admins().add_user('user1').add_role('role1')
+
+        self.assertEqual(self.pipeline_group.authorization.admins.users[0].username, 'user1')
+        self.assertEqual(self.pipeline_group.authorization.admins.roles[0].name, 'role1')
+
+    def test_can_ensure_replacement_of_authorization(self):
+        self.pipeline_group.ensure_authorization().ensure_admins().add_user('user1')
+        self.assertEqual(len(self.pipeline_group.authorization.admins.users), 1)
+
+        self.pipeline_group.ensure_replacement_of_authorization().ensure_admins().add_user('user2')
+        self.assertEqual(len(self.pipeline_group.authorization.admins.users), 1)
 
 
 class TestPipelineGroup(unittest.TestCase):

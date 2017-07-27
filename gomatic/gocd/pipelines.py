@@ -1,6 +1,7 @@
 from functools import cmp_to_key
 from xml.etree import ElementTree as ET
 
+from gomatic.gocd.authorization import Authorization
 from gomatic.gocd.artifacts import Artifact
 from gomatic.gocd.generic import EnvironmentVariableMixin, ResourceMixin
 from gomatic.gocd.materials import GitMaterial, Materials, PackageMaterial
@@ -145,41 +146,6 @@ class Job(CommonEqualityMixin, EnvironmentVariableMixin, ResourceMixin):
         return result
 
 
-class User(CommonEqualityMixin):
-    def __init__(self, element):
-        self.element = element
-
-    @property
-    def username(self):
-        return self.element.text
-
-
-class ViewAuthorization(CommonEqualityMixin):
-    def __init__(self, element):
-        self.element = element
-
-    @property
-    def users(self):
-        return [User(e) for e in self.element.findall('user')]
-
-    def add_user(self, username):
-        Ensurance(self.element).ensure_child_with_text('user', username)
-        return self
-
-
-class Authorization(CommonEqualityMixin):
-    def __init__(self, element):
-        self.element = element
-
-    @property
-    def view(self):
-        return ViewAuthorization(self.element.find('view'))
-
-    def ensure_view(self):
-        view_element = Ensurance(self.element).ensure_child('view').element
-        return ViewAuthorization(view_element)
-
-
 class Stage(CommonEqualityMixin, EnvironmentVariableMixin):
     def __init__(self, element):
         self.element = element
@@ -216,6 +182,18 @@ class Stage(CommonEqualityMixin, EnvironmentVariableMixin):
     def fetch_materials(self):
         return not PossiblyMissingElement(self.element).has_attribute("fetchMaterials", "false")
 
+    @property
+    def _approval_authorization(self):
+        return PossiblyMissingElement(self.element).possibly_missing_child('approval').possibly_missing_child('authorization')
+
+    @property
+    def authorized_users(self):
+        return [u.text for u in self._approval_authorization.findall('user')] 
+
+    @property
+    def authorized_roles(self):
+        return [r.text for r in self._approval_authorization.findall('role')]
+
     @fetch_materials.setter
     def fetch_materials(self, value):
         if value:
@@ -227,8 +205,16 @@ class Stage(CommonEqualityMixin, EnvironmentVariableMixin):
         self.fetch_materials = value
         return self
 
-    def set_has_manual_approval(self):
-        Ensurance(self.element).ensure_child_with_attribute("approval", "type", "manual")
+    def set_has_manual_approval(self, authorize_users=None, authorize_roles=None):
+        approval_element = Ensurance(self.element).ensure_child_with_attribute("approval", "type", "manual").element
+        if authorize_users or authorize_roles:
+            auth_element = Ensurance(approval_element).ensure_child('authorization').element
+            PossiblyMissingElement(auth_element).remove_all_children()
+            for user in (authorize_users or []):
+                auth_element.append(ET.fromstring('<user>{}</user>'.format(user)))
+            for role in (authorize_roles or []):
+                auth_element.append(ET.fromstring('<role>{}</role>'.format(role)))
+
         return self
 
     def reorder_elements_to_please_go(self):
@@ -606,6 +592,11 @@ class PipelineGroup(CommonEqualityMixin):
     def ensure_authorization(self):
         authorization_element = Ensurance(self.element).ensure_child('authorization').element
         return Authorization(authorization_element)
+
+    def ensure_replacement_of_authorization(self):
+        authorization = self.ensure_authorization()
+        authorization.make_empty()
+        return authorization
 
     def ensure_pipeline(self, name):
         pipeline_element = Ensurance(self.element).ensure_child_with_attribute('pipeline', 'name', name).element
