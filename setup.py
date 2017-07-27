@@ -3,9 +3,9 @@ from setuptools import find_packages, setup
 setup(name='gomatic',
       version='0.4.14',
       description='API for configuring GoCD',
-      url='https://github.com/SpringerSBM/gomatic',
-      author='Springer Science+Business Media',
-      author_email='tools-engineering@groups.springer.com',
+      url='https://github.com/gocd-contrib/gomatic',
+      author='The Gomatic Maintainers',
+      author_email='',
       license='MIT',
       packages=find_packages(exclude=("tests",)),
       install_requires=[

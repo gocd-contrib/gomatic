@@ -12,9 +12,9 @@ script:
 
 deploy:
   provider: pypi
-  user: springersbm
+  user: MFAnderson
   on:
     tags: true
-    repo: SpringerSBM/gomatic
+    repo: gocd-contrib/gomatic
   password:
-    secure: iGYAnHBMHWB/2ijrNbaR5/d8obr4BiZJVSpHYz9AbQVAez2/6acXM1g2Ak4s/N0Fh49LCXMIUx5XYDqwcRWAeSkQ2MikxqbVRKAByTsIt0zXJQJrCFA2FhtkhBb5P0o+IpsTx9eNqr7nIyUpOXU7oWrbUl1zxOR7m0/kfnxirPY=
+    secure: J9JpCjsrSxy7GEwb5/5lwOwEtmyQVjdGDKicjTq1GWFiyy0VCe7lJkK01is33WGJlILdOmBUli2RO/LhYrsHVz4YpQrNzC8513g7EPlAxFiccifPLziNSCz+bufBjCOgTcnmJWw63eVoH7RgB4kQgO3FJ476PLMy1NEb2K6/dD8=
