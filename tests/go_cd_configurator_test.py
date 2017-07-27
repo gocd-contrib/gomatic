@@ -16,6 +16,7 @@ from gomatic import (
     Pipeline,
     PipelineMaterial,
     RakeTask,
+    Security,
     Tab
 )
 from gomatic.fake import FakeHostRestClient, config, empty_config, empty_config_xml, load_file
@@ -631,7 +632,7 @@ class TestConfigRepo(unittest.TestCase):
                                                                        'file_pattern': '*.gocd.yml'
                                                                    })
 
-        self.assertEquals(self.configurator.config_repos.config_repo[0].configuration, {
+        self.assertEqual(self.configurator.config_repos.config_repo[0].configuration, {
             'file_pattern': '*.gocd.yml'
         })
 
@@ -1240,6 +1241,82 @@ class TestPipelineGroup(unittest.TestCase):
             self.fail("should have thrown exception")
         except RuntimeError:
             pass
+
+
+class TestSecurity(unittest.TestCase):
+    def setUp(self):
+        self.configurator = GoCdConfigurator(empty_config())
+
+    def test_can_ensure_roles(self):
+        self.configurator.ensure_security().ensure_roles().ensure_role(name='role_name', users=['user1', 'user2'])
+
+        self.assertEqual(self.configurator.security.roles[0].name, 'role_name')
+        self.assertEqual(self.configurator.security.roles[0].users, ['user1', 'user2'])
+
+    def test_can_ensure_replacement_of_security(self):
+        self.configurator.ensure_security().ensure_roles().ensure_role(name='role_name', users=['user1', 'user2'])
+        self.assertEqual(len(self.configurator.security.roles), 1)
+
+        self.configurator.ensure_replacement_of_security().ensure_roles().ensure_role(name='another_role_name', users=['user1', 'user2'])
+        self.assertEqual(len(self.configurator.security.roles), 1)
+
+    def test_can_ensure_replacement_of_roles(self):
+        self.configurator.ensure_security().ensure_roles().ensure_role(name='role_name', users=['user1', 'user2'])
+        self.assertEqual(len(self.configurator.security.roles), 1)
+
+        self.configurator.ensure_security().ensure_replacement_of_roles().ensure_role(name='another_role_name', users=['user1', 'user2'])
+        self.assertEqual(len(self.configurator.security.roles), 1)
+
+    def test_can_ensure_auth_config(self):
+        properties = {'key': 'value' }
+        self.configurator.ensure_security().ensure_auth_configs().ensure_auth_config(auth_config_id='auth-plugin-1',
+                                                                                     plugin_id='auth.plugin.id',
+                                                                                     properties=properties)
+
+        self.assertEqual(self.configurator.security.auth_configs[0].auth_config_id, 'auth-plugin-1')
+        self.assertEqual(self.configurator.security.auth_configs[0].plugin_id, 'auth.plugin.id')
+        self.assertEqual(self.configurator.security.auth_configs[0].properties, properties)
+
+
+    def test_doesnt_add_same_plugin_twice_and_equality_is_only_by_id(self):
+        self.configurator.ensure_security(). \
+            ensure_auth_configs(). \
+            ensure_auth_config(auth_config_id='auth-plugin-1', plugin_id='auth.plugin.id', properties={})
+        self.configurator.ensure_security(). \
+            ensure_auth_configs(). \
+            ensure_auth_config(auth_config_id='auth-plugin-1', plugin_id='another.plugin.id', properties={})
+
+        self.assertEqual(self.configurator.security.auth_configs[0].auth_config_id, 'auth-plugin-1')
+        self.assertEqual(self.configurator.security.auth_configs[0].plugin_id, 'auth.plugin.id')
+        self.assertEqual(self.configurator.security.auth_configs[0].properties, {})
+
+    def test_can_ensure_replacement_of_auth_configs(self):
+        # this test ensures that you can replace ALL auth configs
+        self.configurator.ensure_security(). \
+            ensure_auth_configs(). \
+            ensure_auth_config(auth_config_id='auth-plugin-1', plugin_id='auth.plugin.id', properties={})
+
+        self.assertEqual(len(self.configurator.security.auth_configs), 1)
+
+        self.configurator.ensure_security(). \
+            ensure_replacement_of_auth_configs(). \
+            ensure_auth_config(auth_config_id='auth-plugin-2', plugin_id='auth.plugin.id', properties={})
+
+        self.assertEqual(len(self.configurator.security.auth_configs), 1)
+
+    def test_can_ensure_replacement_of_auth_config(self):
+        # this test ensures that you can override just a single auth config
+        self.configurator.ensure_security(). \
+            ensure_auth_configs(). \
+            ensure_auth_config(auth_config_id='auth-plugin-1', plugin_id='auth.plugin.id', properties={})
+
+        self.assertEqual(len(self.configurator.security.auth_configs), 1)
+
+        self.configurator.ensure_security(). \
+            ensure_auth_configs(). \
+            ensure_replacement_of_auth_config(auth_config_id='auth-plugin-1', plugin_id='auth.plugin.id', properties={})
+
+        self.assertEqual(len(self.configurator.security.auth_configs), 1)
 
 
 class TestGoCdConfigurator(unittest.TestCase):
