@@ -1,4 +1,5 @@
 # Gomatic
+![Travis](https://img.shields.io/travis/gocd-contrib/gomatic.svg) ![Pypi](https://img.shields.io/pypi/v/gomatic.svg)
 
 This is a Python API for configuring ThoughtWorks [GoCD](http://www.go.cd/).
 
