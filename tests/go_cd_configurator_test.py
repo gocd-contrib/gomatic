@@ -137,6 +137,28 @@ class TestJobs(unittest.TestCase):
         self.assertEqual(j, job)
         self.assertEqual(False, job.runs_on_all_agents)
 
+    def test_jobs_can_have_elastic_profile_id(self):
+        job = typical_pipeline().ensure_stage("package").ensure_job("docker")
+        self.assertEqual(True, job.has_elastic_profile_id)
+        self.assertEqual('docker.unit-test', job.elastic_profile_id)
+
+    def test_can_set_elastic_profile_id(self):
+        job = empty_stage().ensure_job("j")
+        j = job.set_elastic_profile_id("docker.unit-test")
+        self.assertEqual(j, job)
+        self.assertEqual(True, job.has_elastic_profile_id)
+        self.assertEqual('docker.unit-test', job.elastic_profile_id)
+
+    def test_jobs_do_not_have_to_have_elastic_profile_id(self):
+        stages = typical_pipeline().stages
+        job = stages[0].jobs[0]
+        self.assertEqual(False, job.has_elastic_profile_id)
+        try:
+            elastic_profile_id = job.elastic_profile_id
+            self.fail("should have thrown exception")
+        except RuntimeError:
+            pass
+
     def test_can_ensure_job_has_resource(self):
         stages = typical_pipeline().stages
         job = stages[0].jobs[0]
@@ -494,16 +516,18 @@ class TestJobs(unittest.TestCase):
 
 class TestStages(unittest.TestCase):
     def test_pipelines_have_stages(self):
-        self.assertEqual(2, len(typical_pipeline().stages))
+        self.assertEqual(3, len(typical_pipeline().stages))
 
     def test_stages_have_names(self):
         stages = typical_pipeline().stages
         self.assertEqual('build', stages[0].name)
-        self.assertEqual('deploy', stages[1].name)
+        self.assertEqual('package', stages[1].name)
+        self.assertEqual('deploy', stages[2].name)
 
     def test_stages_can_have_manual_approval(self):
         self.assertEqual(False, typical_pipeline().stages[0].has_manual_approval)
-        self.assertEqual(True, typical_pipeline().stages[1].has_manual_approval)
+        self.assertEqual(False, typical_pipeline().stages[1].has_manual_approval)
+        self.assertEqual(True, typical_pipeline().stages[2].has_manual_approval)
 
     def test_can_set_manual_approval(self):
         stage = typical_pipeline().stages[0]
@@ -673,43 +697,43 @@ class TestPipeline(unittest.TestCase):
 
     def test_can_ensure_stage(self):
         pipeline = typical_pipeline()
-        self.assertEqual(2, len(pipeline.stages))
+        self.assertEqual(3, len(pipeline.stages))
         ensured_stage = pipeline.ensure_stage("deploy")
-        self.assertEqual(2, len(pipeline.stages))
+        self.assertEqual(3, len(pipeline.stages))
         self.assertEqual("deploy", ensured_stage.name)
 
     def test_can_remove_stage(self):
         pipeline = typical_pipeline()
-        self.assertEqual(2, len(pipeline.stages))
+        self.assertEqual(3, len(pipeline.stages))
         p = pipeline.ensure_removal_of_stage("deploy")
         self.assertEqual(p, pipeline)
-        self.assertEqual(1, len(pipeline.stages))
+        self.assertEqual(2, len(pipeline.stages))
         self.assertEqual(0, len([s for s in pipeline.stages if s.name == "deploy"]))
 
     def test_can_ensure_removal_of_stage(self):
         pipeline = typical_pipeline()
-        self.assertEqual(2, len(pipeline.stages))
+        self.assertEqual(3, len(pipeline.stages))
         pipeline.ensure_removal_of_stage("stage-that-has-already-been-deleted")
-        self.assertEqual(2, len(pipeline.stages))
+        self.assertEqual(3, len(pipeline.stages))
 
     def test_can_ensure_initial_stage(self):
         pipeline = typical_pipeline()
         stage = pipeline.ensure_initial_stage("first")
         self.assertEqual(stage, pipeline.stages[0])
-        self.assertEqual(3, len(pipeline.stages))
+        self.assertEqual(4, len(pipeline.stages))
 
     def test_can_ensure_initial_stage_if_already_exists_as_initial(self):
         pipeline = typical_pipeline()
         stage = pipeline.ensure_initial_stage("build")
         self.assertEqual(stage, pipeline.stages[0])
-        self.assertEqual(2, len(pipeline.stages))
+        self.assertEqual(3, len(pipeline.stages))
 
     def test_can_ensure_initial_stage_if_already_exists(self):
         pipeline = typical_pipeline()
         stage = pipeline.ensure_initial_stage("deploy")
         self.assertEqual(stage, pipeline.stages[0])
         self.assertEqual("build", pipeline.stages[1].name)
-        self.assertEqual(2, len(pipeline.stages))
+        self.assertEqual(3, len(pipeline.stages))
 
     def test_can_set_stage_clean_policy(self):
         pipeline = empty_pipeline()
