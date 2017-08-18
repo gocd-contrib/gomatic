@@ -34,6 +34,19 @@
           </job>
         </jobs>
       </stage>
+      <stage name="package">
+        <jobs>
+          <job name="docker" elasticProfileId="docker.unit-test">
+            <tasks>
+              <exec command="docker">
+                <arg>build</arg>
+                <arg>.</arg>
+                <runif status="passed" />
+              </exec>
+            </tasks>
+          </job>
+        </jobs>
+      </stage>
       <stage name="deploy">
         <approval type="manual" />
         <environmentvariables>

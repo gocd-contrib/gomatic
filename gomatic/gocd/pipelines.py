@@ -66,6 +66,24 @@ class Job(CommonEqualityMixin, EnvironmentVariableMixin, ResourceMixin):
         return self
 
     @property
+    def has_elastic_profile_id(self):
+        return 'elasticProfileId' in self.element.attrib
+
+    @property
+    def elastic_profile_id(self):
+        if not self.has_elastic_profile_id:
+            raise RuntimeError("Job (%s) does not have elasticProfileId" % self)
+        return self.element.attrib['elasticProfileId']
+
+    @elastic_profile_id.setter
+    def elastic_profile_id(self, elastic_profile_id):
+        self.element.attrib['elasticProfileId'] = elastic_profile_id
+
+    def set_elastic_profile_id(self, elastic_profile_id):
+        self.elastic_profile_id = elastic_profile_id
+        return self
+
+    @property
     def artifacts(self):
         artifact_elements = PossiblyMissingElement(self.element).possibly_missing_child("artifacts").iterator
         return set([Artifact.get_artifact_for(e) for e in artifact_elements])
@@ -139,6 +157,9 @@ class Job(CommonEqualityMixin, EnvironmentVariableMixin, ResourceMixin):
         if self.runs_on_all_agents:
             result += '.set_runs_on_all_agents()'
 
+        if self.has_elastic_profile_id:
+            result += '.set_elastic_profile_id("%s")' % self.elastic_profile_id
+
         for task in self.tasks:
             # we add instead of ensure because we know it is starting off empty and need to handle duplicate tasks
             result += "\njob.add_task(%s)" % task
@@ -188,7 +209,7 @@ class Stage(CommonEqualityMixin, EnvironmentVariableMixin):
 
     @property
     def authorized_users(self):
-        return [u.text for u in self._approval_authorization.findall('user')] 
+        return [u.text for u in self._approval_authorization.findall('user')]
 
     @property
     def authorized_roles(self):
