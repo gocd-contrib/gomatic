@@ -1347,6 +1347,17 @@ class TestElastic(unittest.TestCase):
     def setUp(self):
         self.configurator = GoCdConfigurator(empty_config())
 
+    def test_ensure_profile_returns_profile(self):
+        properties = {'key': 'value' }
+        profile = self.configurator.ensure_elastic().ensure_profiles().ensure_profile(profile_id='unit-test',
+                plugin_id='cd.go.contrib.elastic-agent.docker',
+                properties=properties)
+
+        self.assertEqual(self.configurator.elastic.profiles[0], profile)
+        self.assertEqual(profile.profile_id, 'unit-test')
+        self.assertEqual(profile.plugin_id, 'cd.go.contrib.elastic-agent.docker')
+        self.assertEqual(profile.properties, properties)
+
     def test_can_ensure_elastic(self):
         properties = {'key': 'value' }
         self.configurator.ensure_elastic().ensure_profiles().ensure_profile(profile_id='unit-test',

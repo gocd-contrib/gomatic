@@ -24,7 +24,7 @@ class Profile(CommonEqualityMixin):
         return self.element.get('pluginId')
 
     def __eq__(self, other):
-        return self.auth_plugin_id == other.auth_plugin_id
+        return self.profile_id == other.profile_id
 
 
 class Profiles(CommonEqualityMixin):
@@ -41,7 +41,7 @@ class Profiles(CommonEqualityMixin):
             plugin_id,
             properties_xml))
         self.element.append(profile)
-        return self
+        return Profile(profile)
 
     def ensure_replacement_of_profile(self, profile_id, plugin_id, properties):
         current_profile = [ac for ac in self.profile if ac.profile_id == profile_id]
