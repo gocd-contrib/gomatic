@@ -55,6 +55,7 @@ We believe it works for the following versions (as indicated by `integration_tes
 * 17.5.0-5095
 * 17.6.0-5142
 * 17.7.0-5147
+* 17.8.0-5277
 
 We don't support the below versions anymore, however we did at some point in time, so it might still work in newer versions:
 
@@ -132,7 +133,7 @@ Unit tests:
 2. `./build.sh`
 
 Integration tests (takes a long time to download many versions of GoCD) (requires [docker](https://www.docker.com/) to be installed in order to run):
- 
+
 1. `python -m unittest tests.integration_test`
 
 ### Contributing to Gomatic via pull request
