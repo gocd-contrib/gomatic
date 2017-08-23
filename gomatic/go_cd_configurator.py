@@ -12,6 +12,7 @@ import requests
 
 from gomatic.gocd.config_repos import ConfigRepos
 from gomatic.gocd.security import Security
+from gomatic.gocd.elastic import Elastic
 from gomatic.gocd.agents import Agent
 from gomatic.gocd.pipelines import Pipeline, PipelineGroup
 from gomatic.gocd.repositories import Repository
@@ -143,7 +144,7 @@ class GoCdConfigurator(object):
         config_repos = self.ensure_config_repos()
         config_repos.make_empty()
         return config_repos
-    
+
     def ensure_removal_of_pipeline_group(self, group_name):
         matching = [g for g in self.pipeline_groups if g.name == group_name]
         for group in matching:
@@ -213,11 +214,24 @@ class GoCdConfigurator(object):
     def ensure_replacement_of_security(self):
         security = self.ensure_security()
         security.make_empty()
-        return security 
+        return security
 
     @property
     def security(self):
         return Security(self.__server_element_ensurance().element.find('security'))
+
+    def ensure_elastic(self):
+        elastic_element = self.__server_element_ensurance().ensure_child('elastic').element
+        return Elastic(elastic_element)
+
+    def ensure_replacement_of_elastic(self):
+        elastic = self.ensure_elastic()
+        elastic.make_empty()
+        return elastic
+
+    @property
+    def elastic(self):
+        return Elastic(self.__server_element_ensurance().element.find('elastic'))
 
     @property
     def git_urls(self):

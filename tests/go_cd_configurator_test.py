@@ -1343,6 +1343,80 @@ class TestSecurity(unittest.TestCase):
         self.assertEqual(len(self.configurator.security.auth_configs), 1)
 
 
+class TestElastic(unittest.TestCase):
+    def setUp(self):
+        self.configurator = GoCdConfigurator(empty_config())
+
+    def test_ensure_profile_returns_profile(self):
+        properties = {'key': 'value' }
+        profile = self.configurator.ensure_elastic().ensure_profiles().ensure_profile(profile_id='unit-test',
+                plugin_id='cd.go.contrib.elastic-agent.docker',
+                properties=properties)
+
+        self.assertEqual(self.configurator.elastic.profiles[0], profile)
+        self.assertEqual(profile.profile_id, 'unit-test')
+        self.assertEqual(profile.plugin_id, 'cd.go.contrib.elastic-agent.docker')
+        self.assertEqual(profile.properties, properties)
+
+    def test_can_ensure_elastic(self):
+        properties = {'key': 'value' }
+        self.configurator.ensure_elastic().ensure_profiles().ensure_profile(profile_id='unit-test',
+                plugin_id='cd.go.contrib.elastic-agent.docker',
+                properties=properties)
+
+        self.assertEqual(self.configurator.elastic.profiles[0].profile_id, 'unit-test')
+        self.assertEqual(self.configurator.elastic.profiles[0].plugin_id, 'cd.go.contrib.elastic-agent.docker')
+        self.assertEqual(self.configurator.elastic.profiles[0].properties, properties)
+
+    def test_can_ensure_replacement_of_elastic(self):
+        self.configurator.ensure_elastic().ensure_profiles().ensure_profile(profile_id='unit-test',
+                plugin_id='cd.go.contrib.elastic-agent.docker',
+                properties={})
+        self.assertEqual(len(self.configurator.elastic.profiles), 1)
+
+        self.configurator.ensure_replacement_of_elastic().ensure_profiles().ensure_profile(profile_id='unit-test',
+                plugin_id='cd.go.contrib.elastic-agent.docker',
+                properties={})
+        self.assertEqual(len(self.configurator.elastic.profiles), 1)
+
+    def test_can_ensure_replacement_of_profiles(self):
+        self.configurator.ensure_elastic().ensure_profiles().ensure_profile(profile_id='unit-test',
+                plugin_id='cd.go.contrib.elastic-agent.docker',
+                properties={})
+        self.assertEqual(len(self.configurator.elastic.profiles), 1)
+
+        self.configurator.ensure_elastic().ensure_replacement_of_profiles().ensure_profile(profile_id='integration-test',
+                plugin_id='cd.go.contrib.elastic-agent.docker',
+                properties={})
+        self.assertEqual(len(self.configurator.elastic.profiles), 1)
+
+    def test_can_ensure_replacement_of_profile(self):
+        # this test ensures that you can override just a single profile
+        self.configurator.ensure_elastic(). \
+            ensure_profiles(). \
+            ensure_profile(profile_id='unit-test', plugin_id='cd.go.contrib.elastic-agent.docker', properties={})
+
+        self.assertEqual(len(self.configurator.elastic.profiles), 1)
+
+        self.configurator.ensure_elastic(). \
+            ensure_profiles(). \
+            ensure_replacement_of_profile(profile_id='unit-test', plugin_id='cd.go.contrib.elastic-agent.docker', properties={})
+
+        self.assertEqual(len(self.configurator.elastic.profiles), 1)
+
+    def test_doesnt_add_same_plugin_twice_and_equality_is_only_by_id(self):
+        self.configurator.ensure_elastic(). \
+            ensure_profiles(). \
+            ensure_profile(profile_id='unit-test', plugin_id='cd.go.contrib.elastic-agent.docker', properties={})
+        self.configurator.ensure_elastic(). \
+            ensure_profiles(). \
+            ensure_profile(profile_id='unit-test', plugin_id='cd.go.contrib.elastic-agent.docker-swarm', properties={})
+
+        self.assertEqual(self.configurator.elastic.profiles[0].profile_id, 'unit-test')
+        self.assertEqual(self.configurator.elastic.profiles[0].plugin_id, 'cd.go.contrib.elastic-agent.docker')
+        self.assertEqual(self.configurator.elastic.profiles[0].properties, {})
+
+
 class TestGoCdConfigurator(unittest.TestCase):
     def test_can_tell_if_there_is_no_change_to_save(self):
         configurator = GoCdConfigurator(config('config-with-two-pipeline-groups'))
