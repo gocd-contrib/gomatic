@@ -17,6 +17,26 @@ class Role(CommonEqualityMixin):
         return [u.text for u in self.element.find('users').findall('user')]
 
 
+class PluginRole(CommonEqualityMixin):
+    def __init__(self, element):
+        self.element = element
+
+    @property
+    def name(self):
+        return self.element.get('name')
+
+    @property
+    def auth_config_id(self):
+        return self.element.get('authConfigId')
+
+    @property
+    def properties(self):
+        props = {}
+        for prop in self.element.findall('property'):
+            props[prop.find('key').text] = prop.find('value').text
+        return props
+
+
 class Roles(CommonEqualityMixin):
     def __init__(self, element):
         self.element = element
@@ -24,6 +44,10 @@ class Roles(CommonEqualityMixin):
     @property
     def role(self):
         return [Role(r) for r in self.element.findall('role')]
+
+    @property
+    def plugin_role(self):
+        return [PluginRole(r) for r in self.element.findall('pluginRole')]
 
     def make_empty(self):
         PossiblyMissingElement(self.element).remove_all_children()
@@ -35,6 +59,16 @@ class Roles(CommonEqualityMixin):
         self.element.append(role_element)
         return self
 
+    def ensure_plugin_role(self, name, auth_config_id, properties={}):
+        properties_xml = ''.join(['<property><key>{0}</key><value>{1}</value></property>'.format(k, v) for k,v in
+                                properties.items()])
+        plugin_role_xml = '<pluginRole name="{0}" authConfigId="{1}">{2}</pluginRole>'.format(name, auth_config_id,
+                                                                                              properties_xml)
+        plugin_role_element = ET.fromstring(plugin_role_xml)
+        self.element.append(plugin_role_element)
+        return self
+
+    # deprecated, since this only returns "Role" and now we can have both "Role" and "PluginRole"
     def __getitem__(self, index):
         if not isinstance(index, int):
             raise Exception("Roles index must be an integer, got {}".format(type(index)))
@@ -94,7 +128,7 @@ class AuthConfigs(CommonEqualityMixin):
 
     def __getitem__(self, index):
         if not isinstance(index, int):
-            raise Exception("Roles index must be an integer, got {}".format(type(index)))
+            raise Exception("AuthConfig index must be an integer, got {}".format(type(index)))
         return self.auth_config[index]
 
     def __len__(self):

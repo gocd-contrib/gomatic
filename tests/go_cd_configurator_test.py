@@ -1274,8 +1274,19 @@ class TestSecurity(unittest.TestCase):
     def test_can_ensure_roles(self):
         self.configurator.ensure_security().ensure_roles().ensure_role(name='role_name', users=['user1', 'user2'])
 
-        self.assertEqual(self.configurator.security.roles[0].name, 'role_name')
-        self.assertEqual(self.configurator.security.roles[0].users, ['user1', 'user2'])
+        self.assertEqual(self.configurator.security.roles.role[0].name, 'role_name')
+        self.assertEqual(self.configurator.security.roles.role[0].users, ['user1', 'user2'])
+
+    def test_can_ensure_plugin_roles(self):
+        self.configurator.ensure_security().ensure_roles().ensure_plugin_role(name='role_name',
+                                                                              auth_config_id='id-for-auth-plugin',
+                                                                              properties={
+                                                                                  'SomeKey': 'SomeValue'
+                                                                              })
+
+        self.assertEqual(self.configurator.security.roles.plugin_role[0].name, 'role_name')
+        self.assertEqual(self.configurator.security.roles.plugin_role[0].auth_config_id, 'id-for-auth-plugin')
+        self.assertEqual(self.configurator.security.roles.plugin_role[0].properties, {'SomeKey': 'SomeValue'}) 
 
     def test_can_ensure_replacement_of_security(self):
         self.configurator.ensure_security().ensure_roles().ensure_role(name='role_name', users=['user1', 'user2'])
