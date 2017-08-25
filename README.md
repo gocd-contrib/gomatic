@@ -153,3 +153,8 @@ Only tagged commits are deployed to pypi.
 1. update value of `version` in `setup.py`
 1. `git tag -a v<version> -m 'version <version>'` (e.g. `git tag -a v0.3.10 -m 'version 0.3.10'`)
 1. `git push origin --tags`
+
+Alternatively, run:
+
+1. `bumpversion [major|minor|patch`
+1. `git push origin --tags`
