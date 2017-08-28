@@ -37,6 +37,20 @@ class PluginRole(CommonEqualityMixin):
         return props
 
 
+class Admins(CommonEqualityMixin):
+    def __init__(self, element):
+        self.element = element
+
+    def add_user(self, name):
+        user_xml = '<user>{}</user>'.format(name)
+        user_element = ET.fromstring(user_xml)
+        self.element.append(user_element)
+        return self
+
+    def __getitem__(self, index):
+        return [u.text for u in self.element.findall('user')][index]
+
+
 class Roles(CommonEqualityMixin):
     def __init__(self, element):
         self.element = element
@@ -146,6 +160,14 @@ class Security(CommonEqualityMixin):
     @property
     def auth_configs(self):
         return AuthConfigs(self.element.find('authConfigs'))
+
+    @property
+    def admins(self):
+        return Admins(self.element.find('admins'))
+
+    def ensure_admins(self):
+        admins = Ensurance(self.element).ensure_child('admins')
+        return Admins(admins.element)
 
     def ensure_roles(self):
         roles = Ensurance(self.element).ensure_child('roles')
