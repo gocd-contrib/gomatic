@@ -598,6 +598,9 @@ class PipelineGroup(CommonEqualityMixin):
     def pipelines(self):
         return [Pipeline(e, self) for e in self.element.findall('pipeline')]
 
+    def reorder_elements_to_please_go(self):
+        move_all_to_end(self.element, 'pipeline')
+
     def _matching_pipelines(self, name):
         return [p for p in self.pipelines if p.name == name]
 

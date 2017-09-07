@@ -1209,6 +1209,18 @@ class TestPipelineGroup(unittest.TestCase):
         self.assertEqual('user1', pipeline_group.authorization.view.users[0].username)
         self.assertEqual('user2', pipeline_group.authorization.view.users[1].username)
 
+    def test_reorders_elements_to_please_go(self):
+        configurator = GoCdConfigurator(empty_config())
+        pipeline_group = configurator.ensure_pipeline_group("new_group")
+        pipeline_group.ensure_pipeline("some_name")
+        pipeline_group.ensure_authorization().ensure_view().add_user('user1').add_user('user2')
+
+        xml = configurator.config
+
+        pipeline_group_root = ET.fromstring(xml).find('pipelines')
+        self.assertEqual("authorization", pipeline_group_root[0].tag)
+        self.assertEqual("pipeline", pipeline_group_root[1].tag)
+
     def test_can_add_pipeline(self):
         configurator = GoCdConfigurator(empty_config())
         pipeline_group = configurator.ensure_pipeline_group("new_group")

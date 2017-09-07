@@ -62,6 +62,8 @@ class GoCdConfigurator(object):
         move_all_to_end(self.__xml_root, 'environments')
         move_all_to_end(self.__xml_root, 'agents')
 
+        for pipeline_group in self.pipeline_groups:
+            pipeline_group.reorder_elements_to_please_go()
         for pipeline in self.pipelines:
             pipeline.reorder_elements_to_please_go()
         for template in self.templates:
