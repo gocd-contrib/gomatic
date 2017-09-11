@@ -23,6 +23,7 @@ class GoCdConfigurator(object):
     def __init__(self, host_rest_client):
         self.__host_rest_client = host_rest_client
         self.__set_initial_config_xml()
+        self.__set_server_version()
 
     def __set_initial_config_xml(self):
         initial_config, self._initial_md5 = self.__current_config_response()
@@ -31,6 +32,18 @@ class GoCdConfigurator(object):
         else:
             self.__initial_config = initial_config.encode('ascii', errors='xmlcharrefreplace')
         self.__xml_root = ET.fromstring(self.__initial_config)
+
+    def __set_server_version(self):
+        version_url = "/go/api/version"
+        response = self.__host_rest_client.get(version_url)
+        if response.status_code == 404:
+            self.__server_version = '16.5.0' #hardcoding to version before endpoint created
+        elif response.status_code == 200:
+            data = response.json()
+            self.__server_version = data['version']
+        else:
+            raise Exception("Failed to get {} status {}\n:{}".format(version_url, response.status_code, response.text))
+
 
     def __repr__(self):
         return "GoCdConfigurator(%s)" % self.__host_rest_client
@@ -47,6 +60,10 @@ class GoCdConfigurator(object):
     @property
     def current_config(self):
         return self.__current_config_response()[0]
+
+    @property
+    def server_version(self):
+        return self.__server_version
 
     def __current_config_response(self):
         config_url = "/go/admin/restful/configuration/file/GET/xml"
