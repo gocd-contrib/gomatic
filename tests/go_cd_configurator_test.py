@@ -691,7 +691,7 @@ class TestConfigRepo(unittest.TestCase):
     def test_handles_unspecified_id_for_migration(self):
         configurator = GoCdConfigurator(FakeHostRestClient(empty_config_xml, version='17.8.0'))
         configurator.ensure_config_repos().ensure_config_repo('git://url', 'yml.config.plugin')
-        self.assertEqual(configurator.config_repos.config_repo[0].repo_id, 'git--url')
+        self.assertIsNotNone(configurator.config_repos.config_repo[0].repo_id)
 
 class TestPipeline(unittest.TestCase):
     def test_pipelines_have_names(self):

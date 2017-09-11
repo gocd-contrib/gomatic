@@ -6,6 +6,8 @@ empty_config_xml = """<?xml version="1.0" encoding="utf-8"?>
   <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="96eca4bf-210e-499f-9dc9-0cefdae38d0c" />
 </cruise>"""
 
+# This is the oldest version we currently support. Ideally we can make this more automagic in the future
+DEFAULT_VERSION='16.3.0'
 
 class FakeResponse(object):
     def __init__(self, text):
@@ -16,7 +18,8 @@ class FakeResponse(object):
         return json.loads(self.text)
 
 class FakeHostRestClient(object):
-    def __init__(self, config_string, thing_to_recreate_itself=None, version="16.3.0"):
+    def __init__(self, config_string, thing_to_recreate_itself=None, version=DEFAULT_VERSION):
+
         self.config_string = config_string
         self.thing_to_recreate_itself = thing_to_recreate_itself
         self.version = version

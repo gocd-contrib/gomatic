@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+import uuid
 
 from distutils.version import LooseVersion
 
@@ -86,7 +87,7 @@ class ConfigRepos(CommonEqualityMixin):
                         configuration.items()))
         if has_id(self.__configurator.server_version):
             if not repo_id:
-                repo_id = url.replace(':', '').replace('/', '-')
+                repo_id = str(uuid.uuid4())
             attr_name = 'pluginId' if has_new_attr_name(self.__configurator.server_version) else 'plugin'
             element = ET.fromstring('<config-repo {5}="{0}" id="{4}"><{2} url="{1}" />{3}</config-repo>'.format(
                 plugin, url, cvs, configuration_xml_string, repo_id, attr_name))
