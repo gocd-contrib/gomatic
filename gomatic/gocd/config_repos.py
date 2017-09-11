@@ -1,14 +1,29 @@
 import xml.etree.ElementTree as ET
 
+from distutils.version import LooseVersion
+
 from gomatic.mixins import CommonEqualityMixin
 from gomatic.xml_operations import PossiblyMissingElement
+
+
+ATTR_NAME_CHANGE_VERSION = LooseVersion("17.9.0")
+ID_INTRODUCED_VERSION = LooseVersion("17.8.0")
+
+
+def has_new_attr_name(version):
+    return LooseVersion(version) >= ATTR_NAME_CHANGE_VERSION
+
+
+def has_id(version):
+    return LooseVersion(version) >= ID_INTRODUCED_VERSION
 
 
 class ConfigRepo(CommonEqualityMixin):
     valid_cvs = ['git', 'svn', 'hg', 'p4', 'tfs']
 
-    def __init__(self, element):
+    def __init__(self, element, version):
         self.element = element
+        self.version = version
 
     @property
     def url(self):
@@ -29,7 +44,15 @@ class ConfigRepo(CommonEqualityMixin):
 
     @property
     def plugin(self):
-        return self.element.get('plugin')
+        key = 'pluginId' if has_new_attr_name(self.version) else 'plugin'
+        return self.element.get(key)
+
+    @property
+    def repo_id(self):
+        if has_id(self.version):
+            return self.element.get('id')
+        else:
+            return None
 
     def make_empty(self):
         PossiblyMissingElement(self.element).remove_all_children()
@@ -43,28 +66,35 @@ class ConfigRepo(CommonEqualityMixin):
 
 
 class ConfigRepos(CommonEqualityMixin):
+
     def __init__(self, element, configurator):
         self.element = element
         self.__configurator = configurator
 
     @property
     def config_repo(self):
-        return [ConfigRepo(e) for e in self.element.findall('config-repo')]
+        return [ConfigRepo(e, self.__configurator.server_version) for e in self.element.findall('config-repo')]
 
     def make_empty(self):
         PossiblyMissingElement(self.element).remove_all_children()
 
-    def ensure_config_repo(self, url, plugin, cvs='git', configuration=None):
+    def ensure_config_repo(self, url, plugin, cvs='git', configuration=None, repo_id=None):
         configuration_xml_string = ""
         if configuration:
             configuration_xml_string = '<configuration>{}</configuration>'.format(
                 "".join("<property><key>{0}</key><value>{1}</value></property>".format(k, v) for k, v in
                         configuration.items()))
+        if has_id(self.__configurator.server_version):
+            if not repo_id:
+                repo_id = url.replace(':', '').replace('/', '-')
+            attr_name = 'pluginId' if has_new_attr_name(self.__configurator.server_version) else 'plugin'
+            element = ET.fromstring('<config-repo {5}="{0}" id="{4}"><{2} url="{1}" />{3}</config-repo>'.format(
+                plugin, url, cvs, configuration_xml_string, repo_id, attr_name))
+        else:
+            element = ET.fromstring('<config-repo plugin="{0}"><{2} url="{1}" />{3}</config-repo>'.format(
+                plugin, url, cvs, configuration_xml_string))
 
-        element = ET.fromstring('<config-repo plugin="{0}"><{2} url="{1}" />{3}</config-repo>'.format(
-            plugin, url, cvs, configuration_xml_string))
-
-        config_repo_element = ConfigRepo(element)
+        config_repo_element = ConfigRepo(element, self.__configurator.server_version)
 
         if config_repo_element not in self.config_repo:
             self.element.append(element)
