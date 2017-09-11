@@ -1,5 +1,5 @@
 import codecs
-
+import json
 
 empty_config_xml = """<?xml version="1.0" encoding="utf-8"?>
 <cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">
@@ -12,12 +12,14 @@ class FakeResponse(object):
         self.text = text
         self.headers = {'x-cruise-config-md5': '42'}
         self.status_code = 200
-
+    def json(self):
+        return json.loads(self.text)
 
 class FakeHostRestClient(object):
-    def __init__(self, config_string, thing_to_recreate_itself=None):
+    def __init__(self, config_string, thing_to_recreate_itself=None, version="16.3.0"):
         self.config_string = config_string
         self.thing_to_recreate_itself = thing_to_recreate_itself
+        self.version = version
 
     def __repr__(self):
         if self.thing_to_recreate_itself is None:
@@ -30,6 +32,8 @@ class FakeHostRestClient(object):
         # what we want in a controlled way
         if path == "/go/admin/restful/configuration/file/GET/xml":
             return FakeResponse(self.config_string)
+        if path == "/go/api/version":
+            return FakeResponse('{{"version": "{}"}}'.format(self.version))
         raise RuntimeError("not expecting to be asked for anything else")
 
 
