@@ -291,7 +291,8 @@ class HostRestClient(object):
         return (self.__username, self.__password) if self.__username or self.__password else None
 
     def get(self, path):
-        result = requests.get(self.__path(path), auth=self.__auth(), verify=self.__verify_ssl)
+        header = {'Accept': 'application/vnd.go.cd.v1+json'}
+        result = requests.get(self.__path(path), auth=self.__auth(), verify=self.__verify_ssl, headers=header)
         count = 0
         while ((result.status_code == 503) or (result.status_code == 504)) and (count < 5):
             result = requests.get(self.__path(path))
