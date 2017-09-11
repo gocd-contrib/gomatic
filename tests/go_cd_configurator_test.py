@@ -681,6 +681,17 @@ class TestConfigRepo(unittest.TestCase):
 
         self.assertEqual(len(self.configurator.config_repos.config_repo), 3)
 
+    def test_changes_attrs_for_new_server_versions(self):
+        configurator = GoCdConfigurator(FakeHostRestClient(empty_config_xml, version='17.9.0'))
+        configurator.ensure_config_repos().ensure_config_repo('git://url', 'yml.config.plugin', repo_id='myRepo')
+        self.assertEqual(configurator.config_repos.config_repo[0].element.get('pluginId'), 'yml.config.plugin')
+        self.assertEqual(configurator.config_repos.config_repo[0].plugin, 'yml.config.plugin')
+        self.assertEqual(configurator.config_repos.config_repo[0].repo_id, 'myRepo')
+
+    def test_handles_unspecified_id_for_migration(self):
+        configurator = GoCdConfigurator(FakeHostRestClient(empty_config_xml, version='17.8.0'))
+        configurator.ensure_config_repos().ensure_config_repo('git://url', 'yml.config.plugin')
+        self.assertEqual(configurator.config_repos.config_repo[0].repo_id, 'git--url')
 
 class TestPipeline(unittest.TestCase):
     def test_pipelines_have_names(self):
