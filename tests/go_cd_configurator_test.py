@@ -1297,7 +1297,7 @@ class TestSecurity(unittest.TestCase):
     def test_can_ensure_admin_role(self):
         self.configurator.ensure_security().ensure_admins().add_user(name='admin')
 
-        self.assertEquals(self.configurator.security.admins[0], 'admin')
+        self.assertEqual(self.configurator.security.admins[0], 'admin')
 
     def test_can_ensure_roles(self):
         self.configurator.ensure_security().ensure_roles().ensure_role(name='role_name', users=['user1', 'user2'])
