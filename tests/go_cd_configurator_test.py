@@ -2035,6 +2035,16 @@ job.add_task(ExecTask(['true']))
         """
         self.assertEqual(simplified(expected), simplified(actual))
 
+class TestEncryption(unittest.TestCase):
+    def test_gets_encryped_value_from_api_call(self):
+        configurator = GoCdConfigurator(FakeHostRestClient(empty_config_xml, version='17.1.0'))
+        # expected == input because the stub does ROT26 encryption
+        expected = 'aValue'
+        actual = configurator.encryption().encrypt(expected)
+        self.assertEqual(expected, actual)
+    def test_aborts_on_invalid_version(self):
+        configurator = GoCdConfigurator(FakeHostRestClient(empty_config_xml, version='16.12.0'))
+        self.assertRaises(RuntimeError, configurator.encryption().encrypt, 'aValue')
 
 class TestXmlFormatting(unittest.TestCase):
     def test_can_format_simple_xml(self):
