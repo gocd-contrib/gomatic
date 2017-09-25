@@ -3,6 +3,7 @@
 
 import unittest
 import xml.etree.ElementTree as ET
+import os
 from decimal import Decimal
 from xml.dom.minidom import parseString
 
@@ -1474,6 +1475,12 @@ class TestGoCdConfigurator(unittest.TestCase):
         p.ensure_stage('moo').ensure_job('bar')
 
         self.assertTrue(configurator.has_changes)
+
+    def test_saves_local_config_files_if_flag_is_true(self):
+        configurator = GoCdConfigurator(config('config-with-two-pipeline-groups'))
+        configurator.save_updated_config(save_config_locally=True, dry_run=True)
+        self.assertTrue(os.path.exists('config-before.xml'))
+        self.assertTrue(os.path.exists('config-after.xml'))
 
     def test_keeps_schema_version(self):
         empty_config = FakeHostRestClient(empty_config_xml.replace('schemaVersion="72"', 'schemaVersion="73"'), "empty_config()")
