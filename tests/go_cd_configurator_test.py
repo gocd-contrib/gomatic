@@ -1165,6 +1165,15 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(p, pipeline)
         self.assertEqual(True, pipeline.has_automatic_pipeline_locking)
 
+    def test_can_set_lock_behavior(self):
+        lock_on_failure = 'lockOnFailure'
+        configurator = GoCdConfigurator(empty_config())
+        pipeline = configurator.ensure_pipeline_group("new_group").ensure_pipeline("some_name")
+        p = pipeline.set_lock_behavior(lock_on_failure)
+        self.assertEqual(p, pipeline)
+        self.assertEqual(True, pipeline.has_lock_behavior)
+        self.assertEqual(lock_on_failure, pipeline.lock_behavior)
+
     def test_can_have_package_repo_material(self):
         pipeline = GoCdConfigurator(config('config-with-pipeline-and-yum-repo')).ensure_pipeline_group('P.Group').find_pipeline('test')
         self.assertTrue(pipeline.has_single_package_material)
@@ -1315,7 +1324,7 @@ class TestSecurity(unittest.TestCase):
 
         self.assertEqual(self.configurator.security.roles.plugin_role[0].name, 'role_name')
         self.assertEqual(self.configurator.security.roles.plugin_role[0].auth_config_id, 'id-for-auth-plugin')
-        self.assertEqual(self.configurator.security.roles.plugin_role[0].properties, {'SomeKey': 'SomeValue'}) 
+        self.assertEqual(self.configurator.security.roles.plugin_role[0].properties, {'SomeKey': 'SomeValue'})
 
     def test_can_ensure_replacement_of_security(self):
         self.configurator.ensure_security().ensure_roles().ensure_role(name='role_name', users=['user1', 'user2'])
@@ -1856,6 +1865,11 @@ class TestReverseEngineering(unittest.TestCase):
     def test_can_round_trip_automatic_pipeline_locking(self):
         configurator = GoCdConfigurator(empty_config())
         before = configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_automatic_pipeline_locking()
+        self.check_round_trip_pipeline(configurator, before)
+
+    def test_can_round_trip_lock_behavior(self):
+        configurator = GoCdConfigurator(empty_config())
+        before = configurator.ensure_pipeline_group("group").ensure_pipeline("line").set_lock_behavior("lockOnFailure")
         self.check_round_trip_pipeline(configurator, before)
 
     def test_can_round_trip_pipeline_material(self):

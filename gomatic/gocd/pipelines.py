@@ -304,6 +304,9 @@ class Pipeline(CommonEqualityMixin, EnvironmentVariableMixin):
         if self.has_automatic_pipeline_locking:
             result += then('set_automatic_pipeline_locking()')
 
+        if self.has_lock_behavior:
+            result += then('set_lock_behavior("%s")' % self.lock_behavior)
+
         if self.has_single_git_material:
             result += then(self.git_material.as_python_applied_to_pipeline())
 
@@ -334,10 +337,6 @@ class Pipeline(CommonEqualityMixin, EnvironmentVariableMixin):
     def __repr__(self):
         return 'Pipeline("%s", "%s")' % (self.name, self.parent)
 
-    @property
-    def has_label_template(self):
-        return 'labeltemplate' in self.element.attrib
-
     def set_automatic_pipeline_locking(self):
         self.element.attrib['isLocked'] = 'true'
         return self
@@ -345,6 +344,29 @@ class Pipeline(CommonEqualityMixin, EnvironmentVariableMixin):
     @property
     def has_automatic_pipeline_locking(self):
         return 'isLocked' in self.element.attrib and self.element.attrib['isLocked'] == 'true'
+
+    @property
+    def has_lock_behavior(self):
+        return 'lockBehavior' in self.element.attrib
+
+    @property
+    def lock_behavior(self):
+        if self.has_lock_behavior:
+            return self.element.attrib['lockBehavior']
+        else:
+            raise RuntimeError("Does not have a lock behavior")
+
+    @lock_behavior.setter
+    def lock_behavior(self, lock_behavior):
+        self.element.attrib['lockBehavior'] = lock_behavior
+
+    def set_lock_behavior(self, lock_behavior):
+        self.lock_behavior = lock_behavior
+        return self
+
+    @property
+    def has_label_template(self):
+        return 'labeltemplate' in self.element.attrib
 
     @property
     def label_template(self):
