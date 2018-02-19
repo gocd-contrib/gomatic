@@ -248,7 +248,12 @@ class GoCdConfigurator(object):
         return Security(self.__server_element_ensurance().element.find('security'))
 
     def ensure_elastic(self):
-        elastic_element = self.__server_element_ensurance().ensure_child('elastic').element
+        gocd_version_with_elastic_outside_server_tag = 18
+        gocd_major_version = int(self.server_version.split('.')[0])
+        if gocd_major_version < gocd_version_with_elastic_outside_server_tag:
+            elastic_element = self.__server_element_ensurance().ensure_child('elastic').element
+        else:
+            elastic_element = Ensurance(self.__xml_root).ensure_child('elastic').element
         return Elastic(elastic_element)
 
     def ensure_replacement_of_elastic(self):
@@ -258,7 +263,13 @@ class GoCdConfigurator(object):
 
     @property
     def elastic(self):
-        return Elastic(self.__server_element_ensurance().element.find('elastic'))
+        gocd_version_with_elastic_outside_server_tag = 18
+        gocd_major_version = int(self.server_version.split('.')[0])
+        if gocd_major_version < gocd_version_with_elastic_outside_server_tag:
+            elastic_element = Elastic(self.__server_element_ensurance().element.find('elastic'))
+        else:
+            elastic_element = Elastic(Ensurance(self.__xml_root).element.find('elastic'))
+        return elastic_element
 
     @property
     def git_urls(self):
