@@ -56,6 +56,12 @@ We believe it works for the following versions (as indicated by `integration_tes
 * 17.6.0-5142
 * 17.7.0-5147
 * 17.8.0-5277
+* 17.9.0-5368
+* 17.10.0-5380
+* 17.11.0-5520
+* 17.12.0-5626
+* 18.1.0-5937
+* 18.2.0-6228
 
 We don't support the below versions anymore, however we did at some point in time, so it might still work in newer versions:
 
@@ -156,5 +162,5 @@ Only tagged commits are deployed to pypi.
 
 Alternatively, run:
 
-1. `bumpversion [major|minor|patch`
+1. `bumpversion [major|minor|patch]`
 1. `git push origin --tags`
