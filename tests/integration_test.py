@@ -2,6 +2,7 @@
 from __future__ import print_function
 import os
 import subprocess
+import socket
 import sys
 import time
 import unittest
@@ -17,14 +18,21 @@ from gomatic.gocd.artifacts import Artifact
 from gomatic.gocd.materials import PackageMaterial
 
 
-def start_go_server(gocd_version, gocd_download_version_string):
+def get_free_tcp_port():
+    tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tcp.bind(('', 0))
+    addr, port = tcp.getsockname()
+    tcp.close()
+    return port
 
-    os.system("./build-and-run-go-server-in-docker.sh %s %s" % (gocd_version, gocd_download_version_string))
+
+def start_go_server(gocd_version, gocd_download_version_string, gocd_port):
+    os.system("./build-and-run-go-server-in-docker.sh %s %s %s" % (gocd_version, gocd_download_version_string, gocd_port))
 
     count = 0
     for attempt in range(300):
         try:
-            urlopen("http://localhost:8153/go").read()
+            urlopen("http://localhost:{}/go".format(gocd_port)).read()
             return
         except:
             count += 1
@@ -39,12 +47,13 @@ class populated_go_server(object):
     def __init__(self, gocd_version, gocd_download_version_string):
         self.gocd_version = gocd_version
         self.gocd_download_version_string = gocd_download_version_string
+        self.gocd_port = get_free_tcp_port()
 
     def __enter__(self):
         try:
-            start_go_server(self.gocd_version, self.gocd_download_version_string)
+            start_go_server(self.gocd_version, self.gocd_download_version_string, self.gocd_port)
 
-            configurator = GoCdConfigurator(HostRestClient('localhost:8153'))
+            configurator = GoCdConfigurator(HostRestClient('localhost:{}'.format(self.gocd_port)))
             pipeline = configurator \
                 .ensure_pipeline_group("P.Group") \
                 .ensure_replacement_of_pipeline("more-options") \
@@ -60,7 +69,7 @@ class populated_go_server(object):
             job.add_task(ExecTask(['ls']))
 
             configurator.save_updated_config(save_config_locally=True)
-            return GoCdConfigurator(HostRestClient('localhost:8153'))
+            return GoCdConfigurator(HostRestClient('localhost:{}'.format(self.gocd_port)))
         except:
             # Swallow exception if __exit__ returns a True value
             if self.__exit__(*sys.exc_info()):
