@@ -41,6 +41,8 @@ def typical_pipeline():
 def more_options_pipeline():
     return GoCdConfigurator(config('config-with-more-options-pipeline')).ensure_pipeline_group('P.Group').find_pipeline('more-options')
 
+def more_options_pipeline_with_artifacts_type():
+    return GoCdConfigurator(config('config-with-more-options-pipeline-including-artifacts-type')).ensure_pipeline_group('P.Group').find_pipeline('more-options')
 
 def empty_pipeline():
     return GoCdConfigurator(empty_config()).ensure_pipeline_group("pg").ensure_pipeline("pl").set_git_url("gurl")
@@ -177,6 +179,16 @@ class TestJobs(unittest.TestCase):
                               Artifact.get_test_artifact("from", "to")},
                           artifacts)
 
+    def test_jobs_have_artifacts_with_type(self):
+        job = more_options_pipeline_with_artifacts_type().ensure_stage("earlyStage").ensure_job("earlyWorm")
+        artifacts = job.artifacts
+        gocd_18_3_and_above = True
+        self.assertEqual({
+                              Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts", gocd_18_3_and_above),
+                              Artifact.get_build_artifact("scripts/*", "files", gocd_18_3_and_above),
+                              Artifact.get_test_artifact("from", "to", gocd_18_3_and_above)},
+                          artifacts)
+
     def test_job_that_has_no_artifacts_has_no_artifacts_element_to_reduce_thrash(self):
         go_cd_configurator = GoCdConfigurator(empty_config())
         job = go_cd_configurator.ensure_pipeline_group("g").ensure_pipeline("p").ensure_stage("s").ensure_job("j")
@@ -191,6 +203,12 @@ class TestJobs(unittest.TestCase):
         artifacts = job.artifacts
         self.assertEqual(1, len(artifacts))
         self.assertEqual({Artifact.get_build_artifact("things/*")}, artifacts)
+
+    def test_artifacts_with_type_might_have_no_dest(self):
+        job = more_options_pipeline_with_artifacts_type().ensure_stage("s1").ensure_job("rake-job")
+        artifacts = job.artifacts
+        self.assertEqual(1, len(artifacts))
+        self.assertEqual({Artifact.get_build_artifact("things/*", None, "build")}, artifacts)
 
     def test_can_add_build_artifacts_to_job(self):
         job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">
+  <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="779d5885-3db5-4640-8901-f9333bc10046" />
+  <pipelines group="P.Group">
+    <pipeline name="more-options">
+      <params>
+        <param name="environment">qa</param>
+      </params>
+      <timer>0 15 22 * * ?</timer>
+      <environmentvariables>
+        <variable name="JAVA_HOME">
+          <value>/opt/java/jdk-1.7</value>
+        </variable>
+      </environmentvariables>
+      <materials>
+        <git url="git@bitbucket.org:springersbm/gomatic.git" branch="a-branch" autoUpdate="false" materialName="some-material-name" />
+        <pipeline pipelineName="pipeline2" stageName="build" />
+      </materials>
+      <stage name="earlyStage">
+        <jobs>
+          <job name="earlyWorm" runOnAllAgents="true">
+            <tasks>
+              <exec command="ls" />
+              <exec command="bash">
+                <arg>-c</arg>
+                <arg>curl "http://domain.com/service/check?target=one+two+three&amp;key=2714_beta%40domain.com"</arg>
+                <runif status="passed" />
+              </exec>
+            </tasks>
+            <artifacts>
+              <artifact src="target/universal/myapp*.zip" dest="artifacts" type="build" />
+              <artifact src="scripts/*" dest="files" type="build" />
+              <artifact src="from" dest="to" type="test" />
+            </artifacts>
+          </job>
+        </jobs>
+      </stage>
+      <stage name="middleStage">
+        <jobs>
+          <job name="middleJob" />
+        </jobs>
+      </stage>
+      <stage name="s1" fetchMaterials="false">
+        <jobs>
+          <job name="rake-job">
+            <tasks>
+              <rake target="boo">
+                <runif status="passed" />
+              </rake>
+            </tasks>
+            <artifacts>
+              <artifact src="things/*" type="build" />
+            </artifacts>
+          </job>
+          <job name="run-if-variants">
+            <tasks>
+              <exec command="t-passed">
+                <runif status="passed" />
+              </exec>
+              <exec command="t-none" />
+              <exec command="t-failed">
+                <runif status="failed" />
+              </exec>
+              <exec command="t-any">
+                <runif status="any" />
+              </exec>
+              <exec command="t-both">
+                <runif status="failed" />
+                <runif status="passed" />
+              </exec>
+            </tasks>
+          </job>
+          <job name="variety-of-tasks">
+            <tasks>
+              <rake target="sometarget">
+                <runif status="passed" />
+              </rake>
+              <fetchartifact pipeline="more-options" stage="earlyStage" job="earlyWorm" srcdir="sourceDir" dest="destDir">
+                <runif status="passed" />
+              </fetchartifact>
+              <fetchartifact pipeline="more-options" stage="middleStage" job="middleJob" srcfile="someFile">
+                <runif status="passed" />
+              </fetchartifact>
+              <exec command="true" />
+            </tasks>
+          </job>
+        </jobs>
+      </stage>
+    </pipeline>
+    <pipeline name="pipeline2">
+      <timer onlyOnChanges="true">0 0 22 ? * MON-FRI</timer>
+      <materials>
+        <git url="git@bitbucket.org:springersbm/gomatic.git" />
+      </materials>
+      <stage name="build">
+        <jobs>
+          <job name="compile" />
+        </jobs>
+      </stage>
+    </pipeline>
+  </pipelines>
+</cruise>
+

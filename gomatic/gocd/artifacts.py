@@ -2,6 +2,10 @@ from xml.etree import ElementTree as ET
 
 from gomatic.mixins import CommonEqualityMixin
 
+from artifacts_legacy import ArtifactLegacy
+
+from artifacts_new import ArtifactNew
+
 
 def fetch_artifact_src_from(element):
     if 'srcfile' in element.attrib:
@@ -36,43 +40,27 @@ class FetchArtifactDir(CommonEqualityMixin):
 
 
 class Artifact(CommonEqualityMixin):
-    def __init__(self, tag, src, dest=None):
-        self.__tag = tag
-        self.__src = src
-        self.__dest = dest
-
-    def __repr__(self):
-        if self.__dest is None:
-            return '%s("%s")' % (self.constructor, self.__src)
-        else:
-            return '%s("%s", "%s")' % (self.constructor, self.__src, self.__dest)
-
-    def append_to(self, element):
-        if self.__dest is None:
-            element.append(ET.fromstring('<%s src="%s" />' % (self.__tag, self.__src)))
-        else:
-            element.append(ET.fromstring('<%s src="%s" dest="%s" />' % (self.__tag, self.__src, self.__dest)))
-
-    @property
-    def constructor(self):
-        if self.__tag == "artifact":
-            return "BuildArtifact"
-        if self.__tag == "test":
-            return "TestArtifact"
-        raise RuntimeError("Unknown artifact tag %s" % self.__tag)
-
     @classmethod
     def get_artifact_for(cls, element):
-        dest = element.attrib.get('dest', None)
-        return cls(element.tag, element.attrib['src'], dest)
+        artifacttype = element.attrib.get('type', None)
+        if artifacttype is None:
+            return ArtifactLegacy.get_artifact_for(element)
+        else:
+            return ArtifactNew.get_artifact_for(element)
 
     @classmethod
-    def get_build_artifact(cls, src, dest=None):
-        return cls('artifact', src, dest)
+    def get_build_artifact(cls, src, dest=None, gocd_18_3_and_above=False):
+        if gocd_18_3_and_above:
+            return ArtifactNew.get_build_artifact(src, dest)
+        else:
+            return ArtifactLegacy.get_build_artifact(src, dest)
 
     @classmethod
-    def get_test_artifact(cls, src, dest=None):
-        return cls('test', src, dest)
+    def get_test_artifact(cls, src, dest=None, gocd_18_3_and_above=False):
+        if gocd_18_3_and_above:
+            return ArtifactNew.get_test_artifact(src, dest)
+        else:
+            return ArtifactLegacy.get_test_artifact(src, dest)
 
 
 ArtifactFor = Artifact.get_artifact_for
