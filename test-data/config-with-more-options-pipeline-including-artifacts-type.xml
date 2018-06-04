@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">
+<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config-18.3-and-above.xsd" schemaVersion="108">
   <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="779d5885-3db5-4640-8901-f9333bc10046" />
   <pipelines group="P.Group">
     <pipeline name="more-options">
@@ -75,10 +75,10 @@
               <rake target="sometarget">
                 <runif status="passed" />
               </rake>
-              <fetchartifact pipeline="more-options" stage="earlyStage" job="earlyWorm" srcdir="sourceDir" dest="destDir">
+              <fetchartifact pipeline="more-options" stage="earlyStage" job="earlyWorm" srcdir="sourceDir" dest="destDir" origin="gocd">
                 <runif status="passed" />
               </fetchartifact>
-              <fetchartifact pipeline="more-options" stage="middleStage" job="middleJob" srcfile="someFile">
+              <fetchartifact pipeline="more-options" stage="middleStage" job="middleJob" srcfile="someFile" origin="gocd">
                 <runif status="passed" />
               </fetchartifact>
               <exec command="true" />
