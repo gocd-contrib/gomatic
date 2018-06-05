@@ -44,11 +44,10 @@ def start_go_server(gocd_version, gocd_download_version_string, gocd_port):
 
 
 class populated_go_server(object):
-    def __init__(self, gocd_version, gocd_download_version_string, gocd_18_3_and_above=False):
+    def __init__(self, gocd_version, gocd_download_version_string):
         self.gocd_version = gocd_version
         self.gocd_download_version_string = gocd_download_version_string
         self.gocd_port = get_free_tcp_port()
-        self.gocd_18_3_and_above = gocd_18_3_and_above
 
     def __enter__(self):
         try:
@@ -64,9 +63,9 @@ class populated_go_server(object):
                 .ensure_parameters({'environment': 'qa'})
             stage = pipeline.ensure_stage("earlyStage")
             job = stage.ensure_job("earlyWorm").ensure_artifacts(
-                {Artifact.get_build_artifact("scripts/*", "files", self.gocd_18_3_and_above),
-                 Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts", self.gocd_18_3_and_above),
-                 Artifact.get_test_artifact("from", "to", self.gocd_18_3_and_above)}).set_runs_on_all_agents()
+                {Artifact.get_build_artifact("scripts/*", "files"),
+                 Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts"),
+                 Artifact.get_test_artifact("from", "to")}).set_runs_on_all_agents()
             job.add_task(ExecTask(['ls']))
 
             configurator.save_updated_config(save_config_locally=True)
@@ -112,39 +111,39 @@ def check_docker():
 
 class IntegrationTest(unittest.TestCase):
     gocd_versions = [
-        ('16.3.0-3183',  '-16.3.0-3183', False),
-        ('16.4.0-3223',  '-16.4.0-3223', False),
-        ('16.5.0-3305',  '-16.5.0-3305', False),
-        ('16.6.0-3590',  '-16.6.0-3590', False),
-        ('16.7.0-3819',  '_16.7.0-3819_all', False),
-        ('16.8.0-3929',  '_16.8.0-3929_all', False),
-        ('16.9.0-4001',  '_16.9.0-4001_all', False),
-        ('16.10.0-4131', '_16.10.0-4131_all', False),
-        ('16.11.0-4185', '_16.11.0-4185_all', False),
-        ('16.12.0-4352', '_16.12.0-4352_all', False),
-        ('17.1.0-4511',  '_17.1.0-4511_all', False),
-        ('17.2.0-4587',  '_17.2.0-4587_all', False),
-        ('17.3.0-4704',  '_17.3.0-4704_all', False),
-        ('17.4.0-4892',  '_17.4.0-4892_all', False),
-        ('17.5.0-5095',  '_17.5.0-5095_all', False),
-        ('17.6.0-5142',  '_17.6.0-5142_all', False),
-        ('17.7.0-5147',  '_17.7.0-5147_all', False),
-        ('17.8.0-5277',  '_17.8.0-5277_all', False),
-        ('17.9.0-5368',  '_17.9.0-5368_all', False),
-        ('17.10.0-5380', '_17.10.0-5380_all', False),
-        ('17.11.0-5520', '_17.11.0-5520_all', False),
-        ('17.12.0-5626', '_17.12.0-5626_all', False),
-        ('18.1.0-5937',  '_18.1.0-5937_all', False),
-        ('18.2.0-6228',  '_18.2.0-6228_all', False),
-        ('18.3.0-6540',  '_18.3.0-6540_all', True),
-        ('18.4.0-6640',  '_18.4.0-6640_all', True),
-        ('18.5.0-6679',  '_18.5.0-6679_all', True)
+        # ('16.3.0-3183',  '-16.3.0-3183'),
+        # ('16.4.0-3223',  '-16.4.0-3223'),
+        # ('16.5.0-3305',  '-16.5.0-3305'),
+        # ('16.6.0-3590',  '-16.6.0-3590'),
+        # ('16.7.0-3819',  '_16.7.0-3819_all'),
+        # ('16.8.0-3929',  '_16.8.0-3929_all'),
+        # ('16.9.0-4001',  '_16.9.0-4001_all'),
+        # ('16.10.0-4131', '_16.10.0-4131_all'),
+        # ('16.11.0-4185', '_16.11.0-4185_all'),
+        # ('16.12.0-4352', '_16.12.0-4352_all'),
+        # ('17.1.0-4511',  '_17.1.0-4511_all'),
+        # ('17.2.0-4587',  '_17.2.0-4587_all'),
+        # ('17.3.0-4704',  '_17.3.0-4704_all'),
+        # ('17.4.0-4892',  '_17.4.0-4892_all'),
+        # ('17.5.0-5095',  '_17.5.0-5095_all'),
+        # ('17.6.0-5142',  '_17.6.0-5142_all'),
+        # ('17.7.0-5147',  '_17.7.0-5147_all'),
+        # ('17.8.0-5277',  '_17.8.0-5277_all'),
+        # ('17.9.0-5368',  '_17.9.0-5368_all'),
+        # ('17.10.0-5380', '_17.10.0-5380_all'),
+        ('17.11.0-5520', '_17.11.0-5520_all'),
+        # ('17.12.0-5626', '_17.12.0-5626_all'),
+        # ('18.1.0-5937',  '_18.1.0-5937_all'),
+        # ('18.2.0-6228',  '_18.2.0-6228_all'),
+        # ('18.3.0-6540',  '_18.3.0-6540_all'),
+        # ('18.4.0-6640',  '_18.4.0-6640_all'),
+        ('18.5.0-6679',  '_18.5.0-6679_all')
     ]
 
     def test_all_versions(self):
-        for gocd_version, gocd_download_version_string, gocd_18_3_and_above in self.gocd_versions:
+        for gocd_version, gocd_download_version_string in self.gocd_versions:
             print('test_all_versions', "*" * 60, gocd_version)
-            with populated_go_server(gocd_version, gocd_download_version_string, gocd_18_3_and_above) as configurator:
+            with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
                 self.assertEquals(["P.Group"], [p.name for p in configurator.pipeline_groups])
                 self.assertEquals(["more-options"], [p.name for p in configurator.pipeline_groups[0].pipelines])
                 pipeline = configurator.pipeline_groups[0].pipelines[0]
@@ -157,17 +156,17 @@ class IntegrationTest(unittest.TestCase):
                 self.assertEquals(['earlyWorm'], [j.name for j in pipeline.stages[0].jobs])
                 job = pipeline.stages[0].jobs[0]
                 self.assertEquals(
-                    {Artifact.get_build_artifact("scripts/*", "files", gocd_18_3_and_above),
-                     Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts", gocd_18_3_and_above),
-                     Artifact.get_test_artifact("from", "to", gocd_18_3_and_above)},
+                    {Artifact.get_build_artifact("scripts/*", "files"),
+                     Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts"),
+                     Artifact.get_test_artifact("from", "to")},
                     job.artifacts)
                 self.assertEquals(True, job.runs_on_all_agents)
                 self.assertEquals([ExecTask(['ls'])], job.tasks)
 
     def test_can_save_multiple_times_using_same_configurator(self):
-        gocd_version, gocd_download_version_string, gocd_18_3_and_above = self.gocd_versions[-1]
+        gocd_version, gocd_download_version_string = self.gocd_versions[-1]
         print('test_can_save_multiple_times_using_same_configurator', "*" * 60, gocd_version)
-        with populated_go_server(gocd_version, gocd_download_version_string, gocd_18_3_and_above) as configurator:
+        with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
             pipeline = configurator \
                 .ensure_pipeline_group("Test") \
                 .ensure_replacement_of_pipeline("new-one")
@@ -190,9 +189,9 @@ class IntegrationTest(unittest.TestCase):
             self.assertEquals(1, len(configurator.ensure_pipeline_group('Test').find_pipeline('new-two').stages))
 
     def test_can_save_pipeline_with_package_ref(self):
-        gocd_version, gocd_download_version_string, gocd_18_3_and_above = self.gocd_versions[-1]
+        gocd_version, gocd_download_version_string = self.gocd_versions[-1]
         print('test_can_save_pipeline_with_package_ref', "*" * 60, gocd_version)
-        with populated_go_server(gocd_version, gocd_download_version_string, gocd_18_3_and_above) as configurator:
+        with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
             pipeline = configurator \
                 .ensure_pipeline_group("Test") \
                 .ensure_replacement_of_pipeline("new-package")
@@ -212,9 +211,9 @@ class IntegrationTest(unittest.TestCase):
             self.assertEquals(package.id, configurator.ensure_pipeline_group('Test').find_pipeline('new-package').package_material.ref)
 
     def test_can_save_and_read_repositories(self):
-        gocd_version, gocd_download_version_string, gocd_18_3_and_above = self.gocd_versions[-1]
+        gocd_version, gocd_download_version_string = self.gocd_versions[-1]
         print('test_can_save_and_read_repositories', "*" * 60, gocd_version)
-        with populated_go_server(gocd_version, gocd_download_version_string, gocd_18_3_and_above) as configurator:
+        with populated_go_server(gocd_version, gocd_download_version_string) as configurator:
             repo = configurator.ensure_repository("repo_one")
             repo.ensure_type('yum', '1')
             repo.ensure_property('REPO_URL', 'test/repo')

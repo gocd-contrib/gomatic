@@ -25,8 +25,9 @@ class Tab(CommonEqualityMixin):
 
 
 class Job(CommonEqualityMixin, EnvironmentVariableMixin, ResourceMixin):
-    def __init__(self, element):
+    def __init__(self, element, parent_stage):
         self.element = element
+        self.parent_stage = parent_stage
 
     def __repr__(self):
         return "Job('%s', %s)" % (self.name, self.tasks)
@@ -83,6 +84,23 @@ class Job(CommonEqualityMixin, EnvironmentVariableMixin, ResourceMixin):
         self.elastic_profile_id = elastic_profile_id
         return self
 
+    def __get_gocd_version_string(self):
+        if self.parent_stage is not None \
+                and self.parent_stage.parent_pipeline is not None \
+                and self.parent_stage.parent_pipeline.parent is not None \
+                and type(self.parent_stage.parent_pipeline.parent) is not str \
+                and self.parent_stage.parent_pipeline.parent.configurator is not None:
+            return self.parent_stage.parent_pipeline.parent.configurator.server_version
+        return '17.11.0'
+
+    def is_gocd_18_3_and_above(self):
+        version = self.__get_gocd_version_string()
+        gocd_major_version = int(version.split('.')[0])
+        gocd_minor_version = int(version.split('.')[1])
+
+        return (gocd_major_version == 18 and gocd_minor_version >= 3) or \
+               (gocd_major_version >= 19)
+
     @property
     def artifacts(self):
         artifact_elements = PossiblyMissingElement(self.element).possibly_missing_child("artifacts").iterator
@@ -93,7 +111,7 @@ class Job(CommonEqualityMixin, EnvironmentVariableMixin, ResourceMixin):
             artifacts_ensurance = Ensurance(self.element).ensure_child("artifacts")
             artifacts_to_add = artifacts.difference(self.artifacts)
             for artifact in artifacts_to_add:
-                artifact.append_to(artifacts_ensurance)
+                artifact.append_to(artifacts_ensurance, self.is_gocd_18_3_and_above())
         return self
 
     @property
@@ -168,8 +186,9 @@ class Job(CommonEqualityMixin, EnvironmentVariableMixin, ResourceMixin):
 
 
 class Stage(CommonEqualityMixin, EnvironmentVariableMixin):
-    def __init__(self, element):
+    def __init__(self, element, parent_pipeline):
         self.element = element
+        self.parent_pipeline = parent_pipeline
 
     def __repr__(self):
         return 'Stage(%s)' % self.name()
@@ -181,11 +200,11 @@ class Stage(CommonEqualityMixin, EnvironmentVariableMixin):
     @property
     def jobs(self):
         job_elements = PossiblyMissingElement(self.element).possibly_missing_child('jobs').findall('job')
-        return [Job(job_element) for job_element in job_elements]
+        return [Job(job_element, self) for job_element in job_elements]
 
     def ensure_job(self, name):
         job_element = Ensurance(self.element).ensure_child("jobs").ensure_child_with_attribute("job", "name", name)
-        return Job(job_element.element)
+        return Job(job_element.element, self)
 
     def set_clean_working_dir(self):
         self.element.attrib['cleanWorkingDir'] = "true"
@@ -508,11 +527,11 @@ class Pipeline(CommonEqualityMixin, EnvironmentVariableMixin):
 
     @property
     def stages(self):
-        return [Stage(stage_element) for stage_element in self.element.findall('stage')]
+        return [Stage(stage_element, self) for stage_element in self.element.findall('stage')]
 
     def ensure_stage(self, name):
         stage_element = Ensurance(self.element).ensure_child_with_attribute("stage", "name", name)
-        return Stage(stage_element.element)
+        return Stage(stage_element.element, self)
 
     def ensure_removal_of_stage(self, name):
         matching_stages = [s for s in self.stages if s.name == name]
@@ -599,7 +618,7 @@ class Pipeline(CommonEqualityMixin, EnvironmentVariableMixin):
 class PipelineGroup(CommonEqualityMixin):
     def __init__(self, element, configurator):
         self.element = element
-        self.__configurator = configurator
+        self.configurator = configurator
 
     def __repr__(self):
         return 'PipelineGroup("%s")' % self.name
@@ -610,7 +629,7 @@ class PipelineGroup(CommonEqualityMixin):
 
     @property
     def templates(self):
-        return self.__configurator.templates
+        return self.configurator.templates
 
     @property
     def authorization(self):

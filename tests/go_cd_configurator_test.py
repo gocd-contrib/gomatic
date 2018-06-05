@@ -182,11 +182,10 @@ class TestJobs(unittest.TestCase):
     def test_jobs_have_artifacts_with_type(self):
         job = more_options_pipeline_with_artifacts_type().ensure_stage("earlyStage").ensure_job("earlyWorm")
         artifacts = job.artifacts
-        gocd_18_3_and_above = True
         self.assertEqual({
-                              Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts", gocd_18_3_and_above),
-                              Artifact.get_build_artifact("scripts/*", "files", gocd_18_3_and_above),
-                              Artifact.get_test_artifact("from", "to", gocd_18_3_and_above)},
+                              Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts"),
+                              Artifact.get_build_artifact("scripts/*", "files"),
+                              Artifact.get_test_artifact("from", "to")},
                           artifacts)
 
     def test_job_that_has_no_artifacts_has_no_artifacts_element_to_reduce_thrash(self):
@@ -208,7 +207,7 @@ class TestJobs(unittest.TestCase):
         job = more_options_pipeline_with_artifacts_type().ensure_stage("s1").ensure_job("rake-job")
         artifacts = job.artifacts
         self.assertEqual(1, len(artifacts))
-        self.assertEqual({Artifact.get_build_artifact("things/*", None, "build")}, artifacts)
+        self.assertEqual({Artifact.get_build_artifact("things/*")}, artifacts)
 
     def test_can_add_build_artifacts_to_job(self):
         job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")

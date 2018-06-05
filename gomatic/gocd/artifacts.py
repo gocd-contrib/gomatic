@@ -2,11 +2,6 @@ from xml.etree import ElementTree as ET
 
 from gomatic.mixins import CommonEqualityMixin
 
-from artifacts_legacy import ArtifactLegacy
-
-from artifacts_new import ArtifactNew
-
-
 def fetch_artifact_src_from(element):
     if 'srcfile' in element.attrib:
         return FetchArtifactFile(element.attrib['srcfile'])
@@ -40,27 +35,61 @@ class FetchArtifactDir(CommonEqualityMixin):
 
 
 class Artifact(CommonEqualityMixin):
+    def __init__(self, src, dest=None, artifact_type='build'):
+        self.__src = src
+        self.__dest = dest
+        self.__type = artifact_type
+
+    def __repr__(self):
+        if self.__dest is None:
+            return '%s("%s")' % (self.constructor, self.__src)
+        else:
+            return '%s("%s", "%s")' % (self.constructor, self.__src, self.__dest)
+
+    @property
+    def constructor(self):
+        if self.__type == "build":
+            return "BuildArtifact"
+        if self.__type == "test":
+            return "TestArtifact"
+        raise RuntimeError("Unknown artifact type %s" % self.__type)
+
+    def append_to(self, element, gocd_18_3_and_above=False):
+        if gocd_18_3_and_above:
+            self._append_to_gocd_18_3_and_above(element)
+        else:
+            self._append_to_gocd_18_2_and_below(element)
+
+    def _append_to_gocd_18_3_and_above(self, element):
+        if self.__dest is None:
+            element.append(ET.fromstring('<artifact src="%s" type="%s" />' % (self.__src, self.__type)))
+        else:
+            element.append(ET.fromstring('<artifact src="%s" dest="%s" type="%s" />' % (self.__src, self.__dest, self.__type)))
+
+    def _append_to_gocd_18_2_and_below(self, element):
+        tag = 'artifact' if self.__type == 'build' else 'test'
+        if self.__dest is None:
+            element.append(ET.fromstring('<%s src="%s" />' % (tag, self.__src)))
+        else:
+            element.append(ET.fromstring('<%s src="%s" dest="%s" />' % (tag, self.__src, self.__dest)))
+
     @classmethod
     def get_artifact_for(cls, element):
-        artifacttype = element.attrib.get('type', None)
-        if artifacttype is None:
-            return ArtifactLegacy.get_artifact_for(element)
+        artifact_type_attribute = element.attrib.get('type', None)
+        dest = element.attrib.get('dest', None)
+        if artifact_type_attribute is None:
+            _type = 'build' if element.tag == 'artifact' else 'test'
+            return cls(element.attrib['src'], dest, _type)
         else:
-            return ArtifactNew.get_artifact_for(element)
+            return cls(element.attrib['src'], dest, artifact_type_attribute)
 
     @classmethod
-    def get_build_artifact(cls, src, dest=None, gocd_18_3_and_above=False):
-        if gocd_18_3_and_above:
-            return ArtifactNew.get_build_artifact(src, dest)
-        else:
-            return ArtifactLegacy.get_build_artifact(src, dest)
+    def get_build_artifact(cls, src, dest=None):
+        return cls(src, dest, 'build')
 
     @classmethod
-    def get_test_artifact(cls, src, dest=None, gocd_18_3_and_above=False):
-        if gocd_18_3_and_above:
-            return ArtifactNew.get_test_artifact(src, dest)
-        else:
-            return ArtifactLegacy.get_test_artifact(src, dest)
+    def get_test_artifact(cls, src, dest=None):
+        return cls(src, dest, 'test')
 
 
 ArtifactFor = Artifact.get_artifact_for
