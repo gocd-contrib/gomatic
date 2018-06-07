@@ -36,23 +36,23 @@ class FetchArtifactDir(CommonEqualityMixin):
 
 class Artifact(CommonEqualityMixin):
     def __init__(self, src, dest=None, artifact_type='build'):
-        self.__src = src
-        self.__dest = dest
-        self.__type = artifact_type
+        self._src = src
+        self._dest = dest
+        self._type = artifact_type
 
     def __repr__(self):
-        if self.__dest is None:
-            return '%s("%s")' % (self.constructor, self.__src)
+        if self._dest is None:
+            return '%s("%s")' % (self.constructor, self._src)
         else:
-            return '%s("%s", "%s")' % (self.constructor, self.__src, self.__dest)
+            return '%s("%s", "%s")' % (self.constructor, self._src, self._dest)
 
     @property
     def constructor(self):
-        if self.__type == "build":
+        if self._type == "build":
             return "BuildArtifact"
-        if self.__type == "test":
+        if self._type == "test":
             return "TestArtifact"
-        raise RuntimeError("Unknown artifact type %s" % self.__type)
+        raise RuntimeError("Unknown artifact type %s" % self._type)
 
     def append_to(self, element, gocd_18_3_and_above=False):
         if gocd_18_3_and_above:
@@ -61,17 +61,17 @@ class Artifact(CommonEqualityMixin):
             self._append_to_gocd_18_2_and_below(element)
 
     def _append_to_gocd_18_3_and_above(self, element):
-        if self.__dest is None:
-            element.append(ET.fromstring('<artifact src="%s" type="%s" />' % (self.__src, self.__type)))
+        if self._dest is None:
+            element.append(ET.fromstring('<artifact src="%s" type="%s" />' % (self._src, self._type)))
         else:
-            element.append(ET.fromstring('<artifact src="%s" dest="%s" type="%s" />' % (self.__src, self.__dest, self.__type)))
+            element.append(ET.fromstring('<artifact src="%s" dest="%s" type="%s" />' % (self._src, self._dest, self._type)))
 
     def _append_to_gocd_18_2_and_below(self, element):
-        tag = 'artifact' if self.__type == 'build' else 'test'
-        if self.__dest is None:
-            element.append(ET.fromstring('<%s src="%s" />' % (tag, self.__src)))
+        tag = 'artifact' if self._type == 'build' else 'test'
+        if self._dest is None:
+            element.append(ET.fromstring('<%s src="%s" />' % (tag, self._src)))
         else:
-            element.append(ET.fromstring('<%s src="%s" dest="%s" />' % (tag, self.__src, self.__dest)))
+            element.append(ET.fromstring('<%s src="%s" dest="%s" />' % (tag, self._src, self._dest)))
 
     @classmethod
     def get_artifact_for(cls, element):

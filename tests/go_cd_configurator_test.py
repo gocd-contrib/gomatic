@@ -21,7 +21,7 @@ from gomatic import (
     Tab
 )
 from gomatic.fake import FakeHostRestClient, config, empty_config, empty_config_xml, load_file
-from gomatic.gocd.artifacts import Artifact
+from gomatic.gocd.artifacts import Artifact, ArtifactFor, BuildArtifact, TestArtifact
 from gomatic.gocd.pipelines import DEFAULT_LABEL_TEMPLATE
 from gomatic.xml_operations import prettify
 
@@ -2099,3 +2099,66 @@ class TestXmlFormatting(unittest.TestCase):
             return "\n".join(s.split('\n')[:10])
 
         self.assertEqual(expected, formatted, "expected=\n%s\n%s\nactual=\n%s" % (head(expected), "=" * 88, head(formatted)))
+
+class TestArtifacts(unittest.TestCase):
+    def test_renders_build_artifact_version_gocd_18_2_and_below_by_default(self):
+        element = ET.Element('artifacts')
+        artifact = BuildArtifact('src', 'dest')
+        artifact.append_to(element)
+        self.assertEqual(element[0].tag, 'artifact')
+        self.assertEqual('type' in element[0].attrib, False)
+
+    def test_renders_test_artifact_version_gocd_18_2_and_below_by_default(self):
+        element = ET.Element('artifacts')
+        artifact = TestArtifact('src', 'dest')
+        artifact.append_to(element)
+        self.assertEqual(element[0].tag, 'test')
+        self.assertEqual('type' in element[0].attrib, False)
+
+    def test_renders_build_artifact_version_gocd_18_3_and_above(self):
+        element = ET.Element('artifacts')
+        artifact = BuildArtifact('src', 'dest')
+        artifact.append_to(element, gocd_18_3_and_above=True)
+        self.assertEqual(element[0].tag, 'artifact')
+        self.assertEqual(element[0].attrib['type'], 'build')
+
+    def test_renders_test_artifact_version_gocd_18_3_and_above(self):
+        element = ET.Element('artifacts')
+        artifact = TestArtifact('src', 'dest')
+        artifact.append_to(element, gocd_18_3_and_above=True)
+        self.assertEqual(element[0].tag, 'artifact')
+        self.assertEqual(element[0].attrib['type'], 'test')
+
+    def test_can_go_from_xml_to_build_artifact_object_with_version_gocd_18_2_and_below(self):
+        element = ET.Element('artifact')
+        element.attrib['src'] = 'src'
+        artifact = ArtifactFor(element)
+        self.assertEqual(artifact._src, 'src')
+        self.assertEqual(artifact._dest, None)
+        self.assertEqual(artifact._type, 'build')
+
+    def test_can_go_from_xml_to_test_artifact_object_with_version_gocd_18_2_and_below(self):
+        element = ET.Element('test')
+        element.attrib['src'] = 'src'
+        artifact = ArtifactFor(element)
+        self.assertEqual(artifact._src, 'src')
+        self.assertEqual(artifact._dest, None)
+        self.assertEqual(artifact._type, 'test')
+
+    def test_can_go_from_xml_to_build_artifact_object_with_version_gocd_18_3_and_above(self):
+        element = ET.Element('artifact')
+        element.attrib['src'] = 'src'
+        element.attrib['type'] = 'build'
+        artifact = ArtifactFor(element)
+        self.assertEqual(artifact._src, 'src')
+        self.assertEqual(artifact._dest, None)
+        self.assertEqual(artifact._type, 'build')
+
+    def test_can_go_from_xml_to_test_artifact_object_with_version_gocd_18_3_and_above(self):
+        element = ET.Element('artifact')
+        element.attrib['src'] = 'src'
+        element.attrib['type'] = 'test'
+        artifact = ArtifactFor(element)
+        self.assertEqual(artifact._src, 'src')
+        self.assertEqual(artifact._dest, None)
+        self.assertEqual(artifact._type, 'test')
