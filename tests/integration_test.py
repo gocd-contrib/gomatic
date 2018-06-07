@@ -134,7 +134,10 @@ class IntegrationTest(unittest.TestCase):
         ('17.11.0-5520', '_17.11.0-5520_all'),
         ('17.12.0-5626', '_17.12.0-5626_all'),
         ('18.1.0-5937',  '_18.1.0-5937_all'),
-        ('18.2.0-6228',  '_18.2.0-6228_all')
+        ('18.2.0-6228',  '_18.2.0-6228_all'),
+        ('18.3.0-6540',  '_18.3.0-6540_all'),
+        ('18.4.0-6640',  '_18.4.0-6640_all'),
+        ('18.5.0-6679',  '_18.5.0-6679_all')
     ]
 
     def test_all_versions(self):
@@ -152,8 +155,11 @@ class IntegrationTest(unittest.TestCase):
                 self.assertEquals(['earlyStage'], [s.name for s in pipeline.stages])
                 self.assertEquals(['earlyWorm'], [j.name for j in pipeline.stages[0].jobs])
                 job = pipeline.stages[0].jobs[0]
-                self.assertEquals({Artifact.get_build_artifact("scripts/*", "files"), Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts"), Artifact.get_test_artifact("from", "to")},
-                                  job.artifacts)
+                self.assertEquals(
+                    {Artifact.get_build_artifact("scripts/*", "files"),
+                     Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts"),
+                     Artifact.get_test_artifact("from", "to")},
+                    job.artifacts)
                 self.assertEquals(True, job.runs_on_all_agents)
                 self.assertEquals([ExecTask(['ls'])], job.tasks)
 
@@ -213,7 +219,7 @@ class IntegrationTest(unittest.TestCase):
             repo.ensure_property('REPO_URL', 'test/repo')
             repo.ensure_property('REPO_URL', 'test/repo')
             package = repo.ensure_package('xxx')
-            package.ensure_property('PACKAGE_SPEC' , 'spec.*')
+            package.ensure_property('PACKAGE_SPEC', 'spec.*')
 
             pipeline = configurator.ensure_pipeline_group('repo-pipeline').ensure_pipeline('pone')
             pipeline.set_package_ref(package.id)
