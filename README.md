@@ -62,6 +62,9 @@ We believe it works for the following versions (as indicated by `integration_tes
 * 17.12.0-5626
 * 18.1.0-5937
 * 18.2.0-6228
+* 18.3.0-6540
+* 18.4.0-6640
+* 18.5.0-6679
 
 We don't support the below versions anymore, however we did at some point in time, so it might still work in newer versions:
 
