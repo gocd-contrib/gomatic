@@ -36,13 +36,14 @@ class AbstractTask(CommonEqualityMixin):
 
 
 class FetchArtifactTask(AbstractTask):
-    def __init__(self, pipeline, stage, job, src, dest=None, runif="passed"):
+    def __init__(self, pipeline, stage, job, src, dest=None, runif="passed", origin="gocd"):
         super(self.__class__, self).__init__(runif)
         self.__pipeline = pipeline
         self.__stage = stage
         self.__job = job
         self.__src = src
         self.__dest = dest
+        self.__origin = origin
 
     def __repr__(self):
         dest_parameter = ""
@@ -77,15 +78,19 @@ class FetchArtifactTask(AbstractTask):
     def dest(self):
         return self.__dest
 
+    @property
+    def origin(self):
+        return self.__origin
+
     def append_to(self, element):
         src_type, src_value = self.src.as_xml_type_and_value
         if self.__dest is None:
             new_element = ET.fromstring(
-                '<fetchartifact pipeline="%s" stage="%s" job="%s" %s="%s" />' % (self.__pipeline, self.__stage, self.__job, src_type, src_value))
+                '<fetchartifact pipeline="%s" stage="%s" job="%s" origin="%s" %s="%s" />' % (self.__pipeline, self.__stage, self.__job, self.__origin, src_type, src_value))
         else:
             new_element = ET.fromstring(
-                '<fetchartifact pipeline="%s" stage="%s" job="%s" %s="%s" dest="%s"/>' % (
-                    self.__pipeline, self.__stage, self.__job, src_type, src_value, self.__dest))
+                '<fetchartifact pipeline="%s" stage="%s" job="%s" origin="%s" %s="%s" dest="%s"/>' % (
+                    self.__pipeline, self.__stage, self.__job, self.__origin, src_type, src_value, self.__dest))
         new_element.append(ET.fromstring('<runif status="%s" />' % self.runif))
 
         Ensurance(element).ensure_child("tasks").append(new_element)
