@@ -36,7 +36,7 @@
       </stage>
       <stage name="package">
         <jobs>
-          <job name="docker" elasticProfileId="docker.unit-test">
+          <job name="docker" elasticProfileId="docker.unit-test" runInstanceCount="2">
             <tasks>
               <exec command="docker">
                 <arg>build</arg>

@@ -162,6 +162,28 @@ class TestJobs(unittest.TestCase):
         except RuntimeError:
             pass
 
+    def test_jobs_can_have_run_instance_count(self):
+        job = typical_pipeline().ensure_stage("package").ensure_job("docker")
+        self.assertEqual(True, job.has_run_instance_count)
+        self.assertEqual("2", job.run_instance_count)            
+
+    def test_can_set_run_instance_count(self):
+        job = empty_stage().ensure_job("j")
+        j = job.set_run_instance_count(2)
+        self.assertEqual(j, job)
+        self.assertEqual(True, job.has_run_instance_count)
+        self.assertEqual(2, job.run_instance_count)
+
+    def test_jobs_do_not_have_to_have_run_instance_count(self):
+        stages = typical_pipeline().stages
+        job = stages[0].jobs[0]
+        self.assertEqual(False, job.has_run_instance_count)
+        try:
+            run_instance_count = job.run_instance_count
+            self.fail("should have thrown exception")
+        except RuntimeError:
+            pass        
+
     def test_can_ensure_job_has_resource(self):
         stages = typical_pipeline().stages
         job = stages[0].jobs[0]

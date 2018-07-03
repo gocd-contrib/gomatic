@@ -84,6 +84,24 @@ class Job(CommonEqualityMixin, EnvironmentVariableMixin, ResourceMixin):
         self.elastic_profile_id = elastic_profile_id
         return self
 
+    @property
+    def has_run_instance_count(self):
+        return 'runInstanceCount' in self.element.attrib        
+
+    @property
+    def run_instance_count(self):            
+        if not self.has_run_instance_count:
+            raise RuntimeError("Job (%s) does not have runInstanceCount" % self)
+        return self.element.attrib['runInstanceCount']
+
+    @run_instance_count.setter
+    def run_instance_count(self, run_instance_count):
+        self.element.attrib['runInstanceCount'] = run_instance_count       
+
+    def set_run_instance_count(self, run_instance_count):
+        self.run_instance_count = run_instance_count
+        return self         
+
     def __get_gocd_version_string(self):
         if self.parent_stage is not None \
                 and self.parent_stage.parent_pipeline is not None \
