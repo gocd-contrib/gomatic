@@ -31,6 +31,10 @@ class ConfigRepo(CommonEqualityMixin):
         return self.element.find(self.cvs).get('url')
 
     @property
+    def branch(self):
+        return self.element.find(self.cvs).get('branch')
+
+    @property
     def cvs(self):
         for c in self.element.getchildren():
             if c.tag in ConfigRepo.valid_cvs:
@@ -79,21 +83,24 @@ class ConfigRepos(CommonEqualityMixin):
     def make_empty(self):
         PossiblyMissingElement(self.element).remove_all_children()
 
-    def ensure_config_repo(self, url, plugin, cvs='git', configuration=None, repo_id=None):
+    def ensure_config_repo(self, url, plugin, cvs='git', configuration=None, repo_id=None, branch=None):
         configuration_xml_string = ""
         if configuration:
             configuration_xml_string = '<configuration>{}</configuration>'.format(
                 "".join("<property><key>{0}</key><value>{1}</value></property>".format(k, v) for k, v in
                         configuration.items()))
+        branch_entry = ''
+        if branch:
+            branch_entry = ' branch="{}"'.format(branch)
         if has_id(self.__configurator.server_version):
             if not repo_id:
                 repo_id = str(uuid.uuid4())
             attr_name = 'pluginId' if has_new_attr_name(self.__configurator.server_version) else 'plugin'
-            element = ET.fromstring('<config-repo {5}="{0}" id="{4}"><{2} url="{1}" />{3}</config-repo>'.format(
-                plugin, url, cvs, configuration_xml_string, repo_id, attr_name))
+            element = ET.fromstring('<config-repo {5}="{0}" id="{4}"><{2} url="{1}"{6} />{3}</config-repo>'.format(
+                plugin, url, cvs, configuration_xml_string, repo_id, attr_name, branch_entry))
         else:
-            element = ET.fromstring('<config-repo plugin="{0}"><{2} url="{1}" />{3}</config-repo>'.format(
-                plugin, url, cvs, configuration_xml_string))
+            element = ET.fromstring('<config-repo plugin="{0}"><{2} url="{1}"{4} />{3}</config-repo>'.format(
+                plugin, url, cvs, configuration_xml_string, branch_entry))
 
         config_repo_element = ConfigRepo(element, self.__configurator.server_version)
 
