@@ -671,6 +671,14 @@ class TestConfigRepo(unittest.TestCase):
 
         self.assertEqual(self.configurator.config_repos.config_repo[0].url, 'git://url')
         self.assertEqual(self.configurator.config_repos.config_repo[0].plugin, 'yaml.config.plugin')
+        self.assertIsNone(self.configurator.config_repos.config_repo[0].branch)
+
+    def test_can_ensure_config_repo_with_git_url_and_branch(self):
+        self.configurator.ensure_config_repos().ensure_config_repo('git://url', 'yaml.config.plugin', branch='release')
+
+        self.assertEqual(self.configurator.config_repos.config_repo[0].url, 'git://url')
+        self.assertEqual(self.configurator.config_repos.config_repo[0].plugin, 'yaml.config.plugin')
+        self.assertEqual(self.configurator.config_repos.config_repo[0].branch, 'release')
 
     def test_can_ensure_yaml_config_repo_with_git_url(self):
         self.configurator.ensure_config_repos().ensure_yaml_config_repo('git://url')
