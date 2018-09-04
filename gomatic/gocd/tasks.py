@@ -14,10 +14,11 @@ def Task(element):
         return ExecTask(command_and_args, working_dir, runif)
     if element.tag == "fetchartifact":
         dest = element.attrib.get('dest', None)
+        origin = element.attrib.get('origin', None)
         return FetchArtifactTask(
             element.attrib['pipeline'], element.attrib['stage'],
             element.attrib['job'], fetch_artifact_src_from(element),
-            dest, runif)
+            dest, runif, origin)
     if element.tag == "rake":
         return RakeTask(element.attrib['target'])
     raise RuntimeError("Don't know task type %s" % element.tag)
@@ -54,7 +55,11 @@ class FetchArtifactTask(AbstractTask):
         if self._runif != "passed":
             runif_parameter = ', runif="%s"' % self._runif
 
-        return ('FetchArtifactTask("%s", "%s", "%s", %s' % (self.__pipeline, self.__stage, self.__job, self.__src)) + dest_parameter + runif_parameter + ')'
+        origin_parameter = ""
+        if self.__origin is not None:
+            origin_parameter = ', origin="%s"' % self.__origin
+
+        return ('FetchArtifactTask("%s", "%s", "%s", %s' % (self.__pipeline, self.__stage, self.__job, self.__src)) + dest_parameter + runif_parameter + origin_parameter + ')'
 
     type = 'fetchartifact'
 
@@ -91,10 +96,10 @@ class FetchArtifactTask(AbstractTask):
             new_element = ET.fromstring(
                 '<fetchartifact pipeline="%s" stage="%s" job="%s" %s="%s" dest="%s"/>' % (
                     self.__pipeline, self.__stage, self.__job, src_type, src_value, self.__dest))
-        
+
         if self.__origin is not None:
             element.set('origin',self.__origin)
-        
+
         new_element.append(ET.fromstring('<runif status="%s" />' % self.runif))
 
         Ensurance(element).ensure_child("tasks").append(new_element)

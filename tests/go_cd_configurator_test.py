@@ -553,6 +553,11 @@ class TestJobs(unittest.TestCase):
         job.ensure_tab(Tab("Time_Taken", "artifacts/test-run-times.html"))
         self.assertEqual([Tab("Time_Taken", "artifacts/test-run-times.html")], job.tabs)
 
+class TestTasks(unittest.TestCase):
+    def test_fetch_artifact_task_object_representation_format(self):
+        correct_format = 'FetchArtifactTask("p", "s", "j", FetchArtifactFile("f"), dest="d", runif="any", origin="gocd")'
+        current_object_repr = repr(FetchArtifactTask('p', 's', 'j', FetchArtifactFile('f'), runif="any", dest='d', origin='gocd'))
+        self.assertEqual(correct_format, current_object_repr)
 
 class TestStages(unittest.TestCase):
     def test_pipelines_have_stages(self):
