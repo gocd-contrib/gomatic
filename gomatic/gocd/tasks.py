@@ -108,13 +108,6 @@ class FetchArtifactTask(AbstractTask):
         Ensurance(element).ensure_child("tasks").append(new_element)
         return Task(new_element)
 
-    @classmethod
-    def get_fetch_artifact_task(cls, pipeline, stage, job, src, dest, origin):
-        return cls(pipeline, stage, job, src, dest=dest, origin=origin)
-
-
-TestFetchArtifactTask = FetchArtifactTask.get_fetch_artifact_task
-
 
 class ExecTask(AbstractTask):
     def __init__(self, command_and_args, working_dir=None, runif="passed"):

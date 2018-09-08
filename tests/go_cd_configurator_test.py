@@ -22,7 +22,6 @@ from gomatic import (
 )
 from gomatic.fake import FakeHostRestClient, config, empty_config, empty_config_xml, load_file
 from gomatic.gocd.artifacts import Artifact, ArtifactFor, BuildArtifact, TestArtifact
-from gomatic.gocd.tasks import TestFetchArtifactTask
 from gomatic.gocd.pipelines import DEFAULT_LABEL_TEMPLATE
 from gomatic.xml_operations import prettify
 
@@ -572,14 +571,23 @@ class TestTasks(unittest.TestCase):
         current_object_repr = repr(FetchArtifactTask('p', 's', 'j', FetchArtifactFile('f'), runif="any", dest='d', origin='gocd'))
         self.assertEqual(correct_format, current_object_repr)
 
-    def test_renders_fetch_artifact_task(self):
+    def test_renders_fetch_artifact_task_with_dest_origin(self):
         element = ET.Element('fetchartifact')
-        fetch_artifact_task = TestFetchArtifactTask('p', 's', 'j', FetchArtifactDir('d'), dest='dest_path', origin='gocd')
+        fetch_artifact_task = FetchArtifactTask('p', 's', 'j', FetchArtifactDir('d'), dest='dest_path', origin='gocd')
         fetch_artifact_task.append_to(element)
         self.assertEqual(element[0].tag, 'tasks')
         self.assertEqual(element[0][0].tag, 'fetchartifact')
         self.assertEqual(element[0][0].attrib['dest'], 'dest_path')
         self.assertEqual(element[0][0].attrib['origin'], 'gocd')
+
+    def test_renders_fetch_artifact_task_without_dest_origin(self):
+        element = ET.Element('fetchartifact')
+        fetch_artifact_task = FetchArtifactTask('p', 's', 'j', FetchArtifactDir('d'))
+        fetch_artifact_task.append_to(element)
+        self.assertEqual(element[0].tag, 'tasks')
+        self.assertEqual(element[0][0].tag, 'fetchartifact')
+        self.assertEqual('dest' in element[0][0].attrib, False)
+        self.assertEqual('origin' in element[0][0].attrib, False)
 
 class TestStages(unittest.TestCase):
     def test_pipelines_have_stages(self):
