@@ -17,4 +17,4 @@ deploy:
     tags: true
     repo: gocd-contrib/gomatic
   password:
-    secure: gOs63SyqeGkdRmsKEgCTTUTtj3tN0AKxf7zi0fCIkynPNrCE/24+V7xA2mMaRAfI1cw8+6ii3KM67gPUoIeIbIzbb0gvkc96zunKwG7Ulzh9QrNO/MhAw2sc7RxWYagjV8V8l+5GrQRnW2V0FWO7QUmsTo/Z0P6qt145t2jqPV4=
+    secure: "qZrZWdJ4nLFiMdZuA0MJrmF4tRz2jxKjIhPj/TmoCuUtJWHeRG1355ZhUdZDTRCLiyRdBjZZ9svlkJ6HBvsmE7KI/aSEtt2gFvgbhW4Em17j6VTyTq8LyCfxMARKR6+wKbt0Qq2TKYz1kymmWc6QmJDWMMTnBY55Jb6PyBRoujs="
