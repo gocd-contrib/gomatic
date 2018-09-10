@@ -3,11 +3,11 @@
 [![Pypi](https://img.shields.io/pypi/v/gomatic.svg)](https://pypi.python.org/pypi/gomatic)
 [![Gitter chat](https://badges.gitter.im/gocd-gomatic.png)](https://gitter.im/gocd-gomatic)
 
-This is a Python API for configuring ThoughtWorks [GoCD](http://www.go.cd/).
+This is a Python API for configuring ThoughtWorks [GoCD](http://www.gocd.org/).
 
 ## What does it do?
 
-If you wanted to configure a pipeline something like that shown in the [GoCD documentation](http://www.thoughtworks.com/products/docs/go/current/help/quick_pipeline_setup.html) then you could run the following script:
+If you wanted to configure a pipeline something like that shown in the [GoCD documentation](https://docs.gocd.org/current/) then you could run the following script:
 
 ```python
 #!/usr/bin/env python
@@ -30,7 +30,7 @@ configurator.save_updated_config()
 Gomatic uses the same mechanism as editing the config XML through the GoCD web based UI.
 The `GoCdConfigurator` gets the current config XML from the GoCD server, re-writes it as a result of the methods called, then posts the re-written config XML back to the GoCD server when `save_updated_config` is called.
 
-Gomatic doesn't use the [RESTful Go API](http://www.thoughtworks.com/products/docs/go/current/help/go_api.html) because that is (currently) far too limited for our needs.
+Gomatic doesn't use the [RESTful Go API](https://api.gocd.org/current) because that is (currently) far too limited for our needs.
 
 ## Limitations
 
