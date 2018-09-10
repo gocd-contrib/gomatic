@@ -89,16 +89,16 @@ class FetchArtifactTask(AbstractTask):
 
     def append_to(self, element):
         src_type, src_value = self.src.as_xml_type_and_value
-        if self.__dest is None:
-            new_element = ET.fromstring(
-                '<fetchartifact pipeline="%s" stage="%s" job="%s" %s="%s" />' % (self.__pipeline, self.__stage, self.__job, src_type, src_value))
-        else:
-            new_element = ET.fromstring(
-                '<fetchartifact pipeline="%s" stage="%s" job="%s" %s="%s" dest="%s"/>' % (
-                    self.__pipeline, self.__stage, self.__job, src_type, src_value, self.__dest))
+        dest_parameter = ""
+        if self.__dest is not None:
+            dest_parameter = ' dest="%s"' % self.__dest
 
+        origin_parameter = ""
         if self.__origin is not None:
-            element.set('origin',self.__origin)
+            origin_parameter = ' origin="%s"' % self.__origin
+
+        new_element = ET.fromstring(
+            ('<fetchartifact pipeline="%s" stage="%s" job="%s" %s="%s"' % (self.__pipeline, self.__stage, self.__job, src_type, src_value)) + dest_parameter + origin_parameter + '/>')
 
         new_element.append(ET.fromstring('<runif status="%s" />' % self.runif))
 
