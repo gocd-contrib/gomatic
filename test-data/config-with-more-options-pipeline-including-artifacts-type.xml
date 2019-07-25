@@ -75,10 +75,10 @@
               <rake target="sometarget">
                 <runif status="passed" />
               </rake>
-              <fetchartifact pipeline="more-options" stage="earlyStage" job="earlyWorm" srcdir="sourceDir" dest="destDir" origin="gocd">
+              <fetchartifact pipeline="more-options" stage="earlyStage" job="earlyWorm" srcdir="sourceDir" dest="destDir" origin="gocd" artifactOrigin="gocd">
                 <runif status="passed" />
               </fetchartifact>
-              <fetchartifact pipeline="more-options" stage="middleStage" job="middleJob" srcfile="someFile" origin="gocd">
+              <fetchartifact pipeline="more-options" stage="middleStage" job="middleJob" srcfile="someFile" origin="gocd" artifactOrigin="gocd">
                 <runif status="passed" />
               </fetchartifact>
               <exec command="true" />

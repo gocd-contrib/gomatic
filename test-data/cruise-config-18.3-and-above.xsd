@@ -658,6 +658,14 @@
                         </xsd:restriction>
                     </xsd:simpleType>
                 </xsd:attribute>
+                <xsd:attribute name="artifactOrigin">
+                    <xsd:simpleType>
+                        <xsd:restriction base="xsd:string">
+                            <xsd:enumeration value="gocd"/>
+                            <xsd:enumeration value="external"/>
+                        </xsd:restriction>
+                    </xsd:simpleType>
+                </xsd:attribute>
                 <xsd:attributeGroup ref="taskAttributes"/>
             </xsd:extension>
         </xsd:complexContent>

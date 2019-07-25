@@ -165,7 +165,7 @@ class TestJobs(unittest.TestCase):
     def test_jobs_can_have_run_instance_count(self):
         job = typical_pipeline().ensure_stage("package").ensure_job("docker")
         self.assertEqual(True, job.has_run_instance_count)
-        self.assertEqual("2", job.run_instance_count)            
+        self.assertEqual("2", job.run_instance_count)
 
     def test_can_set_run_instance_count(self):
         job = empty_stage().ensure_job("j")
@@ -182,7 +182,7 @@ class TestJobs(unittest.TestCase):
             run_instance_count = job.run_instance_count
             self.fail("should have thrown exception")
         except RuntimeError:
-            pass        
+            pass
 
     def test_can_ensure_job_has_resource(self):
         stages = typical_pipeline().stages
@@ -410,7 +410,8 @@ class TestJobs(unittest.TestCase):
                                            "earlyWorm",
                                            FetchArtifactDir("sourceDir"),
                                            dest="destDir",
-                                           origin="gocd"),
+                                           origin="gocd",
+                                           artifactOrigin="gocd"),
                          tasks[1])
 
     def test_can_ensure_fetch_artifact_tasks(self):

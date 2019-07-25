@@ -15,10 +15,11 @@ def Task(element):
     if element.tag == "fetchartifact":
         dest = element.attrib.get('dest', None)
         origin = element.attrib.get('origin', None)
+        artifact_origin = element.attrib.get('artifactOrigin', None)
         return FetchArtifactTask(
             element.attrib['pipeline'], element.attrib['stage'],
             element.attrib['job'], fetch_artifact_src_from(element),
-            dest, runif, origin)
+            dest, runif, origin, artifact_origin)
     if element.tag == "rake":
         return RakeTask(element.attrib['target'])
     raise RuntimeError("Don't know task type %s" % element.tag)
@@ -37,7 +38,7 @@ class AbstractTask(CommonEqualityMixin):
 
 
 class FetchArtifactTask(AbstractTask):
-    def __init__(self, pipeline, stage, job, src, dest=None, runif="passed", origin=None):
+    def __init__(self, pipeline, stage, job, src, dest=None, runif="passed", origin=None, artifactOrigin=None):
         super(self.__class__, self).__init__(runif)
         self.__pipeline = pipeline
         self.__stage = stage
@@ -45,6 +46,7 @@ class FetchArtifactTask(AbstractTask):
         self.__src = src
         self.__dest = dest
         self.__origin = origin
+        self.__artifact_origin = artifactOrigin
 
     def __repr__(self):
         dest_parameter = ""
@@ -59,7 +61,11 @@ class FetchArtifactTask(AbstractTask):
         if self.__origin is not None:
             origin_parameter = ', origin="%s"' % self.__origin
 
-        return ('FetchArtifactTask("%s", "%s", "%s", %s' % (self.__pipeline, self.__stage, self.__job, self.__src)) + dest_parameter + runif_parameter + origin_parameter + ')'
+        artifact_origin_parameter = ""
+        if self.__artifact_origin is not None:
+            artifact_origin_parameter = ', artifactOrigin="%s"' % self.__artifact_origin
+
+        return ('FetchArtifactTask("%s", "%s", "%s", %s' % (self.__pipeline, self.__stage, self.__job, self.__src)) + dest_parameter + runif_parameter + origin_parameter + artifact_origin_parameter + ')'
 
     type = 'fetchartifact'
 
@@ -87,6 +93,10 @@ class FetchArtifactTask(AbstractTask):
     def origin(self):
         return self.__origin
 
+    @property
+    def artifact_origin(self):
+        return self.__artifact_origin
+
     def append_to(self, element):
         src_type, src_value = self.src.as_xml_type_and_value
         dest_parameter = ""
@@ -97,8 +107,12 @@ class FetchArtifactTask(AbstractTask):
         if self.__origin is not None:
             origin_parameter = ' origin="%s"' % self.__origin
 
+        artifact_origin_parameter = ""
+        if self.__artifact_origin is not None:
+            artifact_origin_parameter = ' artifactOrigin="%s"' % self.__artifact_origin
+
         new_element = ET.fromstring(
-            ('<fetchartifact pipeline="%s" stage="%s" job="%s" %s="%s"' % (self.__pipeline, self.__stage, self.__job, src_type, src_value)) + dest_parameter + origin_parameter + '/>')
+            ('<fetchartifact pipeline="%s" stage="%s" job="%s" %s="%s"' % (self.__pipeline, self.__stage, self.__job, src_type, src_value)) + dest_parameter + origin_parameter + artifact_origin_parameter + '/>')
 
         new_element.append(ET.fromstring('<runif status="%s" />' % self.runif))
 
