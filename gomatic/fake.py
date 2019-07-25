@@ -33,7 +33,7 @@ class FakeHostRestClient(object):
     def get(self, path):
         # sorry for the duplication/shared knowledge of code but this is easiest way to test
         # what we want in a controlled way
-        if path == "/go/admin/restful/configuration/file/GET/xml":
+        if path == "/go/api/admin/config.xml":
             return FakeResponse(self.config_string)
         if path == "/go/api/version":
             return FakeResponse('{{"version": "{}"}}'.format(self.version))

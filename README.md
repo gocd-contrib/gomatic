@@ -38,10 +38,6 @@ We wrote it for our purposes and find it very useful; however, the current versi
 
 We believe it works for the following versions (as indicated by `integration_test.py`):
 
-* 16.3.0-3183
-* 16.4.0-3223
-* 16.5.0-3305
-* 16.6.0-3590
 * 16.7.0-3819
 * 16.8.0-3929
 * 16.9.0-4001
@@ -65,6 +61,19 @@ We believe it works for the following versions (as indicated by `integration_tes
 * 18.3.0-6540
 * 18.4.0-6640
 * 18.5.0-6679
+* 18.6.0-9515
+* 18.7.0-9515
+* 18.8.0-7433
+* 18.9.0-7478
+* 18.10.0-7703
+* 18.11.0-8024
+* 18.12.0-8222
+* 19.1.0-8469
+* 19.2.0-8641
+* 19.3.0-8959
+* 19.4.0-9155
+* 19.5.0-9272
+* 19.6.0-9515
 
 We don't support the below versions anymore, however we did at some point in time, so it might still work in newer versions:
 
@@ -81,6 +90,10 @@ We don't support the below versions anymore, however we did at some point in tim
 * 15.2.0-2248
 * 16.1.0-2855
 * 16.2.1-3027
+* 16.3.0-3183 [unsupported from 0.6.8 onwards]
+* 16.4.0-3223 [unsupported from 0.6.8 onwards]
+* 16.5.0-3305 [unsupported from 0.6.8 onwards]
+* 16.6.0-3590 [unsupported from 0.6.8 onwards]
 
 ## Install
 

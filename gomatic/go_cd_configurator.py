@@ -66,7 +66,7 @@ class GoCdConfigurator(object):
         return self.__server_version
 
     def __current_config_response(self):
-        config_url = "/go/admin/restful/configuration/file/GET/xml"
+        config_url = "/go/api/admin/config.xml"
         response = self.__host_rest_client.get(config_url)
 
         if response.status_code != 200:
@@ -304,17 +304,20 @@ class GoCdConfigurator(object):
             headers = {
                 "Confirm": "true",
             }
-            self.__host_rest_client.post('/go/admin/restful/configuration/file/POST/xml', data, headers)
+            if self.__host_rest_client.access_token is not None:
+                headers["Authorization"] = "Bearer %s" % self.__host_rest_client.access_token
+            self.__host_rest_client.post('/go/api/admin/config.xml', data, headers)
             self.__set_initial_config_xml()
 
 
 class HostRestClient(object):
-    def __init__(self, host, username=None, password=None, ssl=False, verify_ssl=True):
+    def __init__(self, host, username=None, password=None, ssl=False, verify_ssl=True, access_token=None):
         self.__host = host
         self.__username = username
         self.__password = password
         self.__ssl = ssl
         self.__verify_ssl = verify_ssl
+        self.__access_token = access_token
 
     def __repr__(self):
         return 'HostRestClient("{0}", ssl={1})'.format(self.__host, self.__ssl)
@@ -328,7 +331,9 @@ class HostRestClient(object):
 
     def get(self, path):
         header = {'Accept': 'application/vnd.go.cd.v1+json'}
-        result = requests.get(self.__path(path), auth=self.__auth(), verify=self.__verify_ssl, headers=header)
+        if self.__access_token is not None:
+            header["Authorization"] = "Bearer %s" % self.__access_token
+        result = requests.get(self.__path(path), verify=self.__verify_ssl, headers=header)
         count = 0
         while ((result.status_code == 503) or (result.status_code == 504)) and (count < 5):
             result = requests.get(self.__path(path))
@@ -346,6 +351,10 @@ class HostRestClient(object):
                 raise RuntimeError("Could not post config to Go server (%s) [status code=%s]:\n%s" % (url, result.status_code, message))
             except ValueError:
                 raise RuntimeError("Could not post config to Go server (%s) [status code=%s] (and result was not json):\n%s" % (url, result.status_code, result))
+
+    @property
+    def access_token(self):
+        return self.__access_token
 
 
 def main(args):
