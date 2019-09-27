@@ -333,7 +333,7 @@ class HostRestClient(object):
         header = {'Accept': 'application/vnd.go.cd.v1+json'}
         if self.__access_token is not None:
             header["Authorization"] = "Bearer %s" % self.__access_token
-        result = requests.get(self.__path(path), verify=self.__verify_ssl, headers=header)
+        result = requests.get(self.__path(path), auth=self.__auth(), verify=self.__verify_ssl, headers=header)
         count = 0
         while ((result.status_code == 503) or (result.status_code == 504)) and (count < 5):
             result = requests.get(self.__path(path))
