@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 setup(name='gomatic',
-      version='0.6.8',
+      version='0.6.9',
       description='API for configuring GoCD',
       url='https://github.com/gocd-contrib/gomatic',
       author='The Gomatic Maintainers',
