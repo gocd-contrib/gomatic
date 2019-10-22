@@ -39,6 +39,12 @@ class FakeHostRestClient(object):
             return FakeResponse('{{"version": "{}"}}'.format(self.version))
         raise RuntimeError("not expecting to be asked for anything else")
 
+    def post(self, path, data, headers=None):
+        expected_headers = {'Accept': 'application/vnd.go.cd.v1+json', 'Content-Type': 'application/json'}
+        if path == "/go/api/admin/encrypt" and headers == expected_headers:
+            value = json.loads(data)['value']
+            return FakeResponse('{{"encrypted_value": "{}"}}'.format(value))
+        raise RuntimeError("given this garbage: {} {} {}".format(path, data, headers))
 
 def load_file(config_name):
     with codecs.open('test-data/' + config_name + '.xml', encoding='utf-8') as xml_file:

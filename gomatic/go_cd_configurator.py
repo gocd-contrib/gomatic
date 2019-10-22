@@ -11,6 +11,7 @@ from uuid import uuid4
 import requests
 
 from gomatic.gocd.config_repos import ConfigRepos
+from gomatic.gocd.encryption import Encryption
 from gomatic.gocd.security import Security
 from gomatic.gocd.elastic import Elastic
 from gomatic.gocd.agents import Agent
@@ -158,6 +159,9 @@ class GoCdConfigurator(object):
     @property
     def config_repos(self):
         return ConfigRepos(self.__xml_root.find('config-repos'), self)
+
+    def encryption(self):
+        return Encryption(self.server_version, self.__host_rest_client)
 
     def ensure_pipeline_group(self, group_name):
         pipeline_group_element = Ensurance(self.__xml_root).ensure_child_with_attribute("pipelines", "group", group_name)
@@ -351,6 +355,7 @@ class HostRestClient(object):
                 raise RuntimeError("Could not post config to Go server (%s) [status code=%s]:\n%s" % (url, result.status_code, message))
             except ValueError:
                 raise RuntimeError("Could not post config to Go server (%s) [status code=%s] (and result was not json):\n%s" % (url, result.status_code, result))
+        return result
 
     @property
     def access_token(self):
