@@ -49,6 +49,8 @@ def load_file(config_name):
 def config(config_name):
     return FakeHostRestClient(load_file(config_name))
 
+def config_18_3_0(config_name):
+    return FakeHostRestClient(load_file(config_name), version="18.3.0")
 
 def empty_config():
     return FakeHostRestClient(empty_config_xml, "empty_config()")

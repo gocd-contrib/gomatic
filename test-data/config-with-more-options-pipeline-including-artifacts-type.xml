@@ -1,6 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config-18.3-and-above.xsd" schemaVersion="108">
   <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="779d5885-3db5-4640-8901-f9333bc10046" />
+  <artifactStores>
+    <artifactStore id="docker-registry" pluginId="cd.go.artifact.docker.registry">
+      <property>
+        <key>RegistryType</key>
+        <value>other</value>
+      </property>
+      <property>
+        <key>RegistryURL</key>
+        <value>private-registry:5000</value>
+      </property>
+      <property>
+        <key>RegistryID</key>
+        <value />
+      </property>
+      <property>
+        <key>AWSAccessKeyId</key>
+        <encryptedValue />
+      </property>
+      <property>
+        <key>AWSSecretAccessKey</key>
+        <encryptedValue />
+      </property>
+      <property>
+        <key>AWSRegion</key>
+        <value />
+      </property>
+      <property>
+        <key>Username</key>
+        <value>gomatic</value>
+      </property>
+      <property>
+        <key>Password</key>
+        <encryptedValue>secret</encryptedValue>
+      </property>
+    </artifactStore>
+  </artifactStores>
   <pipelines group="P.Group">
     <pipeline name="more-options">
       <params>
@@ -31,6 +67,22 @@
               <artifact src="target/universal/myapp*.zip" dest="artifacts" type="build" />
               <artifact src="scripts/*" dest="files" type="build" />
               <artifact src="from" dest="to" type="test" />
+              <artifact id="docker-image" storeId="docker-registry" type="external">
+                  <configuration>
+                    <property>
+                      <key>Image</key>
+                      <value>docker-image-name</value>
+                    </property>
+                    <property>
+                      <key>Tag</key>
+                      <value>latest</value>
+                    </property>
+                    <property>
+                      <key>BuildFile</key>
+                      <value>buildfile.json</value>
+                    </property>
+                  </configuration>
+                </artifact>
             </artifacts>
           </job>
         </jobs>
@@ -79,6 +131,19 @@
                 <runif status="passed" />
               </fetchartifact>
               <fetchartifact pipeline="more-options" stage="middleStage" job="middleJob" srcfile="someFile" origin="gocd" artifactOrigin="gocd">
+                <runif status="passed" />
+              </fetchartifact>
+              <fetchartifact pipeline="more-options" stage="earlyStage" job="earlyWorm" artifactOrigin="external" artifactId="docker-image">
+                <configuration>
+                  <property>
+                    <key>EnvironmentVariablePrefix</key>
+                    <value/>
+                  </property>
+                  <property>
+                    <key>SkipImagePulling</key>
+                    <value>false</value>
+                  </property>
+                </configuration>
                 <runif status="passed" />
               </fetchartifact>
               <exec command="true" />

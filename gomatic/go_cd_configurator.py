@@ -16,6 +16,7 @@ from gomatic.gocd.elastic import Elastic
 from gomatic.gocd.agents import Agent
 from gomatic.gocd.pipelines import Pipeline, PipelineGroup
 from gomatic.gocd.repositories import Repository
+from gomatic.gocd.artifact_stores import ArtifactStores
 from gomatic.xml_operations import Ensurance, PossiblyMissingElement, move_all_to_end, prettify
 
 
@@ -155,22 +156,9 @@ class GoCdConfigurator(object):
     def pipeline_groups(self):
         return [PipelineGroup(e, self) for e in self.__xml_root.findall('pipelines')]
 
-    @property
-    def config_repos(self):
-        return ConfigRepos(self.__xml_root.find('config-repos'), self)
-
     def ensure_pipeline_group(self, group_name):
         pipeline_group_element = Ensurance(self.__xml_root).ensure_child_with_attribute("pipelines", "group", group_name)
         return PipelineGroup(pipeline_group_element.element, self)
-
-    def ensure_config_repos(self):
-        config_repos = Ensurance(self.__xml_root).ensure_child("config-repos")
-        return ConfigRepos(config_repos.element, self)
-
-    def ensure_replacement_of_config_repos(self):
-        config_repos = self.ensure_config_repos()
-        config_repos.make_empty()
-        return config_repos
 
     def ensure_removal_of_pipeline_group(self, group_name):
         matching = [g for g in self.pipeline_groups if g.name == group_name]
@@ -182,6 +170,32 @@ class GoCdConfigurator(object):
         for e in self.__xml_root.findall('pipelines'):
             self.__xml_root.remove(e)
         return self
+
+    @property
+    def config_repos(self):
+        return ConfigRepos(self.__xml_root.find('config-repos'), self)
+
+    def ensure_config_repos(self):
+        config_repos = Ensurance(self.__xml_root).ensure_child("config-repos")
+        return ConfigRepos(config_repos.element, self)
+
+    def ensure_replacement_of_config_repos(self):
+        config_repos = self.ensure_config_repos()
+        config_repos.make_empty()
+        return config_repos
+
+    @property
+    def artifact_stores(self):
+        return ArtifactStores(self.__xml_root.find('artifactStores'))
+
+    def ensure_artifact_stores(self):
+        artifact_stores = Ensurance(self.__xml_root).ensure_child("artifactStores")
+        return ArtifactStores(artifact_stores.element)
+
+    def ensure_replacement_of_artifact_stores(self):
+        artifact_stores = self.ensure_artifact_stores()
+        artifact_stores.make_empty()
+        return artifact_stores
 
     @property
     def repositories(self):
