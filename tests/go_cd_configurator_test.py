@@ -20,8 +20,9 @@ from gomatic import (
     Security,
     Tab
 )
-from gomatic.fake import FakeHostRestClient, config, empty_config, empty_config_xml, load_file
-from gomatic.gocd.artifacts import Artifact, ArtifactFor, BuildArtifact, TestArtifact
+from gomatic.fake import FakeHostRestClient, config, config_18_3_0, empty_config, empty_config_xml, load_file
+from gomatic.gocd.artifacts import Artifact, ArtifactFor, BuildArtifact, TestArtifact, ExternalArtifact
+from gomatic.gocd.artifact_stores import ArtifactStores, ArtifactStore
 from gomatic.gocd.pipelines import DEFAULT_LABEL_TEMPLATE
 from gomatic.xml_operations import prettify
 
@@ -43,6 +44,9 @@ def more_options_pipeline():
 
 def more_options_pipeline_with_artifacts_type():
     return GoCdConfigurator(config('config-with-more-options-pipeline-including-artifacts-type')).ensure_pipeline_group('P.Group').find_pipeline('more-options')
+
+def more_options_pipeline_with_external_artifacts():
+    return GoCdConfigurator(config_18_3_0('config-with-more-options-pipeline-including-artifacts-type')).ensure_pipeline_group('P.Group').find_pipeline('more-options')
 
 def empty_pipeline():
     return GoCdConfigurator(empty_config()).ensure_pipeline_group("pg").ensure_pipeline("pl").set_git_url("gurl")
@@ -207,7 +211,11 @@ class TestJobs(unittest.TestCase):
         self.assertEqual({
                               Artifact.get_build_artifact("target/universal/myapp*.zip", "artifacts"),
                               Artifact.get_build_artifact("scripts/*", "files"),
-                              Artifact.get_test_artifact("from", "to")},
+                              Artifact.get_test_artifact("from", "to"),
+                              Artifact.get_external_artifact("docker-image",
+                                  "docker-registry", {'Image':
+                                      'docker-image-name', 'Tag': 'latest',
+                                      'BuildFile': 'buildfile.json'})},
                           artifacts)
 
     def test_job_that_has_no_artifacts_has_no_artifacts_element_to_reduce_thrash(self):
@@ -250,6 +258,27 @@ class TestJobs(unittest.TestCase):
         artifacts = job.artifacts
         self.assertEqual(5, len(artifacts))
         self.assertTrue({Artifact.get_test_artifact("a1"), Artifact.get_test_artifact("a2")}.issubset(artifacts))
+
+    def test_can_add_external_artifacts_to_job(self):
+        properties = {'key1': 'value', 'key2': None }
+        job = more_options_pipeline_with_external_artifacts().ensure_stage("earlyStage").ensure_job("earlyWorm")
+        job_with_artifacts = job.ensure_artifacts({
+            ExternalArtifact("id1", "store_id1", properties),
+            ExternalArtifact("id2", "store_id2", properties)})
+        self.assertEqual(job, job_with_artifacts)
+        artifacts = job.artifacts
+        self.assertEqual(6, len(artifacts))
+        self.assertTrue({
+            ExternalArtifact("id1", "store_id1", properties),
+            ExternalArtifact("id2", "store_id2", properties)}.issubset(artifacts))
+
+    def test_can_add_external_artifact_fetch_task_to_job(self):
+        job = more_options_pipeline_with_external_artifacts().ensure_stage("earlyStage").ensure_job("earlyWorm")
+        job_with_fetch_external_artifact_task = job.add_task(
+                FetchArtifactTask("docker-image", "build", "build",
+                    id="docker-image", config={'EnvironmentVariablePrefix':
+                        None, 'SkipImagePulling': 'true'}, artifactOrigin="external"))
+        self.assertIn(job_with_fetch_external_artifact_task, job.tasks)
 
     def test_can_ensure_artifacts(self):
         job = more_options_pipeline().ensure_stage("earlyStage").ensure_job("earlyWorm")
@@ -2228,3 +2257,53 @@ class TestArtifacts(unittest.TestCase):
         self.assertEqual(artifact._src, 'src')
         self.assertEqual(artifact._dest, None)
         self.assertEqual(artifact._type, 'test')
+
+
+class TestArtifactStores(unittest.TestCase):
+    def setUp(self):
+        self.configurator = GoCdConfigurator(empty_config())
+
+    def test_can_ensure_empty_artifact_stores(self):
+        self.configurator.ensure_artifact_stores()
+
+        self.assertEqual(len(self.configurator.artifact_stores), 0)
+        self.assertEqual(len(self.configurator.artifact_stores.artifact_store), 0)
+
+    def test_can_ensure_artifact_store(self):
+        properties = {'key1': 'value', 'key2': None }
+        self.configurator.ensure_artifact_stores().ensure_artifact_store('id1', 'plugin_id1', properties)
+        self.configurator.ensure_artifact_stores().ensure_artifact_store('id2', 'plugin_id2', properties)
+
+        self.assertEqual(len(self.configurator.artifact_stores), 2)
+
+    def test_can_ensure_replacement_of_artifact_stores(self):
+        properties = {'key1': 'value', 'key2': None }
+        self.configurator.ensure_artifact_stores().ensure_artifact_store('id1', 'plugin_id1', properties)
+        self.assertEqual(len(self.configurator.artifact_stores), 1)
+
+        self.configurator.ensure_replacement_of_artifact_stores().ensure_artifact_store('id2', 'plugin_id2', properties)
+        self.assertEqual(len(self.configurator.artifact_stores), 1)
+
+    def test_can_ensure_replacement_of_artifact_store(self):
+        properties1 = {'key1': 'value1', 'key2': None }
+        properties2 = {'key1': 'value2', 'key2': None }
+        self.configurator.ensure_artifact_stores().ensure_artifact_store('id', 'plugin_id', properties1)
+        self.assertEqual(len(self.configurator.artifact_stores), 1)
+        self.assertEqual(self.configurator.artifact_stores[0].properties, properties1)
+        self.configurator.ensure_artifact_stores().ensure_replacement_of_artifact_store('id', 'plugin_id', properties2)
+        self.assertEqual(len(self.configurator.artifact_stores), 1)
+        self.assertEqual(self.configurator.artifact_stores[0].properties, properties2)
+
+    def test_can_differentiate_artifact_store(self):
+        properties = {'key1': 'value', 'key2': None }
+        self.configurator.ensure_artifact_stores().ensure_artifact_store('id1', 'plugin_id1', properties)
+        self.configurator.ensure_artifact_stores().ensure_artifact_store('id2', 'plugin_id2', properties)
+        self.assertNotEqual(self.configurator.artifact_stores[0], self.configurator.artifact_stores[1])
+
+    def test_can_empty_artifact_stores(self):
+        properties = {'key1': 'value', 'key2': None }
+        self.configurator.ensure_artifact_stores().ensure_artifact_store('id1', 'plugin_id1', properties)
+        self.configurator.ensure_artifact_stores().ensure_artifact_store('id2', 'plugin_id2', properties)
+        self.assertEqual(len(self.configurator.artifact_stores), 2)
+        self.configurator.artifact_stores.make_empty()
+        self.assertEqual(len(self.configurator.artifact_stores), 0)

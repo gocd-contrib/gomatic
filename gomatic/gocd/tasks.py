@@ -1,7 +1,9 @@
 from xml.etree import ElementTree as ET
 from xml.sax.saxutils import escape
 
-from gomatic.gocd.artifacts import fetch_artifact_src_from
+from gomatic.gocd.artifacts import (
+        fetch_artifact_src_from,
+        fetch_properties_from)
 from gomatic.mixins import CommonEqualityMixin
 from gomatic.xml_operations import Ensurance
 
@@ -16,6 +18,12 @@ def Task(element):
         dest = element.attrib.get('dest', None)
         origin = element.attrib.get('origin', None)
         artifact_origin = element.attrib.get('artifactOrigin', None)
+        artifact_id = element.attrib.get('artifactId', None)
+        if artifact_origin == 'external':
+            return FetchArtifactTask(
+            element.attrib['pipeline'], element.attrib['stage'],
+            element.attrib['job'], None, None, runif, origin, artifact_origin,
+            artifact_id, fetch_properties_from(element))
         return FetchArtifactTask(
             element.attrib['pipeline'], element.attrib['stage'],
             element.attrib['job'], fetch_artifact_src_from(element),
@@ -38,7 +46,7 @@ class AbstractTask(CommonEqualityMixin):
 
 
 class FetchArtifactTask(AbstractTask):
-    def __init__(self, pipeline, stage, job, src, dest=None, runif="passed", origin=None, artifactOrigin=None):
+    def __init__(self, pipeline, stage, job, src=None, dest=None, runif="passed", origin=None, artifactOrigin=None, id=None, config=None):
         super(self.__class__, self).__init__(runif)
         self.__pipeline = pipeline
         self.__stage = stage
@@ -47,6 +55,8 @@ class FetchArtifactTask(AbstractTask):
         self.__dest = dest
         self.__origin = origin
         self.__artifact_origin = artifactOrigin
+        self.__artifact_id = id
+        self.__config = config
 
     def __repr__(self):
         dest_parameter = ""
@@ -64,6 +74,9 @@ class FetchArtifactTask(AbstractTask):
         artifact_origin_parameter = ""
         if self.__artifact_origin is not None:
             artifact_origin_parameter = ', artifactOrigin="%s"' % self.__artifact_origin
+
+        if self.__artifact_origin == 'external':
+            return ('FetchArtifactTask("%s", "%s", "%s", id="%s", config=%s' % (self.__pipeline, self.__stage, self.__job, self.__artifact_id, self.__config)) + dest_parameter + runif_parameter + origin_parameter + artifact_origin_parameter + ')'
 
         return ('FetchArtifactTask("%s", "%s", "%s", %s' % (self.__pipeline, self.__stage, self.__job, self.__src)) + dest_parameter + runif_parameter + origin_parameter + artifact_origin_parameter + ')'
 
@@ -97,8 +110,15 @@ class FetchArtifactTask(AbstractTask):
     def artifact_origin(self):
         return self.__artifact_origin
 
+    @property
+    def artifact_id(self):
+        return self.__artifact_id
+
+    @property
+    def config(self):
+        return self.__config
+
     def append_to(self, element):
-        src_type, src_value = self.src.as_xml_type_and_value
         dest_parameter = ""
         if self.__dest is not None:
             dest_parameter = ' dest="%s"' % self.__dest
@@ -111,7 +131,13 @@ class FetchArtifactTask(AbstractTask):
         if self.__artifact_origin is not None:
             artifact_origin_parameter = ' artifactOrigin="%s"' % self.__artifact_origin
 
-        new_element = ET.fromstring(
+        if self.__artifact_origin == 'external':
+            properties_xml = "".join(["<property><key>{}</key><value>{}</value></property>".format(k, str(v or '')) for k, v in self.__config.items()])
+            fetch_artifact_xml = """<fetchartifact pipeline="{}" stage="{}" job="{}" artifactId="{}" artifactOrigin="{}"><configuration>{}</configuration></fetchartifact>"""
+            new_element = ET.fromstring(fetch_artifact_xml.format(self.__pipeline, self.__stage, self.__job, self.__artifact_id, self.__artifact_origin, properties_xml))
+        else:
+            src_type, src_value = self.src.as_xml_type_and_value
+            new_element = ET.fromstring(
             ('<fetchartifact pipeline="%s" stage="%s" job="%s" %s="%s"' % (self.__pipeline, self.__stage, self.__job, src_type, src_value)) + dest_parameter + origin_parameter + artifact_origin_parameter + '/>')
 
         new_element.append(ET.fromstring('<runif status="%s" />' % self.runif))
