@@ -36,14 +36,14 @@ class ConfigRepo(CommonEqualityMixin):
 
     @property
     def cvs(self):
-        for c in self.element.getchildren():
+        for c in self.element:
             if c.tag in ConfigRepo.valid_cvs:
                 return c.tag
 
     @property
     def configuration(self):
         config = {}
-        for p in self.element.find('configuration').getchildren():
+        for p in self.element.find('configuration'):
             config[p.find('key').text] = p.find('value').text
         return config
 
