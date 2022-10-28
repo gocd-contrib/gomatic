@@ -9,7 +9,6 @@ class CommonEqualityMixin(object):
         return hash(str(self))
 
     def __repr__(self):
-        keys = self.__dict__.keys()
-        keys.sort()
+        keys = sorted(self.__dict__)
         return "Some %s" % self.__class__ + " Fields[" + (
-            ", ".join([str(k) + ":" + str(self.__dict__[k]) for k in keys]) + "]")
+            ", ".join([str(k) + ":" + repr(self.__dict__[k]) for k in keys]) + "]")

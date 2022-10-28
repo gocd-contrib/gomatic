@@ -122,6 +122,10 @@ class PossiblyMissingElement(object):
 
         return self
 
+    def __repr__(self):
+        cls = type(self)
+        return f'{cls.__name__}({self.__element!r})'
+
 
 def move_all_to_end(parent_element, tag):
     elements = parent_element.findall(tag)

@@ -173,7 +173,7 @@ class GoCdConfigurator(object):
 
     @property
     def config_repos(self):
-        return ConfigRepos(self.__xml_root.find('config-repos'), self)
+        return ConfigRepos(PossiblyMissingElement(self.__xml_root.find('config-repos')), self)
 
     def ensure_config_repos(self):
         config_repos = Ensurance(self.__xml_root).ensure_child("config-repos")
@@ -186,7 +186,7 @@ class GoCdConfigurator(object):
 
     @property
     def artifact_stores(self):
-        return ArtifactStores(self.__xml_root.find('artifactStores'))
+        return ArtifactStores(PossiblyMissingElement(self.__xml_root.find('artifactStores')))
 
     def ensure_artifact_stores(self):
         artifact_stores = Ensurance(self.__xml_root).ensure_child("artifactStores")

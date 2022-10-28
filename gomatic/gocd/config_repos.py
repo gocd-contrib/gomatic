@@ -4,7 +4,6 @@ import uuid
 from distutils.version import LooseVersion
 
 from gomatic.mixins import CommonEqualityMixin
-from gomatic.xml_operations import PossiblyMissingElement
 
 
 ATTR_NAME_CHANGE_VERSION = LooseVersion("17.9.0")
@@ -60,7 +59,7 @@ class ConfigRepo(CommonEqualityMixin):
             return None
 
     def make_empty(self):
-        PossiblyMissingElement(self.element).remove_all_children()
+        self.element.remove_all_children()
 
     def __repr__(self):
         return 'ConfigRepo(url={0}, plugin={1}, cvs={2}, configuration={3})'.format(
@@ -81,7 +80,7 @@ class ConfigRepos(CommonEqualityMixin):
         return [ConfigRepo(e, self.__configurator.server_version) for e in self.element.findall('config-repo')]
 
     def make_empty(self):
-        PossiblyMissingElement(self.element).remove_all_children()
+        self.element.remove_all_children()
 
     def ensure_config_repo(self, url, plugin, cvs='git', configuration=None, repo_id=None, branch=None):
         configuration_xml_string = ""
